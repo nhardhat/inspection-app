@@ -3,6 +3,7 @@ import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "../pdf/pdfjs";
 import type { Rect } from "../viewer/viewTransform";
 import { ViewerCoordsContext, type ViewerCoords } from "../viewer/viewerCoords";
 import {
+  applySharpDisplay,
   beginActivity,
   diagnostics,
   endActivity,
@@ -483,12 +484,14 @@ export function DocPage({
             const canvas = document.createElement("canvas");
             canvas.width = piece.width;
             canvas.height = piece.height;
-            Object.assign(canvas.style, {
-              left: `${piece.rect.x}px`,
-              top: `${piece.rect.y}px`,
-              width: `${piece.rect.width}px`,
-              height: `${piece.rect.height}px`,
+            canvas.className = "sharp-piece";
+            Object.assign(canvas.dataset, {
+              x: String(piece.rect.x),
+              y: String(piece.rect.y),
+              w: String(piece.rect.width),
+              h: String(piece.rect.height),
             });
+            applySharpDisplay(canvas);
             beginActivity("sharp");
             const t = proxy.render({
               canvas,

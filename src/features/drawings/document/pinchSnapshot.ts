@@ -227,14 +227,15 @@ function drawPage(
   const base = baseHost?.querySelector("canvas");
   if (base && base.width > 0)
     ctx.drawImage(base, rect.x, rect.y, rect.width, rect.height);
-  const tile = tileHost?.querySelector("canvas");
-  if (tile && tile.width > 0) {
+  // The sharp pieces, from their place on the page (page units).
+  for (const tile of tileHost?.querySelectorAll("canvas") ?? []) {
+    if (tile.width === 0) continue;
     ctx.drawImage(
       tile,
-      rect.x + parseFloat(tile.style.left) * f,
-      rect.y + parseFloat(tile.style.top) * f,
-      parseFloat(tile.style.width) * f,
-      parseFloat(tile.style.height) * f,
+      rect.x + Number(tile.dataset.x) * f,
+      rect.y + Number(tile.dataset.y) * f,
+      Number(tile.dataset.w) * f,
+      Number(tile.dataset.h) * f,
     );
   }
 }
