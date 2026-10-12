@@ -48,6 +48,7 @@ function state(over: Partial<DiagnosticsState> = {}): DiagnosticsState {
     },
     pdfs: new Map([["d1", { ms: 1200, bytes: 18_400_000 }]]),
     errors: [],
+    drawing: { seconds: 2.4, longestFreezeMs: 140 },
     ...over,
   };
 }
@@ -76,6 +77,10 @@ describe("diagnosticsReport", () => {
     expect(text).toContain(
       "Scroll last 2.1 s · 41 fps · worst frame 96 ms (during 2 preview) · pages drawing 40% of it",
     );
+    expect(text).toContain("Drawing last 2.4 s · longest freeze 140 ms");
+    expect(lines.find((l) => l.text.startsWith("Drawing last"))?.tone).toBe(
+      "warn",
+    );
     expect(text).toContain("PDF opened 1.2 s · 18.4 MB file");
     expect(text).toContain("Errors none");
   });
@@ -94,6 +99,23 @@ describe("diagnosticsReport", () => {
     const error = lines.find((l) => l.text.startsWith("Error "));
     expect(error?.text).toMatch(/Page 4 render failed: boom$/);
     expect(error?.tone).toBe("bad");
+  });
+
+  it("counts a sharp image's pieces", () => {
+    const s = state();
+    s.pages.get("d1:4")!.sharp = render({
+      scale: 2,
+      wanted: 2,
+      kind: "sharp",
+      pixels: 9_700_000,
+      state: "drawing",
+      started: 0,
+      pieces: { done: 3, total: 9 },
+    });
+    const text = diagnosticsReport(s, live, 500).map((l) => l.text);
+    expect(text).toContain(
+      "Sharp 2.00 (as wanted) · 9.7 MP · drawing 500 ms · 3 of 9 pieces",
+    );
   });
 
   it("says when a page came from its saved image", () => {

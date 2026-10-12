@@ -29,6 +29,8 @@ export interface RenderStat {
   /** When it started (performance.now()). */
   started: number;
   kind: Activity;
+  /** A sharp image drawn in pieces: how many are done. */
+  pieces?: { done: number; total: number };
 }
 
 export interface PageStat {
@@ -72,6 +74,11 @@ export interface DiagnosticsState {
   pdfs: Map<string, { ms: number; bytes: number }>;
   /** The latest render errors, newest last. */
   errors: { time: number; message: string }[];
+  /**
+   * The last stretch of drawing (anything busy): how long, and the longest
+   * frame in it, i.e. the longest the screen froze on one drawing step.
+   */
+  drawing: { seconds: number; longestFreezeMs: number } | null;
 }
 
 export const diagnostics: DiagnosticsState = {
@@ -81,6 +88,7 @@ export const diagnostics: DiagnosticsState = {
   scroll: null,
   pdfs: new Map(),
   errors: [],
+  drawing: null,
 };
 
 const MAX_ERRORS = 5;
@@ -130,6 +138,29 @@ const endedSinceFrame = new Set<Activity>();
 
 export function beginActivity(kind: Activity) {
   busy.set(kind, (busy.get(kind) ?? 0) + 1);
+  if (diagnostics.enabled && !watching) watchDrawing();
+}
+
+// --- how long the screen froze while drawing --------------------------------
+
+let watching: { start: number; last: number; longest: number } | null = null;
+
+function watchDrawing() {
+  const now = performance.now();
+  watching = { start: now, last: now, longest: 0 };
+  const frame = (t: number) => {
+    const w = watching;
+    if (!w) return;
+    w.longest = Math.max(w.longest, t - w.last);
+    w.last = t;
+    if (anyBusy()) return void requestAnimationFrame(frame);
+    diagnostics.drawing = {
+      seconds: (t - w.start) / 1000,
+      longestFreezeMs: w.longest,
+    };
+    watching = null;
+  };
+  requestAnimationFrame(frame);
 }
 
 export function endActivity(kind: Activity) {

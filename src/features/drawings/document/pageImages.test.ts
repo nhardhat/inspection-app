@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  PIECE_PX,
   clearPageImages,
   covers,
+  distanceTo,
+  piecesCost,
+  sharpPieces,
   sharpTarget,
   keepPageImage,
   queuePageDrawing,
@@ -151,5 +155,60 @@ describe("sharp image area", () => {
     const { rect } = sharpTarget(page, corner, 1, 12_000_000);
     expect(rect.x).toBe(0);
     expect(rect.y).toBe(0);
+  });
+});
+
+describe("sharp pieces", () => {
+  const page = { width: 2835, height: 2004 };
+
+  it("covers the area with a grid fixed to the page", () => {
+    // At 2 px/pt a piece is 512 pt square.
+    const area = { x: 600, y: 100, width: 600, height: 500 };
+    const pieces = sharpPieces(page, area, 2);
+    expect(pieces.map((p) => p.key)).toEqual(["1,0", "2,0", "1,1", "2,1"]);
+    expect(pieces[0].rect).toEqual({ x: 512, y: 0, width: 512, height: 512 });
+    expect(pieces[0].width).toBe(PIECE_PX);
+    // Panning a little reuses the same cells.
+    const panned = sharpPieces(page, { ...area, x: 620 }, 2);
+    expect(panned.map((p) => p.key)).toEqual(pieces.map((p) => p.key));
+  });
+
+  it("keeps the pieces, not just the area, within the budget", () => {
+    const part = { x: 1000, y: 700, width: 700, height: 500 };
+    const { rect, scale } = sharpTarget(page, part, 2, 7_000_000, (area, at) =>
+      piecesCost(page, area, at),
+    );
+    expect(scale).toBe(2);
+    expect(piecesCost(page, rect, scale)).toBeLessThanOrEqual(7_000_000);
+    expect(covers(rect, part)).toBe(true);
+  });
+
+  it("never lowers the detail for whole pieces going over", () => {
+    // The view alone is 1.4 MP at 2 px/pt, but its six pieces are 6.3 MP.
+    const part = { x: 1000, y: 700, width: 700, height: 500 };
+    const { rect, scale } = sharpTarget(page, part, 2, 6_000_000, (area, at) =>
+      piecesCost(page, area, at),
+    );
+    expect(scale).toBe(2);
+    expect(rect).toEqual(part);
+  });
+
+  it("trims pieces at the page's edge", () => {
+    const pieces = sharpPieces(
+      page,
+      { x: 2700, y: 1900, width: 135, height: 104 },
+      2,
+    );
+    expect(pieces).toHaveLength(1);
+    expect(pieces[0].rect.width).toBeCloseTo(2835 - 2560);
+    expect(pieces[0].width).toBe(Math.ceil((2835 - 2560) * 2));
+  });
+
+  it("measures how far a piece is from the view", () => {
+    const view = { x: 100, y: 100, width: 100, height: 100 };
+    expect(distanceTo({ x: 150, y: 150, width: 10, height: 10 }, view)).toBe(0);
+    expect(distanceTo({ x: 230, y: 100, width: 10, height: 10 }, view)).toBe(
+      30,
+    );
   });
 });

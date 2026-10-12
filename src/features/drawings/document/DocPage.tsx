@@ -3,7 +3,9 @@ import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "../pdf/pdfjs";
 import type { Rect } from "../viewer/viewTransform";
 import { ViewerCoordsContext, type ViewerCoords } from "../viewer/viewerCoords";
 import {
+  beginActivity,
   diagnostics,
+  endActivity,
   endRender,
   pageStat,
   recordError,
@@ -12,10 +14,13 @@ import {
 import { visiblePart, type PageLayout } from "./documentLayout";
 import {
   SHARP_BUDGET,
+  SHARP_DELAY_MS,
   baseTarget,
-  covers,
+  distanceTo,
   keepPageImage,
+  piecesCost,
   queuePageDrawing,
+  sharpPieces,
   sharpTarget,
   takePageImage,
 } from "./pageImages";
@@ -377,13 +382,22 @@ export function DocPage({
     };
   }, [page.key]);
 
-  // Sharpen the visible part once the view settles (step 10b, from the
-  // iPad diagnostics: a busy B1 sheet took over 4 s, and redrawing on every
-  // settle, alongside scrolling, froze frames for seconds and kept it
-  // soft). The sharp image covers a margin round the view and is kept
-  // while it still covers what's on screen at the right detail; it is drawn
-  // one page at a time, never while the document moves.
-  const shownTile = useRef<{ rect: Rect; scale: number } | null>(null);
+  // Sharpen the visible part once the view settles (step 10b). From the
+  // iPad diagnostics on a busy B1 sheet (hatching): a sharp drawing took
+  // over 4 s, and one drawing step could freeze the screen for 1.7 s when
+  // you started moving mid-way (pdf.js only stops between steps). So the
+  // sharp image is drawn in pieces about a quarter of a screen across, on
+  // a grid fixed to the page (panning reuses them), nearest the middle
+  // first, 0.6 s after the view settles, one at a time and never while the
+  // document moves; moving stops between pieces and keeps those done. Each
+  // piece is drawn from the PDF's vectors at full screen detail, so the
+  // finished page is as crisp as one drawn whole. The pieces cover a
+  // margin round the view (within the budget) and are kept while they're
+  // at the right detail.
+  const pieces = useRef<{
+    scale: number;
+    map: Map<string, HTMLCanvasElement>;
+  } | null>(null);
   useEffect(() => {
     if (!proxy || !view || !rendered) return;
     const stat = pageStat(
@@ -395,89 +409,147 @@ export function DocPage({
     );
     const part = visiblePart(page, view.docRect);
     const wanted = view.devicePxPerDocUnit * page.scale;
+    const dropAll = () => {
+      clearHost(tileHost.current);
+      pieces.current = null;
+    };
     if (!part || wanted <= baseScale.current * 1.1) {
       if (!moving) {
-        clearHost(tileHost.current);
-        shownTile.current = null;
+        dropAll();
         stat.sharp = null;
       }
       return;
     }
-    const budget = SHARP_BUDGET / Math.max(1, view.visibleCount);
-    const target = sharpTarget(page.size, part, wanted, budget);
-    // Still good: nothing to draw.
-    const shown = shownTile.current;
-    if (
-      shown &&
-      Math.abs(shown.scale - target.scale) <= target.scale * 0.02 &&
-      covers(shown.rect, part)
-    )
-      return;
     if (moving) return;
-    const { rect, scale } = target;
-    // On screen: before off-screen base drawing and background saving.
-    let task: RenderTask | null = null;
+    const budget = SHARP_BUDGET / Math.max(1, view.visibleCount);
+    const { rect, scale } = sharpTarget(
+      page.size,
+      part,
+      wanted,
+      budget,
+      (area, at) => piecesCost(page.size, area, at),
+    );
+    // A new level of detail starts a new set; the old pieces stay on show
+    // (softer, or sharper than needed) until the first new one arrives.
+    let old: HTMLCanvasElement[] = [];
+    if (
+      !pieces.current ||
+      Math.abs(pieces.current.scale - scale) > scale * 0.02
+    ) {
+      old = [...(pieces.current?.map.values() ?? [])];
+      pieces.current = { scale, map: new Map() };
+    }
+    const set = pieces.current;
+    const grid = sharpPieces(page.size, rect, scale);
+    // Pieces outside the area now wanted go (memory).
+    const wantedKeys = new Set(grid.map((g) => g.key));
+    for (const [key, canvas] of set.map)
+      if (!wantedKeys.has(key)) {
+        releaseCanvas(canvas);
+        set.map.delete(key);
+      }
+    const missing = grid
+      .filter((g) => !set.map.has(g.key))
+      .sort((a, b) => distanceTo(a.rect, part) - distanceTo(b.rect, part));
+    const total = grid.length;
+    const pixels = grid.reduce((n, g) => n + g.width * g.height, 0);
+    const summary = stat.sharp?.pieces ? stat.sharp : null;
+    stat.sharp = {
+      scale,
+      wanted,
+      limit: scale < wanted * 0.999 ? "budget" : null,
+      pixels,
+      ms: summary && missing.length === 0 ? summary.ms : 0,
+      state: missing.length ? "drawing" : "done",
+      started: performance.now(),
+      kind: "sharp",
+      pieces: { done: total - missing.length, total },
+    };
+    const sharp = stat.sharp;
+    if (missing.length === 0) {
+      for (const canvas of old) releaseCanvas(canvas);
+      return;
+    }
+
     let current = true;
-    const cancelQueued = queuePageDrawing(0, (done) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.ceil(rect.width * scale);
-      canvas.height = Math.ceil(rect.height * scale);
-      const diag = startRender(
-        scale,
-        wanted,
-        scale < wanted * 0.999 ? "budget" : null,
-        canvas.width * canvas.height,
-        "sharp",
-      );
-      stat.sharp = diag;
-      Object.assign(canvas.style, {
-        left: `${rect.x}px`,
-        top: `${rect.y}px`,
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-      });
-      const t = proxy.render({
-        canvas,
-        viewport: proxy.getViewport({
-          scale,
-          offsetX: -rect.x * scale,
-          offsetY: -rect.y * scale,
-        }),
-      });
-      task = t;
-      t.promise.then(
-        () => {
-          endRender(diag, "done");
-          done();
-          if (!current) return releaseCanvas(canvas);
-          clearHost(tileHost.current);
-          tileHost.current?.appendChild(canvas);
-          shownTile.current = { rect, scale };
-        },
-        (error: unknown) => {
-          done();
-          releaseCanvas(canvas);
-          if (isCancel(error)) return endRender(diag, "cancelled");
-          endRender(diag, "failed");
-          recordError(`Page ${page.number} sharp render failed`, error);
-          console.error("Tile render failed", error);
-        },
-      );
-      return () => t.cancel();
-    });
-    // A pinch cancels it; the next settled view draws it again.
-    const unregister = registerRender(() => cancelQueued());
+    const cancels: (() => void)[] = [];
+    const tasks = new Set<RenderTask>();
+    const timer = window.setTimeout(() => {
+      for (const piece of missing) {
+        // Pieces showing the view first, then the margin round it.
+        const onScreen = distanceTo(piece.rect, part) === 0;
+        cancels.push(
+          queuePageDrawing(onScreen ? 0 : 1, (done) => {
+            const canvas = document.createElement("canvas");
+            canvas.width = piece.width;
+            canvas.height = piece.height;
+            Object.assign(canvas.style, {
+              left: `${piece.rect.x}px`,
+              top: `${piece.rect.y}px`,
+              width: `${piece.rect.width}px`,
+              height: `${piece.rect.height}px`,
+            });
+            beginActivity("sharp");
+            const t = proxy.render({
+              canvas,
+              viewport: proxy.getViewport({
+                scale,
+                offsetX: -piece.rect.x * scale,
+                offsetY: -piece.rect.y * scale,
+              }),
+            });
+            tasks.add(t);
+            t.promise.then(
+              () => {
+                endActivity("sharp");
+                tasks.delete(t);
+                done();
+                if (!current || pieces.current !== set)
+                  return releaseCanvas(canvas);
+                for (const c of old) releaseCanvas(c);
+                old = [];
+                tileHost.current?.appendChild(canvas);
+                set.map.set(piece.key, canvas);
+                sharp.pieces!.done += 1;
+                if (sharp.pieces!.done >= sharp.pieces!.total) {
+                  sharp.state = "done";
+                  sharp.ms = performance.now() - sharp.started;
+                }
+              },
+              (error: unknown) => {
+                endActivity("sharp");
+                tasks.delete(t);
+                done();
+                releaseCanvas(canvas);
+                if (isCancel(error)) return;
+                sharp.state = "failed";
+                recordError(`Page ${page.number} sharp render failed`, error);
+                console.error("Tile render failed", error);
+              },
+            );
+            return () => t.cancel();
+          }),
+        );
+      }
+    }, SHARP_DELAY_MS);
+    // A pinch stops it; the next settled view carries on.
+    const stop = () => {
+      window.clearTimeout(timer);
+      for (const cancel of cancels) cancel();
+      for (const t of tasks) t.cancel();
+      if (sharp.state === "drawing") sharp.state = "cancelled";
+    };
+    const unregister = registerRender(stop);
     return () => {
       current = false;
       unregister();
-      cancelQueued();
-      task?.cancel();
+      stop();
     };
   }, [proxy, view, moving, rendered, page, registerRender]);
 
-  // Off screen, its sharp image went with the page's canvases.
+  // Off screen, its sharp pieces went with the page's canvases.
   useEffect(() => {
-    if (!active) shownTile.current = null;
+    if (!active) pieces.current = null;
   }, [active]);
 
   const coords = useMemo<ViewerCoords>(

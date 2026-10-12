@@ -57,8 +57,11 @@ function renderLine(
       : r.state === "cancelled"
         ? " · cancelled"
         : "";
+  const pieces = r.pieces
+    ? ` · ${r.pieces.done} of ${r.pieces.total} pieces`
+    : "";
   return {
-    text: `${label} ${detail} · ${mp(r.pixels)} · ${time}${state}`,
+    text: `${label} ${detail} · ${mp(r.pixels)} · ${time}${pieces}${state}`,
     tone: r.state === "failed" ? "bad" : share < 0.999 ? "warn" : "ok",
   };
 }
@@ -114,6 +117,12 @@ export function diagnosticsReport(
     tone:
       scroll && (scroll.fps < 45 || scroll.worstMs > 50) ? "warn" : undefined,
   });
+  const d = state.drawing;
+  if (d)
+    lines.push({
+      text: `Drawing last ${d.seconds.toFixed(1)} s · longest freeze ${ms(d.longestFreezeMs)}`,
+      tone: d.longestFreezeMs > 100 ? "warn" : undefined,
+    });
   for (const id of drawings) {
     const pdf = state.pdfs.get(id);
     if (pdf)

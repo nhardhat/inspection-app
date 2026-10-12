@@ -193,6 +193,9 @@ export function sharpTarget(
   part: Rect,
   wanted: number,
   budget: number,
+  /** Device pixels it costs to cover `rect` at `scale` (the pieces'). */
+  cost: (rect: Rect, scale: number) => number = (rect, scale) =>
+    rect.width * rect.height * scale * scale,
 ): { rect: Rect; scale: number } {
   const around = (margin: number): Rect => {
     const mx = part.width * margin;
@@ -206,11 +209,95 @@ export function sharpTarget(
       height: Math.min(page.height, part.y + part.height + my) - y,
     };
   };
-  for (const margin of [0.5, 0.25, 0.1, 0]) {
+  for (const margin of [0.5, 0.25, 0.1]) {
     const rect = around(margin);
-    if (rect.width * rect.height * wanted * wanted <= budget)
-      return { rect, scale: wanted };
+    if (cost(rect, wanted) <= budget) return { rect, scale: wanted };
   }
+  // Just the view: full detail if the view itself fits (whole pieces may
+  // go a little over); detail drops only when even the view is too big.
   const rect = around(0);
+  if (rect.width * rect.height * wanted * wanted <= budget)
+    return { rect, scale: wanted };
   return { rect, scale: Math.sqrt(budget / (rect.width * rect.height)) };
+}
+
+/** How long the view must be still before sharp pieces start drawing. */
+export const SHARP_DELAY_MS = 600;
+
+/** A sharp piece's side, in device pixels (about a quarter of an iPad screen). */
+export const PIECE_PX = 1024;
+
+export interface SharpPiece {
+  /** Grid cell, e.g. "3,2" (columns and rows fixed to the page). */
+  key: string;
+  /** Page units, within the page. */
+  rect: Rect;
+  /** Canvas size in device pixels. */
+  width: number;
+  height: number;
+}
+
+/**
+ * The grid pieces covering `area` of a page at `scale` (device pixels per
+ * point). The grid is fixed to the page's top-left at this scale, so the
+ * same piece is reused while panning.
+ */
+export function sharpPieces(
+  page: { width: number; height: number },
+  area: Rect,
+  scale: number,
+): SharpPiece[] {
+  const cell = PIECE_PX / scale;
+  const e = 1e-6;
+  const c0 = Math.floor(area.x / cell);
+  const r0 = Math.floor(area.y / cell);
+  const c1 = Math.floor((area.x + area.width - e) / cell);
+  const r1 = Math.floor((area.y + area.height - e) / cell);
+  const pieces: SharpPiece[] = [];
+  for (let r = r0; r <= r1; r++)
+    for (let c = c0; c <= c1; c++) {
+      const x = c * cell;
+      const y = r * cell;
+      const rect = {
+        x,
+        y,
+        width: Math.min(page.width, x + cell) - x,
+        height: Math.min(page.height, y + cell) - y,
+      };
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      pieces.push({
+        key: `${c},${r}`,
+        rect,
+        width: Math.ceil(rect.width * scale),
+        height: Math.ceil(rect.height * scale),
+      });
+    }
+  return pieces;
+}
+
+/** How far `rect` is from `target` (0 when they overlap), page units. */
+export function distanceTo(rect: Rect, target: Rect) {
+  const dx = Math.max(
+    0,
+    target.x - (rect.x + rect.width),
+    rect.x - (target.x + target.width),
+  );
+  const dy = Math.max(
+    0,
+    target.y - (rect.y + rect.height),
+    rect.y - (target.y + target.height),
+  );
+  return Math.hypot(dx, dy);
+}
+
+/** Device pixels of the pieces covering `area` at `scale`. */
+export function piecesCost(
+  page: { width: number; height: number },
+  area: Rect,
+  scale: number,
+) {
+  return sharpPieces(page, area, scale).reduce(
+    (n, p) => n + p.width * p.height,
+    0,
+  );
 }
