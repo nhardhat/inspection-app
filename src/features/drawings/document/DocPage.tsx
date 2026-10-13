@@ -3,7 +3,6 @@ import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "../pdf/pdfjs";
 import type { Rect } from "../viewer/viewTransform";
 import { ViewerCoordsContext, type ViewerCoords } from "../viewer/viewerCoords";
 import {
-  applySharpDisplay,
   beginActivity,
   diagnostics,
   endActivity,
@@ -20,6 +19,7 @@ import {
   distanceTo,
   keepPageImage,
   piecesCost,
+  placeSharpPiece,
   queuePageDrawing,
   sharpPieces,
   sharpTarget,
@@ -77,6 +77,11 @@ function releaseCanvas(canvas: HTMLCanvasElement) {
 function clearHost(host: HTMLElement | null) {
   host?.querySelectorAll("canvas").forEach((c) => releaseCanvas(c));
 }
+
+/** How long after the last touch lifts the crisp markup copy returns. */
+const CRISP_AFTER_MS = 250;
+/** Device pixels the crisp markup copy may cover (the view and a margin). */
+const CRISP_BUDGET = 12_000_000;
 
 /** The kept-images key: the page's place and the PDF page it shows. */
 const imageKey = (page: PageLayout) => `${page.key}@${page.source}`;
@@ -491,7 +496,7 @@ export function DocPage({
               w: String(piece.rect.width),
               h: String(piece.rect.height),
             });
-            applySharpDisplay(canvas);
+            placeSharpPiece(canvas);
             beginActivity("sharp");
             const t = proxy.render({
               canvas,
@@ -555,6 +560,102 @@ export function DocPage({
     if (!active) pieces.current = null;
   }, [active]);
 
+  // Crisp markup (engineer, 2026-10-13): inside the magnified page Safari
+  // shows markup from a lower-resolution copy, as it did the drawing. So
+  // when zoomed in and still, a display-only copy of everything on the
+  // page's overlay (marks, callouts, notes box, arrows) is laid over the
+  // view at true screen size, like the sharp pieces; the original stays in
+  // place, invisible but still touchable, so taps and drags work as before.
+  // Touching the page or moving it shows the original until it settles
+  // again; the copy follows any change. Still vector: the copy is the same
+  // SVG and text, only laid out at full resolution.
+  const overlayHost = useRef<HTMLDivElement>(null);
+  const crispHost = useRef<HTMLDivElement>(null);
+  const [touching, setTouching] = useState(false);
+  useEffect(() => {
+    if (!touching) return;
+    let timer = 0;
+    // Back to the crisp copy a moment after the last finger or Pencil lifts.
+    const up = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setTouching(false), CRISP_AFTER_MS);
+    };
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [touching]);
+  useEffect(() => {
+    const original = overlayHost.current;
+    const crisp = crispHost.current;
+    if (!original || !crisp) return;
+    const hide = () => {
+      crisp.replaceChildren();
+      crisp.hidden = true;
+      original.style.opacity = "";
+    };
+    if (!active || !view || !rendered || moving || touching) return hide();
+    const part = visiblePart(page, view.docRect);
+    const devicePx = view.devicePxPerDocUnit * page.scale;
+    if (!part || devicePx <= baseScale.current * 1.1) return hide();
+    const dpr = window.devicePixelRatio || 1;
+    // Screen px per page point; the copy covers the view and a margin.
+    const k = devicePx / dpr;
+    const { rect } = sharpTarget(page.size, part, devicePx, CRISP_BUDGET);
+    Object.assign(crisp.style, {
+      left: `${rect.x}px`,
+      top: `${rect.y}px`,
+      width: `${rect.width * k}px`,
+      height: `${rect.height * k}px`,
+      transform: `scale(${1 / k})`,
+    });
+    let timer = 0;
+    const build = () => {
+      // Typing in a callout: the copy can't follow the text box.
+      if (original.querySelector("textarea, input")) return hide();
+      const inner = document.createElement("div");
+      inner.className = "crisp-overlay-page";
+      Object.assign(inner.style, {
+        left: `${-rect.x * k}px`,
+        top: `${-rect.y * k}px`,
+        width: `${page.size.width}px`,
+        height: `${page.size.height}px`,
+        transform: `scale(${k})`,
+      });
+      for (const child of original.childNodes)
+        inner.appendChild(child.cloneNode(true));
+      // Display only: no ids or test ids twice.
+      for (const el of inner.querySelectorAll("[id], [data-testid]")) {
+        el.removeAttribute("id");
+        el.removeAttribute("data-testid");
+      }
+      crisp.replaceChildren(inner);
+      crisp.hidden = false;
+      original.style.opacity = "0";
+    };
+    build();
+    const observer = new MutationObserver((records) => {
+      // Its own fading in and out isn't a change to copy.
+      if (records.every((r) => r.target === original)) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(build, 80);
+    });
+    observer.observe(original, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      characterData: true,
+    });
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+      hide();
+    };
+  }, [active, view, rendered, moving, touching, page]);
+
   const coords = useMemo<ViewerCoords>(
     () => ({ pageSize: page.size, clientToNormalised }),
     [page.size, clientToNormalised],
@@ -567,6 +668,7 @@ export function DocPage({
       data-key={page.key}
       data-rendered={rendered}
       style={{ top: page.top, height: page.height }}
+      onPointerDownCapture={() => setTouching(true)}
     >
       <div
         className="doc-page-inner"
@@ -579,11 +681,20 @@ export function DocPage({
       >
         <div ref={baseHost} className="viewer-layer" />
         <div ref={tileHost} className="viewer-layer" />
-        {active && (
-          <ViewerCoordsContext.Provider value={coords}>
-            {overlay}
-          </ViewerCoordsContext.Provider>
-        )}
+        <div ref={overlayHost} className="page-overlay">
+          {active && (
+            <ViewerCoordsContext.Provider value={coords}>
+              {overlay}
+            </ViewerCoordsContext.Provider>
+          )}
+        </div>
+        <div
+          ref={crispHost}
+          className="crisp-overlay"
+          data-testid="crisp-overlay"
+          aria-hidden="true"
+          hidden
+        />
       </div>
     </div>
   );

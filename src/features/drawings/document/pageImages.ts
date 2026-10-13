@@ -301,3 +301,25 @@ export function piecesCost(
     0,
   );
 }
+
+/**
+ * Lays a sharp piece out at its true screen size (CSS px = device px / DPR)
+ * and scales it back to its place on the page (data-x, y, w, h in page
+ * units), on its own layer. The engineer compared three ways on the iPad
+ * (2026-10-13): inside the magnified page, even on its own layer, Safari
+ * showed it from a lower-resolution copy (blurry); laid out at true size it
+ * is crisp.
+ */
+export function placeSharpPiece(canvas: HTMLCanvasElement) {
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.width / dpr;
+  Object.assign(canvas.style, {
+    left: `${canvas.dataset.x}px`,
+    top: `${canvas.dataset.y}px`,
+    width: `${cssWidth}px`,
+    height: `${canvas.height / dpr}px`,
+    transformOrigin: "0 0",
+    transform: `scale(${Number(canvas.dataset.w) / cssWidth})`,
+    willChange: "transform",
+  });
+}

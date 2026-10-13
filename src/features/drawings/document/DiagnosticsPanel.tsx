@@ -1,12 +1,7 @@
 import { Activity, Copy, X } from "lucide-react";
 import { useEffect, useState, type RefObject } from "react";
 import { appCommit, appVersion } from "../../../app/version";
-import {
-  diagnostics,
-  setSharpDisplay,
-  sharpDisplay,
-  type SharpDisplay,
-} from "./diagnostics";
+import { diagnostics } from "./diagnostics";
 import {
   diagnosticsReport,
   type LiveCounts,
@@ -42,7 +37,7 @@ function liveCounts(viewer: HTMLElement | null): LiveCounts {
 }
 
 function reportText(lines: ReportLine[]) {
-  const head = `Northrop Hardhat ${appVersion} (${appCommit}) · ${new Date().toLocaleString("en-AU")} · display ${sharpDisplay.mode}`;
+  const head = `Northrop Hardhat ${appVersion} (${appCommit}) · ${new Date().toLocaleString("en-AU")}`;
   return [head, ...lines.map((l) => (l.indent ? `  ${l.text}` : l.text))].join(
     "\n",
   );
@@ -62,7 +57,6 @@ export function DiagnosticsPanel({
   const [open, setOpen] = useState(true);
   const [lines, setLines] = useState<ReportLine[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
-  const [display, setDisplay] = useState<SharpDisplay>(sharpDisplay.mode);
 
   useEffect(() => {
     diagnostics.enabled = true;
@@ -122,22 +116,6 @@ export function DiagnosticsPanel({
           <X aria-hidden="true" />
         </button>
       </header>
-      <div className="diagnostics-display" role="group" aria-label="Display">
-        <span>Display</span>
-        {(["A", "B", "C"] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            aria-pressed={display === mode}
-            onClick={() => {
-              setSharpDisplay(mode);
-              setDisplay(mode);
-            }}
-          >
-            {mode}
-          </button>
-        ))}
-      </div>
       <ul>
         {lines.map((line, i) => (
           <li

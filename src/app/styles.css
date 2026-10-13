@@ -4783,27 +4783,26 @@ h1 {
   margin-top: var(--space-4);
 }
 
-/* The sharp pieces' display comparison (A, B, C). */
-.diagnostics-display {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  font-size: var(--text-xs);
+/* A page's overlay (marks, callouts, notes box), and its crisp copy laid
+   over the view at true screen size when zoomed in (DocPage). */
+.page-overlay {
+  position: absolute;
+  inset: 0;
 }
 
-.diagnostics-display button {
-  min-width: 0;
-  min-height: 0;
-  padding: 4px 12px;
-  border: 1px solid #666;
-  border-radius: var(--radius-pill);
-  color: inherit;
-  background: transparent;
-  font-size: var(--text-xs);
+.crisp-overlay {
+  position: absolute;
+  overflow: hidden;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
 }
 
-.diagnostics-display button[aria-pressed="true"] {
-  color: var(--selected);
-  background: #f2f2f2;
+.crisp-overlay[hidden] {
+  display: none;
+}
+
+.crisp-overlay-page {
+  position: absolute;
+  transform-origin: 0 0;
 }

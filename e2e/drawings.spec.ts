@@ -2811,3 +2811,41 @@ test("saved page images: drawn from the PDF once, then shown from the saved imag
     page.locator('[data-testid="drawing-viewer"][data-ready="true"]'),
   ).toBeVisible();
 });
+
+test("zoomed in and still, the markup shows from a crisp copy at screen size", async ({
+  page,
+}) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [await typicalPdf()]);
+  await openDrawing(page, "S-101 Level 3", false);
+  const toolbar = page.getByRole("toolbar", { name: "Markup tools" });
+  await toolbar.getByRole("button", { name: "Pen", exact: true }).click();
+  await drawLine(page, [0.45, 0.45], [0.55, 0.5]);
+  await toolbar.getByRole("button", { name: "Pen", exact: true }).click();
+  await expect(page.getByTestId("mark")).toHaveCount(1);
+  const crisp = page.getByTestId("crisp-overlay").first();
+  // At fit width the page is shown as it is.
+  await expect(crisp).toBeHidden();
+
+  const box = await stageBox(page);
+  await pinch(
+    page,
+    { x: box.x + box.width * 0.5, y: box.y + box.height * 0.47 },
+    100,
+    400,
+  );
+  // Settled: the copy holds the mark (display only: no test ids twice).
+  await expect(crisp).toBeVisible();
+  await expect(crisp.locator('[data-tool="pen"]')).toHaveCount(1);
+  await expect(page.getByTestId("mark")).toHaveCount(1);
+  await expect(page.locator(".page-overlay").first()).toHaveCSS("opacity", "0");
+
+  // Touching the page shows the original; letting go brings the copy back.
+  const viewer = (await page.getByTestId("drawing-viewer").boundingBox())!;
+  await page.mouse.move(viewer.x + viewer.width / 2, viewer.y + 200);
+  await page.mouse.down();
+  await expect(crisp).toBeHidden();
+  await expect(page.locator(".page-overlay").first()).toHaveCSS("opacity", "1");
+  await page.mouse.up();
+  await expect(crisp).toBeVisible();
+});
