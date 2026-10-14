@@ -19,3 +19,10 @@ Reply with the step number and what you saw (no need to edit this file). Use the
 11. **Touching.** Press on the page (or start drawing): the markup goes back to its softer look while you touch, then crisp again just after you let go. Drag the notes box and a callout, tap a pin, draw a line, use the eraser: everything works as before.
 12. **Typing.** Tap a callout twice to edit it while zoomed in: it stays usable while you type; crisp again after you finish.
 13. **Export unchanged.** Export the PDF pack: markup is in the same places as on screen.
+
+After the 14 Oct clean-up (one sharp drawing per view)
+
+14. **Navigate and wait.** Zoom into a new spot on the B1 sheet and hold still: about half a second later it starts sharpening, and it's crisp within a few seconds (about 1.5–4 s on that sheet, not 13+). Copy a reading once crisp: one Sharp line with a time, no "pieces".
+15. **Responsiveness.** Straight after navigating, try to pan or zoom again: say whether you still have to wait 2–3 s (a freeze can still happen if you move during the drawing; the "longest freeze" line says how long).
+16. **Nothing missing.** Scroll through the set at fit width: pages appear from their saved images as before; a page never seen before may show blank white until you stop, then draws.
+
