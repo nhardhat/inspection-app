@@ -154,3 +154,11 @@ export async function startInspection(
   }
   await expect(page).toHaveURL(/\/details$/);
 }
+
+/**
+ * Unlocks Settings, Developer for this session as a correct password would
+ * (the password itself stays out of the repo). Call before opening Settings.
+ */
+export async function unlockDeveloperTools(page: Page) {
+  await page.evaluate(() => sessionStorage.setItem("hardhat-developer", "1"));
+}

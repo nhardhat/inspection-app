@@ -8,6 +8,7 @@ import { ProjectPage } from "../features/projects/ProjectPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { DocumentScreen } from "../features/drawings/DocumentScreen";
 import { MemoScreen } from "../features/memo/MemoScreen";
+import { DrawingLab } from "../features/lab/DrawingLab";
 import { Shell } from "./Shell";
 
 // Hash routing: GitHub Pages has no SPA fallback, and every route is served
@@ -27,6 +28,8 @@ const router = createHashRouter([
       { path: "settings", element: <SettingsPage /> },
       { path: "inspections/:id/document", element: <DocumentScreen /> },
       { path: "inspections/:id/memo", element: <MemoScreen /> },
+      // Developer tools (Settings, Developer; password).
+      { path: "lab/drawing", element: <DrawingLab /> },
     ],
   },
 ]);

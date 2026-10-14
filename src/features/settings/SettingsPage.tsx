@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Signature,
   User,
+  Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { appCommit, appVersion } from "../../app/version";
@@ -23,6 +24,7 @@ import { MyDetailsForm, MySignature } from "./MyDetailsForm";
 import { SnippetsEditor } from "./SnippetsEditor";
 import { BackupAll } from "../backup/BackupAll";
 import { AboutCard } from "./AboutCard";
+import { DeveloperSettings } from "./DeveloperSettings";
 
 const KINDS: [SnippetKind, string][] = [
   ["body", "body"],
@@ -42,6 +44,7 @@ const SECTIONS = [
   { id: "drawing", label: "Drawing", Icon: PenLine },
   { id: "storage", label: "Storage and backup", Icon: Database },
   { id: "about", label: "About", Icon: Info },
+  { id: "developer", label: "Developer", Icon: Wrench },
 ];
 
 /**
@@ -184,6 +187,7 @@ export function SettingsPage() {
             <BackupAll />
           </section>
           <AboutCard />
+          <DeveloperSettings />
         </div>
       </div>
     </section>

@@ -13,6 +13,7 @@ import {
   touchTap,
   waitForServiceWorker,
   pinToolOn,
+  unlockDeveloperTools,
 } from "./helpers";
 import { syntheticJpeg } from "./photoFixtures";
 
@@ -2755,6 +2756,7 @@ test("diagnostics: off by default, switched on in Settings, shows each page on s
   await expect(panel).toHaveCount(0);
 
   const rail = page.getByRole("navigation", { name: "Main" });
+  await unlockDeveloperTools(page);
   await rail.getByRole("link", { name: "Settings" }).click();
   await page.getByLabel(/Show diagnostics/).check();
   // The Inspections tab returns to the drawing.
@@ -2805,6 +2807,7 @@ test("saved page images: drawn from the PDF once, then shown from the saved imag
 
   // Opened again: from the saved images, no PDF drawing.
   const rail = page.getByRole("navigation", { name: "Main" });
+  await unlockDeveloperTools(page);
   await rail.getByRole("link", { name: "Settings" }).click();
   await page.getByLabel(/Show diagnostics/).check();
   await rail.getByRole("link", { name: "Inspections" }).click();
@@ -2865,6 +2868,7 @@ test(
     await uploadDrawings(page, [await typicalPdf()]);
     await openDrawing(page, "S-101 Level 3", false);
     const rail = page.getByRole("navigation", { name: "Main" });
+    await unlockDeveloperTools(page);
     await rail.getByRole("link", { name: "Settings" }).click();
     await page.getByLabel(/Show diagnostics/).check();
     await rail.getByRole("link", { name: "Inspections" }).click();
@@ -2912,5 +2916,58 @@ test(
     await expect(panel).toContainText(/Sharp \d\.\d\d/);
     await expect(panel).toContainText("Drawing on the background");
     await expect(panel).toContainText("Errors none");
+  },
+);
+
+test("Settings, Developer: locked by a password; diagnostics and the lab inside", async ({
+  page,
+}) => {
+  await page.goto("./#/settings");
+  const card = page.locator("#developer");
+  await expect(card.getByRole("heading", { name: "Developer" })).toBeVisible();
+  await expect(page.getByLabel(/Show diagnostics/)).toHaveCount(0);
+  await expect(card.getByRole("link", { name: "Drawing lab" })).toHaveCount(0);
+  await card.getByLabel("Password").fill("not it");
+  await card.getByRole("button", { name: "Unlock" }).click();
+  await expect(card.getByRole("alert")).toHaveText("Wrong password.");
+  await expect(page.getByLabel(/Show diagnostics/)).toHaveCount(0);
+  // The lab can't be reached by its address while locked.
+  await page.goto("./#/lab/drawing");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+
+  await unlockDeveloperTools(page);
+  await page.reload();
+  await expect(page.getByLabel(/Show diagnostics/)).toBeVisible();
+  await card.getByRole("link", { name: "Drawing lab" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Drawing lab" }),
+  ).toBeVisible();
+  await page.goBack();
+  await card.getByRole("button", { name: "Lock" }).click();
+  await expect(page.getByLabel(/Show diagnostics/)).toHaveCount(0);
+  await expect(card.getByLabel("Password")).toBeVisible();
+});
+
+// @chromium: the background half needs OffscreenCanvas in workers.
+test(
+  "drawing lab: times a page on the main thread and in the background",
+  { tag: "@chromium" },
+  async ({ page }) => {
+    await setupInspection(page);
+    await uploadDrawings(page, [await typicalPdf()]);
+    await openDrawing(page, "S-101 Level 3", false);
+    await unlockDeveloperTools(page);
+    await page.goto("./#/lab/drawing");
+    await page.getByRole("button", { name: "Draw on main thread" }).click();
+    const results = page.getByTestId("lab-results");
+    await expect(results).toContainText(
+      /Main thread 2× · \d+ ms · longest freeze \d+ ms/,
+    );
+    await page.getByRole("button", { name: "Draw in background" }).click();
+    await expect(results).toContainText(
+      /Background 2× · \d+ ms · longest freeze \d+ ms/,
+    );
+    // Copied results never hold the drawing's name.
+    await expect(results).not.toContainText("S-101");
   },
 );

@@ -36,26 +36,6 @@ export function DrawingSettings() {
           </span>
         </span>
       </label>
-      <label className="checkbox switch">
-        <input
-          type="checkbox"
-          checked={prefs.diagnostics}
-          onChange={(e) =>
-            updatePrefs((p) => {
-              p.diagnostics = e.target.checked;
-            })
-          }
-        />
-        <span>
-          Show diagnostics
-          <span className="muted small">
-            {" "}
-            A panel over the drawings with how sharply each page was drawn,
-            memory, scrolling and errors, to screenshot or copy when something
-            looks wrong. Page numbers only, never drawing names.
-          </span>
-        </span>
-      </label>
     </section>
   );
 }
