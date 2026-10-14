@@ -46,7 +46,6 @@ import { isInkTool, type DocMark, type ViewerTool } from "../../markup/tools";
 import { DocPage, type SettledView } from "./DocPage";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
 import { diagnostics, noteScroll } from "./diagnostics";
-import { clearPageImages } from "./pageImages";
 import { useSavePagesAhead } from "./savedPages";
 import { DOUBLE_TAP_MS, DOUBLE_TAP_SLOP } from "./gestures";
 import { PinchSnapshot } from "./pinchSnapshot";
@@ -726,8 +725,6 @@ export function DocumentViewer(props: Props) {
       window.clearTimeout(settleTimer.current);
       cancelAnimationFrame(frame.current);
       window.clearTimeout(visiblePinsTimer.current);
-      // Pages' kept images (pageImages.ts) go with the drawings screen.
-      clearPageImages();
     },
     [],
   );

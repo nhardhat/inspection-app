@@ -12,25 +12,17 @@ export interface RenderStat {
   scale: number;
   /** The scale the view asked for. */
   wanted: number;
-  /**
-   * Why it got less: the base image's pixel cap, the sharp budget, or a
-   * quick preview while scrolling.
-   */
-  limit: "cap" | "budget" | "preview" | null;
+  /** Why it got less: the base image's pixel cap, or the sharp budget. */
+  limit: "cap" | "budget" | null;
   /** Canvas pixels. */
   pixels: number;
   /** How long pdf.js took (until now, while drawing). */
   ms: number;
-  /**
-   * "kept": kept in memory from earlier; "saved": shown from its saved
-   * image (no PDF drawing).
-   */
-  state: "drawing" | "done" | "cancelled" | "failed" | "kept" | "saved";
+  /** "saved": shown from its saved image (no PDF drawing). */
+  state: "drawing" | "done" | "cancelled" | "failed" | "saved";
   /** When it started (performance.now()). */
   started: number;
   kind: Activity;
-  /** A sharp image drawn in pieces: how many are done. */
-  pieces?: { done: number; total: number };
 }
 
 export interface PageStat {
@@ -40,8 +32,6 @@ export interface PageStat {
   widthPt: number;
   heightPt: number;
   base: RenderStat | null;
-  /** The quick low-detail image shown until the base is drawn. */
-  preview: RenderStat | null;
   /** The sharp render of the visible part; null when the base is enough. */
   sharp: RenderStat | null;
 }
@@ -116,7 +106,6 @@ export function pageStat(
       widthPt,
       heightPt,
       base: null,
-      preview: null,
       sharp: null,
     };
     diagnostics.pages.set(key, stat);
@@ -130,7 +119,7 @@ export function pageStat(
  * coincided with (step 10b).
  */
 export type Activity =
-  "preview" | "base" | "sharp" | "saved image" | "saving" | "background";
+  "base" | "sharp" | "saved image" | "saving" | "background";
 
 const busy = new Map<Activity, number>();
 /** Activities that ended since the last frame (a long one may be theirs). */
@@ -183,27 +172,25 @@ function busySummary(): string {
   return parts.join(", ");
 }
 
-/** A render starting now (or, `kept`, an image kept from earlier). */
+/** A render (or saved image) starting now. */
 export function startRender(
   scale: number,
   wanted: number,
   limit: RenderStat["limit"],
   pixels: number,
   kind: Activity,
-  kept = false,
 ): RenderStat {
-  const stat: RenderStat = {
+  beginActivity(kind);
+  return {
     scale,
     wanted,
     limit,
     pixels,
     ms: 0,
-    state: kept ? "kept" : "drawing",
+    state: "drawing",
     started: performance.now(),
     kind,
   };
-  if (!kept) beginActivity(kind);
-  return stat;
 }
 
 /** Marks a render finished (or cancelled, or failed). */

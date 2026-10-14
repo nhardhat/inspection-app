@@ -227,7 +227,7 @@ function drawPage(
   const base = baseHost?.querySelector("canvas");
   if (base && base.width > 0)
     ctx.drawImage(base, rect.x, rect.y, rect.width, rect.height);
-  // The sharp pieces, from their place on the page (page units).
+  // The sharp image, from its place on the page (page units).
   for (const tile of tileHost?.querySelectorAll("canvas") ?? []) {
     if (tile.width === 0) continue;
     ctx.drawImage(

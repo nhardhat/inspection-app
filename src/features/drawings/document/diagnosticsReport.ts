@@ -46,22 +46,17 @@ function renderLine(
   const time =
     r.state === "drawing"
       ? `drawing ${ms(now - r.started)}`
-      : r.state === "kept"
-        ? "kept from earlier"
-        : r.state === "saved"
-          ? `from saved image · ${ms(r.ms)}`
-          : ms(r.ms);
+      : r.state === "saved"
+        ? `from saved image · ${ms(r.ms)}`
+        : ms(r.ms);
   const state =
     r.state === "failed"
       ? " · FAILED"
       : r.state === "cancelled"
         ? " · cancelled"
         : "";
-  const pieces = r.pieces
-    ? ` · ${r.pieces.done} of ${r.pieces.total} pieces`
-    : "";
   return {
-    text: `${label} ${detail} · ${mp(r.pixels)} · ${time}${pieces}${state}`,
+    text: `${label} ${detail} · ${mp(r.pixels)} · ${time}${state}`,
     tone: r.state === "failed" ? "bad" : share < 0.999 ? "warn" : "ok",
   };
 }
@@ -88,14 +83,11 @@ export function diagnosticsReport(
       text: `Page ${page.number} · ${paperLabel(page.widthPt, page.heightPt)}`,
       heading: true,
     });
-    if (page.base)
-      lines.push({ ...renderLine("Base", page.base, now), indent: true });
-    else if (page.preview)
-      lines.push(
-        { ...renderLine("Preview", page.preview, now), indent: true },
-        { text: "Base waits for scrolling to stop", indent: true },
-      );
-    else lines.push({ text: "Base not drawn yet", indent: true });
+    lines.push(
+      page.base
+        ? { ...renderLine("Base", page.base, now), indent: true }
+        : { text: "Base waits for scrolling to stop", indent: true },
+    );
     lines.push(
       page.sharp
         ? { ...renderLine("Sharp", page.sharp, now), indent: true }

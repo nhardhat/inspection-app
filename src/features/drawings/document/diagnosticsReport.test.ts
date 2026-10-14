@@ -27,7 +27,6 @@ function state(over: Partial<DiagnosticsState> = {}): DiagnosticsState {
           widthPt: 2384,
           heightPt: 1684,
           base: render({ scale: 0.42, wanted: 0.42 }),
-          preview: null,
           sharp: render({
             scale: 1.71,
             wanted: 2.8,
@@ -99,23 +98,6 @@ describe("diagnosticsReport", () => {
     const error = lines.find((l) => l.text.startsWith("Error "));
     expect(error?.text).toMatch(/Page 4 render failed: boom$/);
     expect(error?.tone).toBe("bad");
-  });
-
-  it("counts a sharp image's pieces", () => {
-    const s = state();
-    s.pages.get("d1:4")!.sharp = render({
-      scale: 2,
-      wanted: 2,
-      kind: "sharp",
-      pixels: 9_700_000,
-      state: "drawing",
-      started: 0,
-      pieces: { done: 3, total: 9 },
-    });
-    const text = diagnosticsReport(s, live, 500).map((l) => l.text);
-    expect(text).toContain(
-      "Sharp 2.00 (as wanted) · 9.7 MP · drawing 500 ms · 3 of 9 pieces",
-    );
   });
 
   it("says when a page came from its saved image", () => {
