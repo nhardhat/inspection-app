@@ -4806,3 +4806,59 @@ h1 {
   position: absolute;
   transform-origin: 0 0;
 }
+
+/* The drawing lab (experiment, step 10b). */
+.drawing-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(100%, 60rem);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+.drawing-lab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.drawing-lab-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.drawing-lab-track {
+  position: relative;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.drawing-lab-bar {
+  width: 40px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.drawing-lab-results ul {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-5);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: var(--text-sm);
+}
+
+.drawing-lab-output {
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.drawing-lab-output canvas {
+  display: block;
+}

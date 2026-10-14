@@ -2849,3 +2849,26 @@ test("zoomed in and still, the markup shows from a crisp copy at screen size", a
   await page.mouse.up();
   await expect(crisp).toBeVisible();
 });
+
+test("drawing lab (experiment): opens from Settings and draws a page on the main thread", async ({
+  page,
+}) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [await typicalPdf()]);
+  await openDrawing(page, "S-101 Level 3", false);
+  const rail = page.getByRole("navigation", { name: "Main" });
+  await rail.getByRole("link", { name: "Settings" }).click();
+  // Only offered with diagnostics on.
+  await expect(page.getByRole("link", { name: "Drawing lab" })).toHaveCount(0);
+  await page.getByLabel(/Show diagnostics/).check();
+  await page.getByRole("link", { name: "Drawing lab" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Drawing lab" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Draw on main thread" }).click();
+  await expect(page.getByTestId("lab-results")).toContainText(
+    /Main thread 2× · \d+ ms · longest freeze \d+ ms/,
+  );
+  // Copied results never hold the drawing's name.
+  await expect(page.getByTestId("lab-results")).not.toContainText("S-101");
+});

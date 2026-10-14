@@ -1,4 +1,5 @@
 import { PenLine } from "lucide-react";
+import { Link } from "react-router";
 import { updatePrefs, useMarkupPrefs } from "../markup/markupPrefs";
 
 /** Settings: how the Pencil draws (kept on this device). */
@@ -56,6 +57,14 @@ export function DrawingSettings() {
           </span>
         </span>
       </label>
+      {prefs.diagnostics && (
+        <p className="small">
+          <Link to="/lab/drawing">Drawing lab</Link>{" "}
+          <span className="muted">
+            (experiment: compare drawing on a background thread)
+          </span>
+        </p>
+      )}
     </section>
   );
 }
