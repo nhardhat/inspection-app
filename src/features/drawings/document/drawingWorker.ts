@@ -188,6 +188,9 @@ async function draw(id: number, job: DrawJob) {
         // Shown but not saved: it's drawn again next time.
       }
       post({ type: "png", id, data: png }, png ? [png] : []);
+    } else if (!job.image) {
+      // Neither asked for (opening the PDF ahead): just say it's done.
+      post({ type: "png", id, data: null });
     }
   } catch (error) {
     const cancelled =
