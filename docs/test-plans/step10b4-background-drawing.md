@@ -4,10 +4,10 @@ Device: iPad [model], iPadOS [version]
 Build/commit:
 Tester / date:
 
-The drawings screen now draws pages from the PDF on a background thread, as the drawing lab did, so touches shouldn't wait while a page draws. The lab is gone. Reply with step numbers and what you saw; for readings, paste the diagnostics panel's **Copy** text (page numbers and paper sizes only).
+The drawings screen now draws pages from the PDF on a background thread, as the drawing lab did, so touches shouldn't wait while a page draws. The drawing lab now lives in Settings, Developer. Reply with step numbers and what you saw; for readings, paste the diagnostics panel's **Copy** text (page numbers and paper sizes only).
 
 1. **Update.** Open the app, accept the update if offered, and check Settings shows the new commit.
-2. **Where it draws.** Settings, Drawing: turn on **Show diagnostics**. Open the inspection with the B1 set. The panel should say **Drawing on the background**. (If it says "main thread (...)", copy the panel and stop here.)
+2. **Where it draws.** Settings, Developer: unlock with the password and turn on **Show diagnostics**. Open the inspection with the B1 set. The panel should say **Drawing on the background**. (If it says "main thread (...)", copy the panel and stop here.)
 3. **No freeze while it draws.** On the busy B1 page, pinch to about 2× and let go. During the ~2 s before it turns sharp, scroll or pinch again straight away. Does the page move at once, without the old stall?
 4. **Sharp as before.** Let it settle at 2×, then 4×. Do the lines, hatching and text turn crisp, the same as before this update? Is anything missing or different (text, shading, colours)?
 5. **Freeze reading.** After step 4, the **Drawing last … longest freeze** line should be well under 100 ms (it was over 1,400 ms). Copy the panel and paste it here.

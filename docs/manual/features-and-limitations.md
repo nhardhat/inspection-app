@@ -132,7 +132,7 @@ These are the known limits of the proof of concept, stated plainly so they can b
 - **Drawings:** shown with Mozilla's pdf.js; markup and pins are stored as positions relative to each page, so they stay correct at any zoom or sheet size.
 - **PDF export:** built on the device with pdf-lib. Drawing pages are copied in as they are (vector), with the markup drawn on top; the memo uses the Northrop template and the Figtree font.
 - **Privacy:** no analytics, no external fonts or services, no data sent anywhere. Real drawings may be used in the app because they never leave the device.
-- **Quality:** around 300 automated unit tests and 90 end-to-end tests on an iPad-sized browser run before every release, plus a written manual test plan for each feature, run on the iPad. A diagnostics panel (Settings) shows how sharply each page is drawn, memory use, scrolling smoothness and errors, to measure performance on the iPad itself.
+- **Quality:** around 300 automated unit tests and 90 end-to-end tests on an iPad-sized browser run before every release, plus a written manual test plan for each feature, run on the iPad. A diagnostics panel (Settings, Developer, behind a password) shows how sharply each page is drawn, memory use, scrolling smoothness and errors, to measure performance on the iPad itself.
 
 ## How it was built
 

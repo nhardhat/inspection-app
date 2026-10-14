@@ -19,18 +19,18 @@ WORKING AGREEMENTS (important)
 - When features or limitations change, update the documents (see DOCUMENTS) and rebuild them.
 - Repo, test fixtures and chats stay synthetic. Real drawings are allowed in the app only. Don't ask me for screenshots of real drawings: ask for the diagnostics panel's **Copy** text instead (it holds page numbers and paper sizes only).
 - I'm right-handed: viewer controls on the right edge; panels open on the left. Markup tools are a GoodNotes-style toolbar across the top.
-- No Mac: no Safari Web Inspector. Don't guess at iPad-only rendering or performance problems: measure with the diagnostics panel (or the drawing lab) and ask me for a reading.
+- No Mac: no Safari Web Inspector. Don't guess at iPad-only rendering or performance problems: measure with the diagnostics panel (or the drawing lab) and ask me for a reading. Both are in Settings, Developer, behind a password I know (never write it in the repo; e2e unlocks with the helper unlockDeveloperTools, a session flag).
 - I asked (2026-10-14) whether we were congesting the code. Keep it lean: remove experiments that don't pay off, and say so.
 
 STATUS (2026-10-14)
 - Steps 1 to 9 DONE and iPad-verified. Slice 2 markup DONE and iPad-verified (2026-10-07), including Select, rotation, general notes, documents, About.
 - Fixes after slice 2 (iPad-confirmed "all good" 2026-10-08): one-letter project badges; Settings warning not to remove the app from the Home Screen; hold-and-drag places the arrowhead first then drags the pin or callout out.
 - **Step 10 hardening, in progress (step 10b: drawing speed and sharpness, mostly on a busy B1 sheet with hatching):**
-  - 10a diagnostics panel (Settings, Drawing, Show diagnostics; Drawing is also in the Settings section list): per page on screen, base and sharp render detail vs wanted, times, canvases, marks, scroll fps and worst frame (with what was busy), longest freeze while drawing, PDF open time, errors; Copy as text.
+  - 10a diagnostics panel (Settings, Developer, Show diagnostics; password): per page on screen, base and sharp render detail vs wanted, times, canvases, marks, scroll fps and worst frame (with what was busy), longest freeze while drawing, PDF open time, errors; Copy as text.
   - 10b (live): saved page images (lossless PNG per page and size, Dexie `pageImages`, shown at once in any session, saved ahead in the background while still, tidied when a drawing goes); PDF drawing only while the document is still, one at a time, on-screen pages first (a queue with pausing); one sharp drawing of the view and a margin, 0.6 s after settling, kept while it covers the view; the sharp image and a display-only crisp copy of the markup laid out at TRUE SCREEN SIZE (Safari blurs anything inside the magnified page; confirmed by a live A/B/C comparison on the iPad); B0–B4 paper labels. Removed after readings showed no benefit: drawing in pieces, a low-detail preview while scrolling, a recent-pages memory cache.
   - Engineer feedback after the clean-up: "much better" sharpness; remaining problem is lag: pdf.js draws on the main thread and the B1 sheet takes ~1.5–3 s per drawing, freezing touches.
   - **Drawing lab result (2026-10-14, iPad):** background drawing WORKS in iPad Safari. B1 busy page: main thread 2× ~2950 ms with a 1.43 s freeze; background 2× ~1980 ms with a 17–21 ms longest freeze (one frame); 1× and 4× similar; the engineer: the two pictures look the same.
-  - **Background drawing built in (2026-10-14):** pageDrawer.ts + drawingWorker.ts; the lab is removed. iPad plan docs/test-plans/step10b4-background-drawing.md (1–10) waiting.
+  - **Background drawing built in (2026-10-14, live 1be5876):** pageDrawer.ts + drawingWorker.ts. Then (engineer) Settings, Developer, password-locked until the app closes: Show diagnostics and the drawing lab (src/features/lab, route #/lab/drawing, redirects to Settings while locked; its background half uses pageDrawer). iPad plans docs/test-plans/step10b4-background-drawing.md (1–10) and docs/test-plans/developer-settings.md waiting.
 - iPad test plans waiting: docs/test-plans/step10b4-background-drawing.md, docs/test-plans/step10b3-sharp-zoom.md (steps 9–16), docs/test-plans/step10b2-saved-pages.md (housekeeping steps 9–11).
 
 NEXT (agreed; plan first, the engineer approves)
