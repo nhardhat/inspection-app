@@ -65,10 +65,17 @@ export interface DiagnosticsState {
   /** The latest render errors, newest last. */
   errors: { time: number; message: string }[];
   /**
-   * The last stretch of drawing (anything busy): how long, and the longest
-   * frame in it, i.e. the longest the screen froze on one drawing step.
+   * The last stretch of PDF drawing: how long, the longest the screen
+   * went without a new frame, and the longest the main thread (touches,
+   * the app's code) was held up, with what was busy then. Time while the
+   * app isn't on screen doesn't count.
    */
-  drawing: { seconds: number; longestFreezeMs: number } | null;
+  drawing: {
+    seconds: number;
+    longestFreezeMs: number;
+    longestBlockMs: number;
+    blockDuring: string;
+  } | null;
   /** Where pages are drawn from the PDF (pageDrawer.ts); null until the first. */
   drawingThread: string | null;
 }
@@ -131,28 +138,81 @@ const endedSinceFrame = new Set<Activity>();
 export function beginActivity(kind: Activity) {
   busy.set(kind, (busy.get(kind) ?? 0) + 1);
   if (diagnostics.enabled && !watching) watchDrawing();
+  if (watching && PDF_DRAWING.includes(kind)) watching.pdf = true;
 }
 
 // --- how long the screen froze while drawing --------------------------------
 
-let watching: { start: number; last: number; longest: number } | null = null;
+/** Activities that draw from the PDF (the others show or save images). */
+const PDF_DRAWING: Activity[] = ["base", "sharp", "background"];
+
+/** Timer step for measuring how long the main thread is held up. */
+const TICK_MS = 16;
+
+let watching: {
+  start: number;
+  lastFrame: number;
+  lastTick: number;
+  longestFrame: number;
+  longestBlock: number;
+  blockDuring: string;
+  /** Whether a PDF drawing ran in this stretch. */
+  pdf: boolean;
+  /** Time not on screen, left out. */
+  hiddenMs: number;
+} | null = null;
 
 function watchDrawing() {
   const now = performance.now();
-  watching = { start: now, last: now, longest: 0 };
-  const frame = (t: number) => {
-    const w = watching;
-    if (!w) return;
-    w.longest = Math.max(w.longest, t - w.last);
-    w.last = t;
-    if (anyBusy()) return void requestAnimationFrame(frame);
-    diagnostics.drawing = {
-      seconds: (t - w.start) / 1000,
-      longestFreezeMs: w.longest,
-    };
+  const w = {
+    start: now,
+    lastFrame: now,
+    lastTick: now,
+    longestFrame: 0,
+    longestBlock: 0,
+    blockDuring: "",
+    pdf: false,
+    hiddenMs: 0,
+  };
+  watching = w;
+  const finish = (t: number) => {
+    if (watching !== w) return;
     watching = null;
+    window.clearTimeout(timer);
+    if (!w.pdf) return;
+    diagnostics.drawing = {
+      seconds: (t - w.start - w.hiddenMs) / 1000,
+      longestFreezeMs: w.longestFrame,
+      longestBlockMs: w.longestBlock,
+      blockDuring: w.blockDuring,
+    };
+  };
+  // Screen updates: the longest gap between frames.
+  const frame = (t: number) => {
+    if (watching !== w) return;
+    if (!document.hidden)
+      w.longestFrame = Math.max(w.longestFrame, t - w.lastFrame);
+    w.lastFrame = t;
+    if (anyBusy()) requestAnimationFrame(frame);
+    else finish(t);
   };
   requestAnimationFrame(frame);
+  // The main thread: a timer that runs late was held up (timers run
+  // whether or not the screen changes).
+  let timer = 0;
+  const tick = () => {
+    if (watching !== w) return;
+    const t = performance.now();
+    const late = t - w.lastTick - TICK_MS;
+    if (document.hidden) w.hiddenMs += t - w.lastTick;
+    else if (late > w.longestBlock) {
+      w.longestBlock = late;
+      w.blockDuring = busySummary();
+    }
+    w.lastTick = t;
+    timer = window.setTimeout(tick, TICK_MS);
+  };
+  timer = window.setTimeout(tick, TICK_MS);
 }
 
 export function endActivity(kind: Activity) {

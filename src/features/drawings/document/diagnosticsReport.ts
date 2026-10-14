@@ -112,8 +112,9 @@ export function diagnosticsReport(
   const d = state.drawing;
   if (d)
     lines.push({
-      text: `Drawing last ${d.seconds.toFixed(1)} s · longest freeze ${ms(d.longestFreezeMs)}`,
-      tone: d.longestFreezeMs > 100 ? "warn" : undefined,
+      text: `Drawing last ${d.seconds.toFixed(1)} s · longest freeze ${ms(d.longestFreezeMs)} · main thread held up ${ms(d.longestBlockMs)}${d.blockDuring ? ` (during ${d.blockDuring})` : ""}`,
+      tone:
+        d.longestFreezeMs > 100 || d.longestBlockMs > 100 ? "warn" : undefined,
     });
   if (state.drawingThread)
     lines.push({

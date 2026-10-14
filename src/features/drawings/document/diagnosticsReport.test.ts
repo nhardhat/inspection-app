@@ -47,7 +47,12 @@ function state(over: Partial<DiagnosticsState> = {}): DiagnosticsState {
     },
     pdfs: new Map([["d1", { ms: 1200, bytes: 18_400_000 }]]),
     errors: [],
-    drawing: { seconds: 2.4, longestFreezeMs: 140 },
+    drawing: {
+      seconds: 2.4,
+      longestFreezeMs: 140,
+      longestBlockMs: 30,
+      blockDuring: "sharp",
+    },
     drawingThread: "background",
     ...over,
   };
@@ -77,7 +82,9 @@ describe("diagnosticsReport", () => {
     expect(text).toContain(
       "Scroll last 2.1 s · 41 fps · worst frame 96 ms (during 2 preview) · pages drawing 40% of it",
     );
-    expect(text).toContain("Drawing last 2.4 s · longest freeze 140 ms");
+    expect(text).toContain(
+      "Drawing last 2.4 s · longest freeze 140 ms · main thread held up 30 ms (during sharp)",
+    );
     expect(lines.find((l) => l.text.startsWith("Drawing last"))?.tone).toBe(
       "warn",
     );
