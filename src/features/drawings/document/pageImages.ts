@@ -149,8 +149,104 @@ export function sharpTarget(
   return { rect, scale: Math.sqrt(budget / (rect.width * rect.height)) };
 }
 
-/** How long the view must be still before its sharp image starts drawing. */
+/**
+ * How long the view must be still before its sharp image starts drawing:
+ * on the main thread a drawing freezes touches, so wait to be sure; in the
+ * background it only costs work, so start soon.
+ */
 export const SHARP_DELAY_MS = 600;
+export const SHARP_DELAY_BACKGROUND_MS = 150;
+
+// --- drawing ahead (engineer, 2026-10-14) -----------------------------------
+
+/**
+ * Device pixels of sharp images kept for the pages on screen, shared: the
+ * view and about a screen around it at full detail (a view on the iPad is
+ * about 4 MP; 3 × 3 views is 36 MP).
+ */
+export const SHARP_KEEP = 40_000_000;
+
+/** The view and one view's width and height round it, within the page. */
+export function aheadTarget(
+  page: { width: number; height: number },
+  part: Rect,
+): Rect {
+  const x = Math.max(0, part.x - part.width);
+  const y = Math.max(0, part.y - part.height);
+  return {
+    x,
+    y,
+    width: Math.min(page.width, part.x + 2 * part.width) - x,
+    height: Math.min(page.height, part.y + 2 * part.height) - y,
+  };
+}
+
+function intersect(a: Rect, b: Rect): Rect | null {
+  const x = Math.max(a.x, b.x);
+  const y = Math.max(a.y, b.y);
+  const right = Math.min(a.x + a.width, b.x + b.width);
+  const bottom = Math.min(a.y + a.height, b.y + b.height);
+  return right - x > 0.5 && bottom - y > 0.5
+    ? { x, y, width: right - x, height: bottom - y }
+    : null;
+}
+
+/** Whether `rect` lies within the union of `rects` (checked on a grid). */
+export function coveredBy(rect: Rect, rects: Rect[]) {
+  const n = 8;
+  for (let i = 0; i <= n; i++)
+    for (let j = 0; j <= n; j++) {
+      const p = {
+        x: rect.x + (rect.width * i) / n,
+        y: rect.y + (rect.height * j) / n,
+        width: 0,
+        height: 0,
+      };
+      if (!rects.some((r) => covers(r, p))) return false;
+    }
+  return true;
+}
+
+/**
+ * The areas to draw ahead round the view's sharp image `main`: its
+ * neighbours (sides, then corners) cut to a view round the view and to
+ * the page. Each is one drawing (pdf.js works through the whole page per
+ * drawing, so they're as big as the view's own).
+ */
+export function aheadAreas(
+  page: { width: number; height: number },
+  main: Rect,
+  part: Rect,
+): Rect[] {
+  const target = aheadTarget(page, part);
+  const steps = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1],
+  ];
+  return steps.flatMap(([dx, dy]) => {
+    const area = intersect(
+      {
+        x: main.x + dx * main.width,
+        y: main.y + dy * main.height,
+        width: main.width,
+        height: main.height,
+      },
+      target,
+    );
+    return area ? [area] : [];
+  });
+}
+
+/** Whether two rectangles overlap. */
+export function overlaps(a: Rect, b: Rect) {
+  return intersect(a, b) !== null;
+}
 
 /**
  * Lays a sharp image out at its true screen size (CSS px = device px / DPR)

@@ -93,6 +93,12 @@ export function diagnosticsReport(
         ? { ...renderLine("Sharp", page.sharp, now), indent: true }
         : { text: "Sharp not needed (the base is enough)", indent: true },
     );
+    const kept = page.sharpKept;
+    if (kept)
+      lines.push({
+        text: `Sharp kept ${kept.images} ${kept.images === 1 ? "image" : "images"} · ${mp(kept.pixels)}${kept.drawing ? ` · ${kept.drawing} drawing` : ""}`,
+        indent: true,
+      });
   }
 
   lines.push({

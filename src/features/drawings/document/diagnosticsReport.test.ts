@@ -34,6 +34,7 @@ function state(over: Partial<DiagnosticsState> = {}): DiagnosticsState {
             pixels: 6_000_000,
             ms: 640,
           }),
+          sharpKept: { images: 4, pixels: 30_500_000, drawing: 2 },
         },
       ],
     ]),
@@ -77,6 +78,7 @@ describe("diagnosticsReport", () => {
     );
     expect(lines.find((l) => l.text.startsWith("Sharp"))?.tone).toBe("warn");
     expect(lines.find((l) => l.text.startsWith("Base"))?.tone).toBe("ok");
+    expect(text).toContain("Sharp kept 4 images · 30.5 MP · 2 drawing");
     expect(text).toContain("Canvases 5 live · 21.3 MP total");
     expect(text).toContain("Markup 312 marks on screen · 4,820 segments");
     expect(text).toContain(

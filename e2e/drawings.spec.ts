@@ -2914,6 +2914,11 @@ test(
       timeout: 10_000,
     });
     await expect(panel).toContainText(/Sharp \d\.\d\d/);
+    // Then the areas round the view, drawn ahead and kept.
+    await expect
+      .poll(() => page.locator("canvas[data-x]").count(), { timeout: 15_000 })
+      .toBeGreaterThan(2);
+    await expect(panel).toContainText(/Sharp kept \d+ images/);
     await expect(panel).toContainText("Drawing on the background");
     await expect(panel).toContainText("Errors none");
   },
@@ -2966,6 +2971,15 @@ test(
     await page.getByRole("button", { name: "Draw in background" }).click();
     await expect(results).toContainText(
       /Background 2× · \d+ ms · longest freeze \d+ ms/,
+    );
+    await page
+      .getByRole("button", { name: "Two areas: one drawer, then two" })
+      .click();
+    await expect(results).toContainText(
+      /Two areas, one drawer 2× · \d+ ms · longest freeze \d+ ms/,
+    );
+    await expect(results).toContainText(
+      /Two areas, two drawers 2× · \d+ ms · longest freeze \d+ ms/,
     );
     // Copied results never hold the drawing's name.
     await expect(results).not.toContainText("S-101");

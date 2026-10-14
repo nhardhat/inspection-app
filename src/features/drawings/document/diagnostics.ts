@@ -34,6 +34,8 @@ export interface PageStat {
   base: RenderStat | null;
   /** The sharp render of the visible part; null when the base is enough. */
   sharp: RenderStat | null;
+  /** Sharp images kept (the view's and those drawn ahead round it). */
+  sharpKept?: { images: number; pixels: number; drawing: number } | null;
 }
 
 export interface ViewStat {
@@ -129,7 +131,7 @@ export function pageStat(
  * coincided with (step 10b).
  */
 export type Activity =
-  "base" | "sharp" | "saved image" | "saving" | "background";
+  "base" | "sharp" | "ahead" | "saved image" | "saving" | "background";
 
 const busy = new Map<Activity, number>();
 /** Activities that ended since the last frame (a long one may be theirs). */
@@ -144,7 +146,7 @@ export function beginActivity(kind: Activity) {
 // --- how long the screen froze while drawing --------------------------------
 
 /** Activities that draw from the PDF (the others show or save images). */
-const PDF_DRAWING: Activity[] = ["base", "sharp", "background"];
+const PDF_DRAWING: Activity[] = ["base", "sharp", "ahead", "background"];
 
 /** Timer step for measuring how long the main thread is held up. */
 const TICK_MS = 16;

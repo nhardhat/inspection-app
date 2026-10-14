@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { covers, queuePageDrawing, sharpTarget } from "./pageImages";
+import {
+  aheadAreas,
+  aheadTarget,
+  covers,
+  coveredBy,
+  queuePageDrawing,
+  sharpTarget,
+} from "./pageImages";
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
@@ -112,5 +119,49 @@ describe("sharp image area", () => {
     const { rect } = sharpTarget(page, corner, 1, 12_000_000);
     expect(rect.x).toBe(0);
     expect(rect.y).toBe(0);
+  });
+});
+
+describe("drawing ahead", () => {
+  const page = { width: 2834, height: 2004 };
+  const part = { x: 1000, y: 800, width: 400, height: 280 };
+
+  it("aims at a view round the view, within the page", () => {
+    expect(aheadTarget(page, part)).toEqual({
+      x: 600,
+      y: 520,
+      width: 1200,
+      height: 840,
+    });
+    expect(aheadTarget(page, { x: 0, y: 0, width: 400, height: 280 })).toEqual({
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 560,
+    });
+  });
+
+  it("draws the main image's neighbours, sides first, cut to the target", () => {
+    // The view and a quarter view's margin.
+    const main = { x: 900, y: 730, width: 600, height: 420 };
+    const areas = aheadAreas(page, main, part);
+    expect(areas).toHaveLength(8);
+    expect(areas[0]).toEqual({ x: 600, y: 730, width: 300, height: 420 });
+    expect(areas[1]).toEqual({ x: 1500, y: 730, width: 300, height: 420 });
+    // Together with the main image they cover the whole target.
+    expect(coveredBy(aheadTarget(page, part), [main, ...areas])).toBe(true);
+  });
+
+  it("has nothing to add when the main image already covers the target", () => {
+    const whole = { x: 0, y: 0, ...page };
+    expect(aheadAreas(page, whole, part)).toEqual([]);
+  });
+
+  it("tells when several images together cover an area", () => {
+    const left = { x: 0, y: 0, width: 100, height: 100 };
+    const right = { x: 100, y: 0, width: 100, height: 100 };
+    const area = { x: 50, y: 10, width: 100, height: 50 };
+    expect(coveredBy(area, [left])).toBe(false);
+    expect(coveredBy(area, [left, right])).toBe(true);
   });
 });

@@ -10,17 +10,10 @@ import {
   startRender,
 } from "./diagnostics";
 import { visiblePart, type PageLayout } from "./documentLayout";
-import {
-  SHARP_BUDGET,
-  SHARP_DELAY_MS,
-  baseTarget,
-  covers,
-  placeSharpImage,
-  queuePageDrawing,
-  sharpTarget,
-} from "./pageImages";
+import { baseTarget, queuePageDrawing, sharpTarget } from "./pageImages";
 import { drawPage, type PageDrawing } from "./pageDrawer";
 import { loadSavedPage, savePageSoon } from "./savedPages";
+import { useSharpImages } from "./useSharpImages";
 
 export interface SettledView {
   /** Visible document rectangle (document units). */
@@ -271,128 +264,29 @@ export function DocPage({
   useEffect(() => {
     if (active) return;
     clearHost(baseHost.current);
-    clearHost(sharpHost.current);
     baseScale.current = 0;
     diagnostics.pages.delete(page.key);
   }, [active, page.key]);
   useEffect(() => {
     const base = baseHost.current;
-    const sharp = sharpHost.current;
     return () => {
       clearHost(base);
-      clearHost(sharp);
       diagnostics.pages.delete(page.key);
     };
   }, [page.key]);
 
-  // Sharpen the view once it settles (step 10b): one drawing of the view
-  // and a small margin, 0.6 s after the document stops, never while it
-  // moves, kept while it still covers the view at the right detail. (A B1
-  // sheet's readings: pdf.js works through the whole page for every
-  // drawing, about 1.5 s on that sheet, so drawing it in pieces took 13 s;
-  // one drawing is the least work.) Laid out at true screen size, as
-  // Safari blurs anything inside the magnified page.
-  const shownSharp = useRef<{ rect: Rect; scale: number } | null>(null);
-  useEffect(() => {
-    if (!doc || !proxy || !view || !rendered) return;
-    const stat = pageStat(
-      page.key,
-      page.drawingId,
-      page.number,
-      page.size.width,
-      page.size.height,
-    );
-    const part = visiblePart(page, view.docRect);
-    const wanted = view.devicePxPerDocUnit * page.scale;
-    if (!part || wanted <= baseScale.current * 1.1) {
-      if (!moving) {
-        clearHost(sharpHost.current);
-        shownSharp.current = null;
-        stat.sharp = null;
-      }
-      return;
-    }
-    if (moving) return;
-    const budget = SHARP_BUDGET / Math.max(1, view.visibleCount);
-    const { rect, scale } = sharpTarget(page.size, part, wanted, budget);
-    // Still good: nothing to draw.
-    const shown = shownSharp.current;
-    if (
-      shown &&
-      Math.abs(shown.scale - scale) <= scale * 0.02 &&
-      covers(shown.rect, part)
-    )
-      return;
-    let drawing: PageDrawing | null = null;
-    let current = true;
-    let cancelQueued = () => {};
-    const timer = window.setTimeout(() => {
-      cancelQueued = queuePageDrawing(0, (done) => {
-        const width = Math.ceil(rect.width * scale);
-        const height = Math.ceil(rect.height * scale);
-        const diag = startRender(
-          scale,
-          wanted,
-          scale < wanted * 0.999 ? "budget" : null,
-          width * height,
-          "sharp",
-        );
-        stat.sharp = diag;
-        const d = drawPage(doc, page.drawingId, {
-          source: page.source,
-          scale,
-          width,
-          height,
-          offsetX: -rect.x * scale,
-          offsetY: -rect.y * scale,
-        });
-        drawing = d;
-        d.promise.then(
-          ({ canvas }) => {
-            endRender(diag, "done");
-            done();
-            if (!canvas) return;
-            if (!current) return releaseCanvas(canvas);
-            Object.assign(canvas.dataset, {
-              x: String(rect.x),
-              y: String(rect.y),
-              w: String(rect.width),
-              h: String(rect.height),
-            });
-            placeSharpImage(canvas);
-            clearHost(sharpHost.current);
-            sharpHost.current?.appendChild(canvas);
-            shownSharp.current = { rect, scale };
-          },
-          (error: unknown) => {
-            done();
-            if (isCancel(error)) return endRender(diag, "cancelled");
-            endRender(diag, "failed");
-            recordError(`Page ${page.number} sharp render failed`, error);
-            console.error("Sharp render failed", error);
-          },
-        );
-        return () => d.cancel();
-      });
-    }, SHARP_DELAY_MS);
-    // A pinch stops it; the next settled view draws it again.
-    const stop = () => {
-      window.clearTimeout(timer);
-      cancelQueued();
-      drawing?.cancel();
-    };
-    const unregister = registerRender(stop);
-    return () => {
-      current = false;
-      unregister();
-      stop();
-    };
-  }, [doc, proxy, view, moving, rendered, page, registerRender]);
-
-  // Off screen, its sharp image went with the page's canvases.
-  useEffect(() => {
-    if (!active) shownSharp.current = null;
-  }, [active]);
+  useSharpImages({
+    doc,
+    proxy,
+    view,
+    moving,
+    rendered,
+    active,
+    page,
+    baseScale,
+    host: sharpHost,
+    registerRender,
+  });
 
   // Crisp markup (engineer, 2026-10-13): inside the magnified page Safari
   // shows markup from a lower-resolution copy, as it did the drawing. So

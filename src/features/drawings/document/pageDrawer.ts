@@ -65,7 +65,17 @@ const mainOnly = new Set<string>();
 let ids = 0;
 
 function drawOnMainFrom(why: string) {
+  inBackground = false;
   diagnostics.drawingThread = `main thread (${why})`;
+}
+
+let inBackground = false;
+/**
+ * Whether pages are being drawn in the background (so drawing while the
+ * document moves costs no freeze). False until the worker has started.
+ */
+export function drawsInBackground() {
+  return inBackground;
 }
 
 function startWorker(): Promise<Worker | null> {
@@ -76,7 +86,10 @@ function startWorker(): Promise<Worker | null> {
       if (!result) {
         w?.terminate();
         drawOnMainFrom(why);
-      } else diagnostics.drawingThread = "background";
+      } else {
+        inBackground = true;
+        diagnostics.drawingThread = "background";
+      }
       resolve(result);
     };
     const timer = window.setTimeout(() => give(null, "no answer"), 10_000);
