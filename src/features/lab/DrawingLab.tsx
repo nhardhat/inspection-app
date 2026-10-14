@@ -6,6 +6,7 @@ import { db } from "../../db/db";
 import { diagnostics } from "../drawings/document/diagnostics";
 import { closeDrawing, drawPage } from "../drawings/document/pageDrawer";
 import { isDeveloperUnlocked } from "../settings/developer";
+import { LabDrawer } from "./labDrawer";
 
 /**
  * The drawing lab (developer tool; Settings, Developer). Draws one page of
@@ -13,10 +14,13 @@ import { isDeveloperUnlocked } from "../settings/developer";
  * background thread the drawings screen uses (pageDrawer.ts), timing each
  * and measuring how long the screen froze, with a moving bar to show it.
  * It proved background drawing on the iPad (2026-10-14) and stays for
- * timing slow sheets. Copied results hold no drawing names.
+ * timing slow sheets. "Two areas" times the view and the area beside it
+ * drawn by one background drawer, one after the other, then by two at
+ * once, to see whether a second drawer would help drawing ahead.
+ * Copied results hold no drawing names.
  */
 
-type Method = "main" | "worker";
+type Method = "main" | "worker" | "one drawer" | "two drawers";
 
 interface Result {
   method: Method;
@@ -152,6 +156,63 @@ export function DrawingLab() {
         } finally {
           await pdf.loadingTask.destroy();
         }
+      } else if (method === "one drawer" || method === "two drawers") {
+        // The view's area and the one beside it (as drawn ahead).
+        const right = {
+          ...rect,
+          x: Math.min(rect.x + rect.width, widthPt - rect.width),
+        };
+        const job = (r: typeof rect) => ({
+          drawingId: "lab",
+          source,
+          scale,
+          width: Math.ceil(r.width * scale),
+          height: Math.ceil(r.height * scale),
+          offsetX: -r.x * scale,
+          offsetY: -r.y * scale,
+          image: true,
+          png: false,
+        });
+        const drawers =
+          method === "one drawer"
+            ? [new LabDrawer()]
+            : [new LabDrawer(), new LabDrawer()];
+        try {
+          // Starting and opening the PDF aren't part of the timing.
+          for (const d of drawers) {
+            await d.ready;
+            d.open("lab", await bytes());
+            await d.draw({
+              ...job(rect),
+              scale: 0.05,
+              width: 8,
+              height: 8,
+              image: false,
+            });
+          }
+          const start = performance.now();
+          const { value, longestFreezeMs } = await measured(async () => {
+            if (drawers.length === 1)
+              return [
+                await drawers[0].draw(job(rect)),
+                await drawers[0].draw(job(right)),
+              ];
+            return Promise.all([
+              drawers[0].draw(job(rect)),
+              drawers[1].draw(job(right)),
+            ]);
+          });
+          record({
+            ms: performance.now() - start,
+            longestFreezeMs,
+            pixels: pixels * 2,
+          });
+          const [first] = value;
+          if (first) show(first, first.width, first.height);
+          for (const b of value) b?.close();
+        } finally {
+          for (const d of drawers) d.close();
+        }
       } else {
         const { loadPdf } = await import("../drawings/pdf/pdfjs");
         const pdf = await loadPdf(new Uint8Array(await bytes()));
@@ -200,10 +261,21 @@ export function DrawingLab() {
     }
   }
 
+  async function runBoth() {
+    await run("one drawer");
+    await run("two drawers");
+  }
+
+  const NAMES: Record<Method, string> = {
+    main: "Main thread",
+    worker: "Background",
+    "one drawer": "Two areas, one drawer",
+    "two drawers": "Two areas, two drawers",
+  };
   const label = (r: Result) =>
     r.error
-      ? `${r.method === "main" ? "Main thread" : "Background"} ${r.zoom}×: FAILED ${r.error}`
-      : `${r.method === "main" ? "Main thread" : "Background"} ${r.zoom}× · ${Math.round(r.ms)} ms · longest freeze ${Math.round(r.longestFreezeMs)} ms · ${(r.pixels / 1e6).toFixed(1)} MP`;
+      ? `${NAMES[r.method]} ${r.zoom}×: FAILED ${r.error}`
+      : `${NAMES[r.method]} ${r.zoom}× · ${Math.round(r.ms)} ms · longest freeze ${Math.round(r.longestFreezeMs)} ms · ${(r.pixels / 1e6).toFixed(1)} MP`;
 
   async function copy() {
     const lines = [
@@ -286,6 +358,9 @@ export function DrawingLab() {
             onClick={() => run("worker")}
           >
             Draw in background
+          </button>
+          <button type="button" disabled={busy} onClick={() => void runBoth()}>
+            Two areas: one drawer, then two
           </button>
         </div>
       )}
