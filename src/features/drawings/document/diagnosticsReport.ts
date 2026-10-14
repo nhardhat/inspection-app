@@ -115,6 +115,11 @@ export function diagnosticsReport(
       text: `Drawing last ${d.seconds.toFixed(1)} s · longest freeze ${ms(d.longestFreezeMs)}`,
       tone: d.longestFreezeMs > 100 ? "warn" : undefined,
     });
+  if (state.drawingThread)
+    lines.push({
+      text: `Drawing on the ${state.drawingThread}`,
+      tone: state.drawingThread === "background" ? undefined : "warn",
+    });
   for (const id of drawings) {
     const pdf = state.pdfs.get(id);
     if (pdf)

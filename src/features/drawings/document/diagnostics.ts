@@ -69,6 +69,8 @@ export interface DiagnosticsState {
    * frame in it, i.e. the longest the screen froze on one drawing step.
    */
   drawing: { seconds: number; longestFreezeMs: number } | null;
+  /** Where pages are drawn from the PDF (pageDrawer.ts); null until the first. */
+  drawingThread: string | null;
 }
 
 export const diagnostics: DiagnosticsState = {
@@ -79,6 +81,7 @@ export const diagnostics: DiagnosticsState = {
   pdfs: new Map(),
   errors: [],
   drawing: null,
+  drawingThread: null,
 };
 
 const MAX_ERRORS = 5;

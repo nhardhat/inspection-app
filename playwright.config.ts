@@ -22,16 +22,18 @@ export default defineConfig({
       use: { ...devices["iPad Pro 11"] },
       // Manual screenshots (@shots) run only when asked for: docs:shots.
       grepInvert: process.argv.some((a) => a.includes("@shots"))
-        ? /@offline/
-        : /@offline|@shots/,
+        ? /@offline|@chromium/
+        : /@offline|@chromium|@shots/,
     },
     {
       // Playwright's WebKit cannot reload a page offline through a service
       // worker, so @offline tests run in Chromium at the iPad viewport.
       // Offline on real iPad Safari is covered by the manual test plan.
+      // @chromium tests need what desktop WebKit lacks (OffscreenCanvas in
+      // workers, for background page drawing).
       name: "ipad-chromium",
       use: { ...devices["iPad Pro 11"], browserName: "chromium" },
-      grep: /@offline/,
+      grep: /@offline|@chromium/,
     },
   ],
   webServer: {

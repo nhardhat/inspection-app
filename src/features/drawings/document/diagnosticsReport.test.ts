@@ -48,6 +48,7 @@ function state(over: Partial<DiagnosticsState> = {}): DiagnosticsState {
     pdfs: new Map([["d1", { ms: 1200, bytes: 18_400_000 }]]),
     errors: [],
     drawing: { seconds: 2.4, longestFreezeMs: 140 },
+    drawingThread: "background",
     ...over,
   };
 }
@@ -80,8 +81,20 @@ describe("diagnosticsReport", () => {
     expect(lines.find((l) => l.text.startsWith("Drawing last"))?.tone).toBe(
       "warn",
     );
+    expect(text).toContain("Drawing on the background");
     expect(text).toContain("PDF opened 1.2 s · 18.4 MB file");
     expect(text).toContain("Errors none");
+  });
+
+  it("warns when pages are drawn on the main thread", () => {
+    const lines = diagnosticsReport(
+      state({ drawingThread: "main thread (not supported)" }),
+      live,
+      1000,
+    );
+    const line = lines.find((l) => l.text.startsWith("Drawing on"));
+    expect(line?.text).toBe("Drawing on the main thread (not supported)");
+    expect(line?.tone).toBe("warn");
   });
 
   it("shows a render in progress, a page needing no sharp render, and errors", () => {

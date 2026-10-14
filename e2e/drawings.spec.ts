@@ -2763,6 +2763,10 @@ test("diagnostics: off by default, switched on in Settings, shows each page on s
   await expect(panel).toContainText(/Zoom 1\.0× fit/);
   await expect(panel).toContainText(/Page 1 · A1 \(841 × 594 mm\)/);
   await expect(panel).toContainText(/Base \d\.\d\d/);
+  // WebKit here can't draw in the background: the main thread takes over.
+  await expect(panel).toContainText(
+    /Drawing on the (background|main thread \(not supported\))/,
+  );
   await expect(panel).toContainText("Errors none");
 
   // Hide folds it to a chip; the chip opens it again.
@@ -2850,25 +2854,63 @@ test("zoomed in and still, the markup shows from a crisp copy at screen size", a
   await expect(crisp).toBeVisible();
 });
 
-test("drawing lab (experiment): opens from Settings and draws a page on the main thread", async ({
-  page,
-}) => {
-  await setupInspection(page);
-  await uploadDrawings(page, [await typicalPdf()]);
-  await openDrawing(page, "S-101 Level 3", false);
-  const rail = page.getByRole("navigation", { name: "Main" });
-  await rail.getByRole("link", { name: "Settings" }).click();
-  // Only offered with diagnostics on.
-  await expect(page.getByRole("link", { name: "Drawing lab" })).toHaveCount(0);
-  await page.getByLabel(/Show diagnostics/).check();
-  await page.getByRole("link", { name: "Drawing lab" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Drawing lab" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Draw on main thread" }).click();
-  await expect(page.getByTestId("lab-results")).toContainText(
-    /Main thread 2× · \d+ ms · longest freeze \d+ ms/,
-  );
-  // Copied results never hold the drawing's name.
-  await expect(page.getByTestId("lab-results")).not.toContainText("S-101");
-});
+// Tagged @chromium: Playwright's desktop WebKit has no OffscreenCanvas in
+// workers, so there (and in every other test) pages draw on the main
+// thread, the fallback. Background drawing on the iPad is in the test plan.
+test(
+  "pages draw in the background and their saved images come from there",
+  { tag: "@chromium" },
+  async ({ page }) => {
+    await setupInspection(page);
+    await uploadDrawings(page, [await typicalPdf()]);
+    await openDrawing(page, "S-101 Level 3", false);
+    const rail = page.getByRole("navigation", { name: "Main" });
+    await rail.getByRole("link", { name: "Settings" }).click();
+    await page.getByLabel(/Show diagnostics/).check();
+    await rail.getByRole("link", { name: "Inspections" }).click();
+    const panel = page.getByTestId("diagnostics");
+    await expect(panel).toContainText("Drawing on the background");
+    await expect(
+      page.locator('[data-testid="doc-page"][data-rendered="true"]').first(),
+    ).toBeVisible();
+    // Saved from the background drawings' PNGs (on screen and ahead).
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              new Promise<number>((resolve, reject) => {
+                const open = indexedDB.open("inspection-app");
+                open.onerror = () => reject(open.error);
+                open.onsuccess = () => {
+                  const req = open.result
+                    .transaction("pageImages")
+                    .objectStore("pageImages")
+                    .count();
+                  req.onsuccess = () => {
+                    resolve(req.result);
+                    open.result.close();
+                  };
+                };
+              }),
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe(3);
+
+    // Zoomed in, the sharp image comes from the background too.
+    const box = await stageBox(page);
+    await pinch(
+      page,
+      { x: box.x + box.width * 0.5, y: box.y + box.height * 0.47 },
+      100,
+      400,
+    );
+    await expect(page.locator("canvas[data-x]").first()).toBeAttached({
+      timeout: 10_000,
+    });
+    await expect(panel).toContainText(/Sharp \d\.\d\d/);
+    await expect(panel).toContainText("Drawing on the background");
+    await expect(panel).toContainText("Errors none");
+  },
+);

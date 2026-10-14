@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../../../db/db";
 import type { PDFDocumentProxy } from "../pdf/pdfjs";
 import { diagnostics, recordError } from "./diagnostics";
+import { closeDrawing } from "./pageDrawer";
 
 /** PDFs kept open beyond the ones currently needed, most recent first. */
 const KEEP_EXTRA = 2;
@@ -41,6 +42,7 @@ export function usePdfDocuments(
     for (const [id, doc] of open.current) {
       if (!keep.has(id)) {
         void doc.loadingTask.destroy();
+        closeDrawing(id);
         open.current.delete(id);
         changed = true;
       }
@@ -89,7 +91,10 @@ export function usePdfDocuments(
     const opened = open.current;
     return () => {
       alive.current = false;
-      for (const doc of opened.values()) void doc.loadingTask.destroy();
+      for (const [id, doc] of opened) {
+        void doc.loadingTask.destroy();
+        closeDrawing(id);
+      }
       opened.clear();
     };
   }, []);

@@ -5,6 +5,8 @@
  * instead of being drawn from the PDF again. While the document is still,
  * the pages not yet saved are drawn and saved in the background, one at a
  * time, nearest first. Zooming in still draws sharp detail from the PDF.
+ * The PNGs are made where the page is drawn (pageDrawer.ts: in the
+ * background where the browser can).
  */
 import { useEffect, useRef } from "react";
 import { db } from "../../../db/db";
@@ -18,15 +20,11 @@ import {
 import type { PDFDocumentProxy } from "../pdf/pdfjs";
 import { beginActivity, endActivity, recordError } from "./diagnostics";
 import type { DocumentLayout, PageLayout } from "./documentLayout";
+import { drawPage, type PageDrawing } from "./pageDrawer";
 import { baseTarget, queuePageDrawing } from "./pageImages";
 
 /** Pages saved (or found saved) this session, by saved-image id. */
 const known = new Set<string>();
-
-function release(canvas: HTMLCanvasElement) {
-  canvas.width = 0;
-  canvas.height = 0;
-}
 
 /** The page's saved base image at this size, drawn into a canvas, or null. */
 export async function loadSavedPage(
@@ -51,52 +49,27 @@ export async function loadSavedPage(
   return canvas;
 }
 
-function encodePng(canvas: HTMLCanvasElement): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-}
-
-/**
- * Saves a page's freshly drawn base image, in its turn after any drawing
- * (it never runs alongside one).
- */
+/** Saves a page's freshly drawn base image once its PNG is made. */
 export function savePageSoon(
-  canvas: HTMLCanvasElement,
+  png: Promise<ArrayBuffer | null>,
   drawingId: string,
   source: number,
+  { width, height }: { width: number; height: number },
 ) {
-  const id = pageImageId(drawingId, source, canvas.width, canvas.height);
+  const id = pageImageId(drawingId, source, width, height);
   if (known.has(id)) return;
   known.add(id);
-  const { width, height } = canvas;
-  queuePageDrawing(2, (done) => {
-    // Let go since (kept images are let go when memory runs short).
-    if (canvas.width !== width) {
+  beginActivity("saving");
+  void png
+    .then(async (data) => {
+      if (!data) throw new Error("The page image couldn't be encoded");
+      await savePageImage(db, { drawingId, source, width, height, data });
+    })
+    .catch((error: unknown) => {
       known.delete(id);
-      done();
-      return () => {};
-    }
-    beginActivity("saving");
-    void encodePng(canvas)
-      .then(async (blob) => {
-        if (!blob) throw new Error("The page image couldn't be encoded");
-        await savePageImage(db, {
-          drawingId,
-          source,
-          width,
-          height,
-          data: await blob.arrayBuffer(),
-        });
-      })
-      .catch((error: unknown) => {
-        known.delete(id);
-        recordError("Saving a page image failed", error);
-      })
-      .finally(() => {
-        endActivity("saving");
-        done();
-      });
-    return () => {};
-  });
+      recordError("Saving a page image failed", error);
+    })
+    .finally(() => endActivity("saving"));
 }
 
 /** How long the document must be still before saving pages ahead. */
@@ -188,8 +161,7 @@ export function useSavePagesAhead({
       if (!page || !doc) return;
       const id = idOf(page);
       cancel = queuePageDrawing(2, (done) => {
-        let canvas: HTMLCanvasElement | null = null;
-        let task: { cancel: () => void } | null = null;
+        let drawing: PageDrawing | null = null;
         let over = false;
         beginActivity("background");
         /** Ends this run; false if it had already ended. */
@@ -197,7 +169,6 @@ export function useSavePagesAhead({
           if (over) return false;
           over = true;
           endActivity("background");
-          if (canvas) release(canvas);
           return true;
         };
         // Finished: on to the next page. (Paused or cancelled: the queue
@@ -209,33 +180,26 @@ export function useSavePagesAhead({
         };
         void (async () => {
           try {
-            const proxy = await doc.getPage(page.source);
-            if (over) return;
             const t = target(page);
-            canvas = document.createElement("canvas");
-            canvas.width = t.width;
-            canvas.height = t.height;
-            const render = proxy.render({
-              canvas,
-              viewport: proxy.getViewport({ scale: t.scale }),
+            drawing = drawPage(doc, page.drawingId, {
+              source: page.source,
+              scale: t.scale,
+              width: t.width,
+              height: t.height,
+              show: false,
+              png: true,
             });
-            task = render;
-            await render.promise;
+            const data = await (await drawing.promise).png;
             if (over) return;
-            beginActivity("saving");
-            const blob = await encodePng(canvas).finally(() =>
-              endActivity("saving"),
-            );
-            if (!blob) throw new Error("The page image couldn't be encoded");
+            if (!data) throw new Error("The page image couldn't be encoded");
             await savePageImage(db, {
               drawingId: page.drawingId,
               source: page.source,
               width: t.width,
               height: t.height,
-              data: await blob.arrayBuffer(),
+              data,
             });
             known.add(id);
-            if (!activeRef.current.has(page.key)) proxy.cleanup();
           } catch (error) {
             if (
               !(error instanceof Error) ||
@@ -249,7 +213,7 @@ export function useSavePagesAhead({
           finish();
         })();
         return () => {
-          task?.cancel();
+          drawing?.cancel();
           stop();
         };
       });

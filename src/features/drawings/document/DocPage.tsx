@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "../pdf/pdfjs";
+import type { PDFDocumentProxy, PDFPageProxy } from "../pdf/pdfjs";
 import type { Rect } from "../viewer/viewTransform";
 import { ViewerCoordsContext, type ViewerCoords } from "../viewer/viewerCoords";
 import {
@@ -19,6 +19,7 @@ import {
   queuePageDrawing,
   sharpTarget,
 } from "./pageImages";
+import { drawPage, type PageDrawing } from "./pageDrawer";
 import { loadSavedPage, savePageSoon } from "./savedPages";
 
 export interface SettledView {
@@ -196,49 +197,49 @@ export function DocPage({
         current = false;
       };
     }
-    if (moving) return;
+    if (moving || !doc) return;
     // Pages on screen first, then the ones just off it.
     const onScreen =
       viewRef.current && visiblePart(page, viewRef.current.docRect) !== null;
-    let task: RenderTask | null = null;
+    let drawing: PageDrawing | null = null;
     let current = true;
     const cancelQueued = queuePageDrawing(onScreen ? 0 : 1, (done) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = target.width;
-      canvas.height = target.height;
-      canvas.className = "viewer-base";
       const diag = startRender(
         scale,
         wanted,
         limit,
-        canvas.width * canvas.height,
+        target.width * target.height,
         "base",
       );
       stat.base = diag;
-      const t = proxy.render({
-        canvas,
-        viewport: proxy.getViewport({ scale }),
+      const d = drawPage(doc, page.drawingId, {
+        source: page.source,
+        scale,
+        width: target.width,
+        height: target.height,
+        png: true,
       });
-      task = t;
-      t.promise.then(
-        () => {
+      drawing = d;
+      d.promise.then(
+        ({ canvas, png }) => {
           endRender(diag, "done");
           done();
-          if (!current) return releaseCanvas(canvas);
-          showBase(canvas, scale, proxy);
           // Next time it shows at once (savedPages.ts).
-          savePageSoon(canvas, page.drawingId, page.source);
+          savePageSoon(png, page.drawingId, page.source, target);
+          if (!canvas) return;
+          if (!current) return releaseCanvas(canvas);
+          canvas.className = "viewer-base";
+          showBase(canvas, scale, proxy);
         },
         (error: unknown) => {
           done();
-          releaseCanvas(canvas);
           if (isCancel(error)) return endRender(diag, "cancelled");
           endRender(diag, "failed");
           recordError(`Page ${page.number} render failed`, error);
           console.error("Page render failed", error);
         },
       );
-      return () => t.cancel();
+      return () => d.cancel();
     });
     // A pinch pauses drawing too; the next settled view starts it again.
     const unregister = registerRender(() => cancelQueued());
@@ -246,11 +247,12 @@ export function DocPage({
       current = false;
       unregister();
       cancelQueued();
-      task?.cancel();
+      drawing?.cancel();
     };
     // Re-render only when the page, its quality target or motion changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    doc,
     proxy,
     fitQuality,
     moving,
@@ -292,7 +294,7 @@ export function DocPage({
   // Safari blurs anything inside the magnified page.
   const shownSharp = useRef<{ rect: Rect; scale: number } | null>(null);
   useEffect(() => {
-    if (!proxy || !view || !rendered) return;
+    if (!doc || !proxy || !view || !rendered) return;
     const stat = pageStat(
       page.key,
       page.drawingId,
@@ -321,64 +323,63 @@ export function DocPage({
       covers(shown.rect, part)
     )
       return;
-    let task: RenderTask | null = null;
+    let drawing: PageDrawing | null = null;
     let current = true;
     let cancelQueued = () => {};
     const timer = window.setTimeout(() => {
       cancelQueued = queuePageDrawing(0, (done) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.ceil(rect.width * scale);
-        canvas.height = Math.ceil(rect.height * scale);
-        Object.assign(canvas.dataset, {
-          x: String(rect.x),
-          y: String(rect.y),
-          w: String(rect.width),
-          h: String(rect.height),
-        });
-        placeSharpImage(canvas);
+        const width = Math.ceil(rect.width * scale);
+        const height = Math.ceil(rect.height * scale);
         const diag = startRender(
           scale,
           wanted,
           scale < wanted * 0.999 ? "budget" : null,
-          canvas.width * canvas.height,
+          width * height,
           "sharp",
         );
         stat.sharp = diag;
-        const t = proxy.render({
-          canvas,
-          viewport: proxy.getViewport({
-            scale,
-            offsetX: -rect.x * scale,
-            offsetY: -rect.y * scale,
-          }),
+        const d = drawPage(doc, page.drawingId, {
+          source: page.source,
+          scale,
+          width,
+          height,
+          offsetX: -rect.x * scale,
+          offsetY: -rect.y * scale,
         });
-        task = t;
-        t.promise.then(
-          () => {
+        drawing = d;
+        d.promise.then(
+          ({ canvas }) => {
             endRender(diag, "done");
             done();
+            if (!canvas) return;
             if (!current) return releaseCanvas(canvas);
+            Object.assign(canvas.dataset, {
+              x: String(rect.x),
+              y: String(rect.y),
+              w: String(rect.width),
+              h: String(rect.height),
+            });
+            placeSharpImage(canvas);
             clearHost(sharpHost.current);
             sharpHost.current?.appendChild(canvas);
             shownSharp.current = { rect, scale };
           },
           (error: unknown) => {
             done();
-            releaseCanvas(canvas);
             if (isCancel(error)) return endRender(diag, "cancelled");
             endRender(diag, "failed");
             recordError(`Page ${page.number} sharp render failed`, error);
             console.error("Sharp render failed", error);
           },
         );
-        return () => t.cancel();
+        return () => d.cancel();
       });
     }, SHARP_DELAY_MS);
     // A pinch stops it; the next settled view draws it again.
     const stop = () => {
       window.clearTimeout(timer);
       cancelQueued();
-      task?.cancel();
+      drawing?.cancel();
     };
     const unregister = registerRender(stop);
     return () => {
@@ -386,7 +387,7 @@ export function DocPage({
       unregister();
       stop();
     };
-  }, [proxy, view, moving, rendered, page, registerRender]);
+  }, [doc, proxy, view, moving, rendered, page, registerRender]);
 
   // Off screen, its sharp image went with the page's canvases.
   useEffect(() => {
