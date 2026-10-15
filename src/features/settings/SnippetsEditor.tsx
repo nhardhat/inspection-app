@@ -36,6 +36,12 @@ const GROUPS: {
     hint: "Instructions needing photo confirmation are marked * in the memo and the notes box; this line is the last bullet of the memo's list when any is. Leave it empty for no line.",
     single: true,
   },
+  {
+    kind: "referDrawings",
+    title: "Refer to drawings",
+    hint: "With Refer to drawings on in a memo, this line replaces the instructions list. [letters] becomes the instruction letters, e.g. A–M.",
+    single: true,
+  },
 ];
 
 /**

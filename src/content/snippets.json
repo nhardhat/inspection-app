@@ -52,5 +52,11 @@
     "kind": "photoNote",
     "label": "Photo confirmation line",
     "text": "Items marked * are to be closed out with photos confirming completion prior to proceeding."
+  },
+  {
+    "id": "referDrawings-refer-to-drawings",
+    "kind": "referDrawings",
+    "label": "Refer to drawings",
+    "text": "Complete the instructions marked on the attached drawings (items [letters])."
   }
 ]

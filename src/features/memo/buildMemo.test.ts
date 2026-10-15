@@ -12,6 +12,8 @@ import {
   memoConditions,
   memoFields,
   photoLine,
+  referLine,
+  DEFAULT_REFER_LINE,
 } from "./buildMemo";
 
 const conditionSnippets = (starterSnippets as Snippet[]).filter(
@@ -109,6 +111,37 @@ describe("conditions", () => {
     ]);
     // No instruction needs photos: no line.
     expect(texts(undefined, [b]).at(-1)).toBe("B. Prop spacing");
+  });
+
+  test("Refer to drawings: one line replaces the instructions", () => {
+    const a = item("A", "Add bar", { requiresPhotoConfirmation: true });
+    const b = item("B", "Prop spacing");
+    const c = item("C", "Lap length");
+    const texts = (refer?: string) =>
+      memoConditions(
+        memo({ referToDrawings: true }),
+        [a, b, c],
+        conditionSnippets,
+        undefined,
+        refer,
+      ).map((x) => x.text);
+    expect(texts()).toEqual([
+      "Complete items A–C listed below.",
+      "Complete the instructions marked on the attached drawings (items A–C).",
+      // The * is on the drawings' notes boxes.
+      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
+    ]);
+    expect(texts("See drawings for [letters].")[1]).toBe(
+      "See drawings for A–C.",
+    );
+    expect(referLine([])).toBe(DEFAULT_REFER_LINE);
+    expect(referLine([{ kind: "referDrawings", text: " " }])).toBe(
+      DEFAULT_REFER_LINE,
+    );
+    // No instructions: nothing to refer to.
+    expect(
+      memoConditions(memo({ referToDrawings: true }), [], conditionSnippets),
+    ).toEqual([]);
   });
 
   test("the photo line comes from Settings, else the default", () => {

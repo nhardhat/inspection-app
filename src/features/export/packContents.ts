@@ -33,6 +33,7 @@ export interface PackData {
   conditionSnippets: Snippet[];
   /** The note after instructions needing photo confirmation. */
   photoLine: string;
+  referLine: string;
   observationHeading: string;
   photos: Map<string, Photo>;
   /** The memo's signature (PNG), if it prints one. */

@@ -127,6 +127,16 @@ test("create a memo from the instructions, with a live preview", async ({
   await page.getByRole("button", { name: "Use item text" }).click();
   await expect(a).toHaveValue("Add N12 bar at grid C/4");
 
+  // Refer to drawings: one line instead of the list; the * line stays.
+  await page.getByLabel(/Refer to drawings/).check();
+  await expect(instructions).toHaveCount(0);
+  await expect(page.getByTestId("memo-refer-line")).toHaveText(
+    "Complete the instructions marked on the attached drawings (items A–B).",
+  );
+  await expect(page.getByTestId("memo-photo-line")).toBeVisible();
+  await page.getByLabel(/Refer to drawings/).uncheck();
+  await expect(instructions.getByRole("listitem")).toHaveCount(2);
+
   // Job details are shared with the inspection; they fold to a summary.
   await expect(field(page, "Item inspected")).toHaveCount(0);
   await page.getByRole("button", { name: "Edit job details" }).click();

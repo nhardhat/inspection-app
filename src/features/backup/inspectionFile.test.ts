@@ -144,7 +144,10 @@ beforeEach(async () => {
   await addPhotos(source, { itemId: a.id }, [photo(true), photo(false)]);
   await addPhotos(source, { inspectionId }, [photo(false)]);
   const memo = await createMemo(source, inspectionId);
-  await updateMemo(source, memo.id, { itemOverrides: { [a.id]: "Reworded" } });
+  await updateMemo(source, memo.id, {
+    itemOverrides: { [a.id]: "Reworded" },
+    referToDrawings: true,
+  });
   await setMemoSignature(source, memo.id, PNG);
   await markMemoExported(source, memo.id, { [a.id]: "instruction:A" });
 });

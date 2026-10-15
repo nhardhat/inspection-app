@@ -6,6 +6,7 @@ const NEW_LABELS: Record<SnippetKind, string> = {
   condition: "New condition",
   heading: "New heading",
   photoNote: "Photo confirmation line",
+  referDrawings: "Refer to drawings",
 };
 
 export async function addSnippet(

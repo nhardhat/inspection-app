@@ -33,6 +33,16 @@ export const OLD_PHOTO_NOTE =
 /** The marker after an instruction that needs photo confirmation. */
 export const PHOTO_MARK = "*";
 
+/** The Refer to drawings line when no message for it is stored. */
+export const DEFAULT_REFER_LINE =
+  "Complete the instructions marked on the attached drawings (items [letters]).";
+
+/** The Refer to drawings line, from Settings. */
+export function referLine(snippets: Pick<Snippet, "kind" | "text">[]): string {
+  const stored = snippets.find((s) => s.kind === "referDrawings");
+  return stored?.text.trim() || DEFAULT_REFER_LINE;
+}
+
 /** The line explaining the *, from Settings (empty: no line). */
 export function photoLine(snippets: Pick<Snippet, "kind" | "text">[]): string {
   const stored = snippets.find((s) => s.kind === "photoNote");
@@ -89,9 +99,12 @@ export function conditionTicked(
 }
 
 export interface MemoCondition {
-  /** Snippet id (standard condition), item id (instruction) or "photo-line". */
+  /**
+   * Snippet id (standard condition), item id (instruction), "refer-line"
+   * or "photo-line".
+   */
   key: string;
-  kind: "standard" | "instruction" | "photo";
+  kind: "standard" | "instruction" | "refer" | "photo";
   text: string;
   /** Instructions: reworded for this memo rather than the item's text. */
   reworded?: boolean;
@@ -101,13 +114,16 @@ export interface MemoCondition {
  * The bulleted conditions: ticked standard conditions first ("[letters]"
  * filled in, e.g. "A–D"), then each instruction as "A. text", reworded
  * where the engineer changed it for this memo, marked * when it needs
- * photo confirmation, then the photo line when any is.
+ * photo confirmation, then the photo line when any is. With Refer to
+ * drawings on, one line ("[letters]" filled in) replaces the instructions;
+ * the photo line stays (the notes boxes carry the *).
  */
 export function memoConditions(
-  memo: Pick<Memo, "conditionChoices" | "itemOverrides">,
+  memo: Pick<Memo, "conditionChoices" | "itemOverrides" | "referToDrawings">,
   items: Item[],
   conditionSnippets: Snippet[],
   line = DEFAULT_PHOTO_LINE,
+  refer = DEFAULT_REFER_LINE,
 ): MemoCondition[] {
   const instructions = memoInstructions(items);
   const letters = letterRange(instructions.map((item) => item.letter));
@@ -132,7 +148,17 @@ export function memoConditions(
     line && instructions.some((item) => item.requiresPhotoConfirmation)
       ? [{ key: "photo-line", kind: "photo", text: line }]
       : [];
-  return [...standard, ...lines, ...photo];
+  const listed: MemoCondition[] =
+    memo.referToDrawings && instructions.length > 0
+      ? [
+          {
+            key: "refer-line",
+            kind: "refer",
+            text: refer.replace(/\[letters\]/g, letters).trim(),
+          },
+        ]
+      : lines;
+  return [...standard, ...listed, ...photo];
 }
 
 /** Memo fields for the page: job details from the inspection, the rest from the memo. */
@@ -166,6 +192,7 @@ export function buildMemoPdfInput(
   items: Item[],
   conditionSnippets: Snippet[],
   line = DEFAULT_PHOTO_LINE,
+  refer = DEFAULT_REFER_LINE,
 ): MemoPdfInput {
   return {
     reference: memo.reference,
@@ -174,7 +201,7 @@ export function buildMemoPdfInput(
       confirmationParagraph(inspection.itemInspected),
       memo.bodyText.trim(),
     ].filter(Boolean),
-    conditions: memoConditions(memo, items, conditionSnippets, line).map(
+    conditions: memoConditions(memo, items, conditionSnippets, line, refer).map(
       (c) => c.text,
     ),
   };

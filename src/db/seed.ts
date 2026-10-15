@@ -12,7 +12,7 @@ const defaultSettings: Settings = {
 };
 
 /** Kinds with exactly one message, which can't be deleted. */
-const SINGLE_KINDS: Snippet["kind"][] = ["photoNote"];
+const SINGLE_KINDS: Snippet["kind"][] = ["photoNote", "referDrawings"];
 
 /**
  * First-run setup: creates the settings record and seeds the starter

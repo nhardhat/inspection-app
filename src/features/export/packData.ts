@@ -5,7 +5,7 @@ import { getMemo } from "../../db/memos";
 import { loadJobInspection } from "../../db/projects";
 import type { InspectionDb } from "../../db/schema";
 import { observationHeading } from "../drawings/observationBox";
-import { photoLine } from "../memo/buildMemo";
+import { photoLine, referLine } from "../memo/buildMemo";
 import type { LoadBlob, PackData } from "./packContents";
 
 /** Null when the inspection or its memo is missing. */
@@ -43,6 +43,7 @@ export async function loadPackData(
     marks,
     conditionSnippets: snippets.filter((s) => s.kind === "condition"),
     photoLine: photoLine(snippets),
+    referLine: referLine(snippets),
     observationHeading: observationHeading(
       snippets.filter((s) => s.kind === "heading"),
     ),

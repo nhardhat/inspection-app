@@ -37,6 +37,7 @@ import {
 import {
   buildMemoPdfInput,
   photoLine,
+  referLine,
   conditionTicked,
   defaultSalutation,
   defaultSiteVisitRequestedBy,
@@ -204,6 +205,7 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
     items,
     conditionSnippets,
     photoLine(snippets),
+    referLine(snippets),
   );
   const saveState =
     jobSave.state === "error" || memoSave.state === "error"
@@ -625,10 +627,31 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                 </label>
               ))}
             </fieldset>
+            {instructions.length > 0 && (
+              <label className="checkbox switch">
+                <input
+                  type="checkbox"
+                  checked={memo.referToDrawings ?? false}
+                  onChange={(e) => patch({ referToDrawings: e.target.checked })}
+                />
+                <span>
+                  Refer to drawings
+                  <span className="muted small">
+                    {" "}
+                    One line pointing to the attached drawings instead of
+                    listing every instruction (for memos with many pins).
+                  </span>
+                </span>
+              </label>
+            )}
             {instructions.length === 0 ? (
               <p className="muted">
                 No instructions yet, so the memo says &ldquo;Ok to
                 proceed.&rdquo;
+              </p>
+            ) : memo.referToDrawings ? (
+              <p className="memo-refer-line" data-testid="memo-refer-line">
+                {referLine(snippets).replace(/\[letters\]/g, letters)}
               </p>
             ) : (
               <ol className="memo-instructions" aria-label="Instructions">

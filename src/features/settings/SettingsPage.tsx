@@ -31,6 +31,7 @@ const KINDS: [SnippetKind, string][] = [
   ["condition", "condition"],
   ["heading", "heading"],
   ["photoNote", "photo line"],
+  ["referDrawings", "refer line"],
 ];
 
 const SECTIONS = [

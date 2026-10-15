@@ -19,6 +19,9 @@ These seed the Snippet table. The engineer can edit them in the app. Add new one
 ## Photo confirmation line (kind: photoNote, one only; instructions needing photo confirmation are marked * in the memo and the notes box, and this line is the last bullet of the memo's list when any is)
 - Photo confirmation line: "Items marked * are to be closed out with photos confirming completion prior to proceeding."
 
+## Refer to drawings (kind: referDrawings, one only; with the memo's Refer to drawings switch on, this line replaces the A, B, C… instructions; [letters] becomes the instruction letters, e.g. A–M)
+- Refer to drawings: "Complete the instructions marked on the attached drawings (items [letters])."
+
 ## Rules (template logic, not snippets)
 - Conditions lead-in: with one or more instruction items, one line "Ok to proceed subject to the following:" then the list, whichever body message is chosen. With no instruction items, "Ok to proceed." and no list.
 - Observations never appear in the memo. They go in a draggable text box on each drawing page that has them, and the box is hidden on pages with none.

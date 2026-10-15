@@ -271,6 +271,11 @@ export interface Memo {
   conditionChoices: Record<string, boolean>;
   /** Instruction lines reworded for this memo, by item id (without letter). */
   itemOverrides: Record<string, string>;
+  /**
+   * One line pointing to the drawings instead of the A, B, C… list (the
+   * referDrawings message), for memos with many pins. Missing: off.
+   */
+  referToDrawings?: boolean;
   signOffName: string;
   signOffTitle: string;
   /** The memo's own copy of the signature (PNG in blobs), if it has one. */
@@ -384,7 +389,9 @@ export interface Markup {
  * "photoNote": the memo line explaining the * on instructions needing
  * photo confirmation (the last bullet of the list).
  */
-export type SnippetKind = "body" | "condition" | "heading" | "photoNote";
+/** "referDrawings": the line replacing the instructions (Refer to drawings). */
+export type SnippetKind =
+  "body" | "condition" | "heading" | "photoNote" | "referDrawings";
 
 export interface Snippet {
   id: string;
