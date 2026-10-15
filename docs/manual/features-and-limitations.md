@@ -48,7 +48,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 - Letters follow the document (drawing, page, then order on the page) and re-letter automatically when items are added, deleted, switched or reordered, so there are never gaps.
 - GoodNotes-style gestures: tap for an instruction, double-tap for an observation, tap-hold on the spot then drag the pin out, for a pin with an arrow. Several arrows per pin are possible.
 - **Copy pin** puts the same item at several spots, on any page.
-- Instructions can require **photo confirmation** before the builder proceeds; the memo says so against each one.
+- Instructions can require **photo confirmation** before the builder proceeds; the memo and the drawing's notes box mark each one \*, and the memo's list ends with a line saying those items are to be closed out with photos.
 - Each page with pins gets a **notes box** listing its instructions and observations, dragged into a clear spot and burned into the exported page.
 - **General notes** are observations with no pin, for things that apply to the whole inspection (such as its extent). They're lettered first and listed in every page's notes box.
 - The Items panel lists everything by page: tap one to jump to its pin, swipe to delete, drag to reorder and multi-select.

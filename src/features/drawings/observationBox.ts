@@ -112,12 +112,21 @@ export function observationHeading(
 /** Fixed template heading for the page's instructions in the box. */
 export const INSTRUCTIONS_HEADING = "Instructions:";
 
-/** That page's items of one kind in letter order, e.g. "D. Existing crack". */
+/**
+ * That page's items of one kind in letter order, e.g. "D. Existing crack";
+ * an instruction needing photo confirmation ends with * (as in the memo).
+ */
 export function itemLines(items: Item[], kind: Item["kind"]): string[] {
   return items
     .filter((item) => item.kind === kind)
     .sort((a, b) => indexForLetter(a.letter) - indexForLetter(b.letter))
-    .map((item) => `${item.letter}. ${item.text.trim()}`.trim());
+    .map((item) => {
+      const mark =
+        item.kind === "instruction" && item.requiresPhotoConfirmation
+          ? " *"
+          : "";
+      return `${item.letter}. ${item.text.trim()}${mark}`.trim();
+    });
 }
 
 /** That page's observations in letter order. */

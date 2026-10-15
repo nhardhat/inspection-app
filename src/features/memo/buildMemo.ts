@@ -18,14 +18,25 @@ import type { MemoPdfInput } from "./pdf/renderMemoPdf";
 
 export const COMPLETE_ITEMS_ID = "condition-complete-listed-items";
 
-/** The photo note when no message for it is stored (a Settings message). */
-export const DEFAULT_PHOTO_NOTE =
+/**
+ * Photo confirmation (engineer, 2026-10-16): an instruction needing it is
+ * marked * (memo and notes box), and the memo's list ends with this line
+ * when any is. A Settings message; this is the text when none is stored.
+ */
+export const DEFAULT_PHOTO_LINE =
+  "Items marked * are to be closed out with photos confirming completion prior to proceeding.";
+
+/** The note after each such instruction until 2026-10-16 (replaced once). */
+export const OLD_PHOTO_NOTE =
   "(provide photos confirming completion before proceeding)";
 
-/** The note added after an instruction that needs photo confirmation. */
-export function photoNote(snippets: Pick<Snippet, "kind" | "text">[]): string {
+/** The marker after an instruction that needs photo confirmation. */
+export const PHOTO_MARK = "*";
+
+/** The line explaining the *, from Settings (empty: no line). */
+export function photoLine(snippets: Pick<Snippet, "kind" | "text">[]): string {
   const stored = snippets.find((s) => s.kind === "photoNote");
-  return stored ? stored.text.trim() : DEFAULT_PHOTO_NOTE;
+  return stored ? stored.text.trim() : DEFAULT_PHOTO_LINE;
 }
 
 /** Instructions in letter order (only instructions appear in the memo). */
@@ -78,9 +89,9 @@ export function conditionTicked(
 }
 
 export interface MemoCondition {
-  /** Snippet id (standard condition) or item id (instruction). */
+  /** Snippet id (standard condition), item id (instruction) or "photo-line". */
   key: string;
-  kind: "standard" | "instruction";
+  kind: "standard" | "instruction" | "photo";
   text: string;
   /** Instructions: reworded for this memo rather than the item's text. */
   reworded?: boolean;
@@ -89,14 +100,14 @@ export interface MemoCondition {
 /**
  * The bulleted conditions: ticked standard conditions first ("[letters]"
  * filled in, e.g. "A–D"), then each instruction as "A. text", reworded
- * where the engineer changed it for this memo, followed by the photo note
- * when it needs photo confirmation.
+ * where the engineer changed it for this memo, marked * when it needs
+ * photo confirmation, then the photo line when any is.
  */
 export function memoConditions(
   memo: Pick<Memo, "conditionChoices" | "itemOverrides">,
   items: Item[],
   conditionSnippets: Snippet[],
-  note = DEFAULT_PHOTO_NOTE,
+  line = DEFAULT_PHOTO_LINE,
 ): MemoCondition[] {
   const instructions = memoInstructions(items);
   const letters = letterRange(instructions.map((item) => item.letter));
@@ -109,15 +120,19 @@ export function memoConditions(
     }));
   const lines = instructions.map<MemoCondition>((item) => {
     const override = memo.itemOverrides[item.id];
-    const photos = item.requiresPhotoConfirmation && note ? ` ${note}` : "";
+    const mark = item.requiresPhotoConfirmation ? ` ${PHOTO_MARK}` : "";
     return {
       key: item.id,
       kind: "instruction",
-      text: `${item.letter}. ${(override ?? item.text).trim()}${photos}`.trim(),
+      text: `${item.letter}. ${(override ?? item.text).trim()}${mark}`.trim(),
       reworded: override !== undefined,
     };
   });
-  return [...standard, ...lines];
+  const photo: MemoCondition[] =
+    line && instructions.some((item) => item.requiresPhotoConfirmation)
+      ? [{ key: "photo-line", kind: "photo", text: line }]
+      : [];
+  return [...standard, ...lines, ...photo];
 }
 
 /** Memo fields for the page: job details from the inspection, the rest from the memo. */
@@ -150,7 +165,7 @@ export function buildMemoPdfInput(
   inspection: JobInspection,
   items: Item[],
   conditionSnippets: Snippet[],
-  note = DEFAULT_PHOTO_NOTE,
+  line = DEFAULT_PHOTO_LINE,
 ): MemoPdfInput {
   return {
     reference: memo.reference,
@@ -159,7 +174,7 @@ export function buildMemoPdfInput(
       confirmationParagraph(inspection.itemInspected),
       memo.bodyText.trim(),
     ].filter(Boolean),
-    conditions: memoConditions(memo, items, conditionSnippets, note).map(
+    conditions: memoConditions(memo, items, conditionSnippets, line).map(
       (c) => c.text,
     ),
   };

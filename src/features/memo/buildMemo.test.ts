@@ -4,14 +4,14 @@ import { emptyClient } from "../../db/inspections";
 import { blankMemo } from "../../db/memos";
 import type { Item, JobInspection, Memo, Snippet } from "../../db/types";
 import {
-  DEFAULT_PHOTO_NOTE,
+  DEFAULT_PHOTO_LINE,
   buildMemoPdfInput,
   defaultSalutation,
   defaultSiteVisitRequestedBy,
   letterRange,
   memoConditions,
   memoFields,
-  photoNote,
+  photoLine,
 } from "./buildMemo";
 
 const conditionSnippets = (starterSnippets as Snippet[]).filter(
@@ -75,38 +75,50 @@ describe("conditions", () => {
       memoConditions(memo(), items, conditionSnippets).map((c) => c.text),
     ).toEqual([
       "Complete items A–B listed below.",
-      "A. Add N12 bar at grid C/4 (provide photos confirming completion before proceeding)",
+      "A. Add N12 bar at grid C/4 *",
       "B. Prop spacing per shop drawing",
+      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
   });
 
-  test("photo confirmation: a note on the instruction, not the photo condition", () => {
+  test("photo confirmation: a * on the instruction and one line at the end", () => {
     const a = item("A", "Add bar", { requiresPhotoConfirmation: true });
-    const texts = (note?: string) =>
+    const b = item("B", "Prop spacing");
+    const texts = (line?: string, items = [a, b]) =>
       memoConditions(
         memo({ itemOverrides: { [a.id]: "Add N16 bar" } }),
-        [a],
+        items,
         conditionSnippets,
-        note,
+        line,
       ).map((c) => c.text);
-    // Reworded for the memo, it still carries the note.
+    // Reworded for the memo, it still carries the *.
     expect(texts()).toEqual([
-      "Complete items A listed below.",
-      "A. Add N16 bar (provide photos confirming completion before proceeding)",
+      "Complete items A–B listed below.",
+      "A. Add N16 bar *",
+      "B. Prop spacing",
+      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
-    expect(texts("(photos please)")[1]).toBe("A. Add N16 bar (photos please)");
-    // An empty note (Settings) adds nothing.
-    expect(texts("")[1]).toBe("A. Add N16 bar");
+    expect(texts("Photos for items marked *.").at(-1)).toBe(
+      "Photos for items marked *.",
+    );
+    // An empty line (Settings) leaves just the *.
+    expect(texts("")).toEqual([
+      "Complete items A–B listed below.",
+      "A. Add N16 bar *",
+      "B. Prop spacing",
+    ]);
+    // No instruction needs photos: no line.
+    expect(texts(undefined, [b]).at(-1)).toBe("B. Prop spacing");
   });
 
-  test("the photo note comes from Settings, else the default", () => {
-    expect(photoNote([])).toBe(DEFAULT_PHOTO_NOTE);
+  test("the photo line comes from Settings, else the default", () => {
+    expect(photoLine([])).toBe(DEFAULT_PHOTO_LINE);
     expect(
-      photoNote([
+      photoLine([
         { kind: "condition", text: "x" },
-        { kind: "photoNote", text: " (photos) " },
+        { kind: "photoNote", text: " Photos for items marked *. " },
       ]),
-    ).toBe("(photos)");
+    ).toBe("Photos for items marked *.");
   });
 
   test("the engineer's ticks win over the defaults", () => {

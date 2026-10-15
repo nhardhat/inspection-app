@@ -120,6 +120,33 @@ describe("boxLines", () => {
     ]);
   });
 
+  test("an instruction needing photo confirmation ends with *", () => {
+    const lines = boxLines({
+      header: "H",
+      observationHeading: "Noted for information:",
+      items: [
+        {
+          ...item("A", "instruction", "Add bar"),
+          requiresPhotoConfirmation: true,
+        },
+        item("B", "instruction", "Prop"),
+        // Only instructions carry it.
+        {
+          ...item("A", "observation", "Crack"),
+          requiresPhotoConfirmation: true,
+        },
+      ],
+    });
+    expect(lines.map((l) => l.text)).toEqual([
+      "H",
+      "NOTED FOR INFORMATION:",
+      "A. CRACK",
+      "INSTRUCTIONS:",
+      "A. ADD BAR *",
+      "B. PROP",
+    ]);
+  });
+
   test("leaves out a section with no items", () => {
     const lines = boxLines({
       header: "H",

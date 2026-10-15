@@ -33,8 +33,28 @@ describe("ensureSeeded", () => {
     await ensureSeeded(db);
     const notes = await db.snippets.where("kind").equals("photoNote").toArray();
     expect(notes.map((n) => n.text)).toEqual([
-      "(provide photos confirming completion before proceeding)",
+      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
+  });
+
+  test("the old photo note becomes the * line once; the engineer's own text stays", async () => {
+    await ensureSeeded(db);
+    const id = (await db.snippets.where("kind").equals("photoNote").first())!
+      .id;
+    await db.snippets.update(id, {
+      text: "(provide photos confirming completion before proceeding)",
+      label: "Photo confirmation note",
+    });
+    await ensureSeeded(db);
+    expect((await db.snippets.get(id))?.text).toBe(
+      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
+    );
+    expect((await db.snippets.get(id))?.label).toBe("Photo confirmation line");
+    await db.snippets.update(id, { text: "Photos for items marked *." });
+    await ensureSeeded(db);
+    expect((await db.snippets.get(id))?.text).toBe(
+      "Photos for items marked *.",
+    );
   });
 
   test("running again does not duplicate snippets", async () => {

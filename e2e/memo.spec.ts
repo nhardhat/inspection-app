@@ -114,8 +114,9 @@ test("create a memo from the instructions, with a live preview", async ({
   ).not.toBeChecked();
   const instructions = page.getByRole("list", { name: "Instructions" });
   await expect(instructions.getByRole("listitem")).toHaveCount(2);
-  await expect(instructions.getByTestId("memo-photo-note")).toHaveText(
-    "+ (provide photos confirming completion before proceeding)",
+  await expect(instructions.getByTestId("memo-photo-mark")).toHaveCount(1);
+  await expect(page.getByTestId("memo-photo-line")).toHaveText(
+    "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
   );
 
   // Reword A for the memo only, then go back to the item's text.

@@ -19,7 +19,7 @@ const SECTION_KINDS: [prefix: string, kind: SnippetKind][] = [
   ["Body messages", "body"],
   ["Standard conditions", "condition"],
   ["Observations box heading", "heading"],
-  ["Photo confirmation note", "photoNote"],
+  ["Photo confirmation line", "photoNote"],
 ];
 
 const BULLET = /^- (.+?): "(.+)"\s*$/;

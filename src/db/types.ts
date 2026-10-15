@@ -380,7 +380,10 @@ export interface Markup {
   createdAt: number;
 }
 
-/** "photoNote": the note after an instruction needing photo confirmation. */
+/**
+ * "photoNote": the memo line explaining the * on instructions needing
+ * photo confirmation (the last bullet of the list).
+ */
 export type SnippetKind = "body" | "condition" | "heading" | "photoNote";
 
 export interface Snippet {

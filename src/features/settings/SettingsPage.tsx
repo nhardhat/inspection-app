@@ -30,7 +30,7 @@ const KINDS: [SnippetKind, string][] = [
   ["body", "body"],
   ["condition", "condition"],
   ["heading", "heading"],
-  ["photoNote", "photo note"],
+  ["photoNote", "photo line"],
 ];
 
 const SECTIONS = [

@@ -16,8 +16,8 @@ These seed the Snippet table. The engineer can edit them in the app. Add new one
 - Noted for information: "Noted for information:"
 - Noted for information (long): "The following items are noted for information only and do not form conditions of this instruction:"
 
-## Photo confirmation note (kind: photoNote, one only; added in the memo after each instruction that needs photo confirmation)
-- Photo confirmation note: "(provide photos confirming completion before proceeding)"
+## Photo confirmation line (kind: photoNote, one only; instructions needing photo confirmation are marked * in the memo and the notes box, and this line is the last bullet of the memo's list when any is)
+- Photo confirmation line: "Items marked * are to be closed out with photos confirming completion prior to proceeding."
 
 ## Rules (template logic, not snippets)
 - Conditions lead-in: with one or more instruction items, one line "Ok to proceed subject to the following:" then the list, whichever body message is chosen. With no instruction items, "Ok to proceed." and no list.

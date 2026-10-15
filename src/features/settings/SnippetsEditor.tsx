@@ -32,8 +32,8 @@ const GROUPS: {
   },
   {
     kind: "photoNote",
-    title: "Photo confirmation note",
-    hint: "Added in the memo after each instruction that needs photo confirmation. Leave it empty for no note.",
+    title: "Photo confirmation line",
+    hint: "Instructions needing photo confirmation are marked * in the memo and the notes box; this line is the last bullet of the memo's list when any is. Leave it empty for no line.",
     single: true,
   },
 ];

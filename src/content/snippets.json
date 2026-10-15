@@ -48,9 +48,9 @@
     "text": "The following items are noted for information only and do not form conditions of this instruction:"
   },
   {
-    "id": "photoNote-photo-confirmation-note",
+    "id": "photoNote-photo-confirmation-line",
     "kind": "photoNote",
-    "label": "Photo confirmation note",
-    "text": "(provide photos confirming completion before proceeding)"
+    "label": "Photo confirmation line",
+    "text": "Items marked * are to be closed out with photos confirming completion prior to proceeding."
   }
 ]

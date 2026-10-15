@@ -1506,9 +1506,15 @@ dl.facts dd {
   list-style: none;
 }
 
-.memo-photo-note {
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-sm);
+.memo-photo-mark {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.memo-photo-line {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--line);
 }
 
 .memo-instructions textarea {

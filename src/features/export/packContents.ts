@@ -32,7 +32,7 @@ export interface PackData {
   marks: Markup[];
   conditionSnippets: Snippet[];
   /** The note after instructions needing photo confirmation. */
-  photoNote: string;
+  photoLine: string;
   observationHeading: string;
   photos: Map<string, Photo>;
   /** The memo's signature (PNG), if it prints one. */

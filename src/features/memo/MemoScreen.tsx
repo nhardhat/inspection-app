@@ -35,7 +35,7 @@ import {
 } from "../inspections/jobDetails";
 import {
   buildMemoPdfInput,
-  photoNote,
+  photoLine,
   conditionTicked,
   defaultSalutation,
   defaultSiteVisitRequestedBy,
@@ -194,7 +194,7 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
     inspection,
     items,
     conditionSnippets,
-    photoNote(snippets),
+    photoLine(snippets),
   );
   const saveState =
     jobSave.state === "error" || memoSave.state === "error"
@@ -600,6 +600,14 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                       <label className="field">
                         <span>
                           {item.letter}.{" "}
+                          {item.requiresPhotoConfirmation && (
+                            <span
+                              className="memo-photo-mark"
+                              data-testid="memo-photo-mark"
+                            >
+                              * photo confirmation{" "}
+                            </span>
+                          )}
                           {override !== undefined && (
                             <span className="muted">
                               (reworded for this memo)
@@ -621,16 +629,6 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                           onBlur={() => void memoSave.flush()}
                         />
                       </label>
-                      {/* Added after the text in the memo (Settings). */}
-                      {item.requiresPhotoConfirmation &&
-                        photoNote(snippets) && (
-                          <p
-                            className="muted memo-photo-note"
-                            data-testid="memo-photo-note"
-                          >
-                            + {photoNote(snippets)}
-                          </p>
-                        )}
                       {override !== undefined && (
                         <button
                           type="button"
@@ -648,6 +646,13 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                 })}
               </ol>
             )}
+            {/* The list's last bullet when any instruction needs photos. */}
+            {instructions.some((i) => i.requiresPhotoConfirmation) &&
+              photoLine(snippets) && (
+                <p className="memo-photo-line" data-testid="memo-photo-line">
+                  {photoLine(snippets)}
+                </p>
+              )}
             <p className="muted">
               Instructions come from the pins; add or change them on the
               drawings. Rewording one here changes only the memo.
