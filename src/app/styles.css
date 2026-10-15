@@ -1490,6 +1490,18 @@ dl.facts dd {
   width: 100%;
 }
 
+/* Rows reorder by dragging ≡ (recipients, project contacts). */
+.memo-recipients tbody tr {
+  position: relative;
+  background-color: var(--surface);
+  transition: transform 150ms ease;
+}
+
+.memo-recipients th:first-child,
+.memo-recipients td:first-child {
+  width: var(--control);
+}
+
 .memo-conditions {
   display: grid;
   gap: 0.4rem;

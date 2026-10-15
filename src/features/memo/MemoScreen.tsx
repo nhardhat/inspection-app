@@ -5,6 +5,7 @@ import { useParams } from "react-router";
 import { NotFound } from "../../app/NotFound";
 import { AutoGrowTextarea } from "../../app/AutoGrowTextarea";
 import { saveStateLabel, useAutosave } from "../../app/useAutosave";
+import { useRowDrag } from "../../app/useRowDrag";
 import { db } from "../../db/db";
 import { formatLongDate } from "../../lib/dates";
 import { getMemo, updateMemo, type MemoPatch } from "../../db/memos";
@@ -157,6 +158,14 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
     };
   }, [inspectionId]);
 
+  // Drag ≡ to reorder the recipients (their order in the memo).
+  const recipientDrag = useRowDrag(
+    (memo?.recipients ?? []).map((_, i) => String(i)),
+    (order) =>
+      memo &&
+      patch({ recipients: order.map((i) => memo.recipients[Number(i)]) }),
+  );
+
   if (load.status === "loading") return null;
   if (load.status === "missing" || !job || !memo || !items || !snippets) {
     if (load.status !== "missing") return null;
@@ -306,6 +315,9 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
             <table className="memo-recipients" aria-label="Recipients">
               <thead>
                 <tr>
+                  <th>
+                    <span className="sr-only">Reorder</span>
+                  </th>
                   <th>Company</th>
                   <th>Attn</th>
                   <th>Send as</th>
@@ -318,11 +330,38 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                 {memo.recipients.map((r, i) => (
                   <tr
                     key={i}
+                    ref={recipientDrag.rowRef(String(i))}
+                    className={
+                      recipientDrag.draggingId === String(i)
+                        ? "reorder-row-dragged"
+                        : undefined
+                    }
+                    style={{
+                      transform: `translateY(${recipientDrag.shift(String(i))}px)`,
+                      transition:
+                        recipientDrag.draggingId === null ||
+                        recipientDrag.draggingId === String(i)
+                          ? "none"
+                          : undefined,
+                    }}
                     onBlur={(e) => {
                       if (!e.currentTarget.contains(e.relatedTarget as Node))
                         rememberRecipient(i);
                     }}
                   >
+                    <td>
+                      {memo.recipients.length > 1 && (
+                        <button
+                          type="button"
+                          className="drag-handle"
+                          aria-label={`Reorder recipient ${i + 1}`}
+                          title="Drag to reorder"
+                          {...recipientDrag.handleProps(String(i))}
+                        >
+                          ≡
+                        </button>
+                      )}
+                    </td>
                     <td>
                       <input
                         aria-label={`Recipient ${i + 1} company`}

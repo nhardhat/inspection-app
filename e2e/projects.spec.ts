@@ -1,10 +1,20 @@
-import { expect, test, type Page } from "@playwright/test";
-import { openTab, startInspection } from "./helpers";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+import { centre, openTab, startInspection } from "./helpers";
 
 const field = (page: Page, label: string) =>
   page.getByLabel(label, { exact: true });
 
 const PROJECT = { jobNumber: "SY000001", jobName: "Example Apartments" };
+
+/** Drags a ≡ handle up to the top of a row, with the mouse in small steps. */
+async function dragUp(page: Page, handle: Locator, toRow: Locator) {
+  const at = await centre(handle);
+  const row = (await toRow.boundingBox())!;
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await page.mouse.move(at.x, row.y + 4, { steps: 10 });
+  await page.mouse.up();
+}
 
 /** The Inspections tab, where Projects sit beside Recent inspections. */
 async function openProjects(page: Page) {
@@ -166,6 +176,38 @@ test("recipients typed into a memo become the project's contacts", async ({
     "Example Certifiers",
   );
   await expect(page.getByLabel("Recipient 2 copy")).toBeChecked();
+
+  // Drag ≡ to reorder the memo's recipients.
+  const recipients = page.getByRole("table", { name: "Recipients" });
+  await dragUp(
+    page,
+    page.getByLabel("Reorder recipient 2"),
+    recipients.getByRole("row").nth(1),
+  );
+  await expect(page.getByLabel("Recipient 1 company")).toHaveValue(
+    "Example Certifiers",
+  );
+  await expect(page.getByLabel("Recipient 2 company")).toHaveValue(
+    "Example Builders Pty Ltd",
+  );
+  await expect(page.getByTestId("memo-save-state")).toHaveText("Saved");
+
+  // And the project's contacts (the order "Add from contacts" offers).
+  await page.goto("./");
+  await openProjects(page);
+  await page.getByRole("link", { name: /^SY000001/ }).click();
+  await dragUp(
+    page,
+    page.getByLabel("Reorder contact 2"),
+    contacts.getByRole("row").nth(1),
+  );
+  await expect(page.getByLabel("Contact 1 attention")).toHaveValue(
+    "Sam Sample",
+  );
+  await page.reload();
+  await expect(page.getByLabel("Contact 1 attention")).toHaveValue(
+    "Sam Sample",
+  );
 });
 
 test("deleting a project says how many inspections go with it", async ({

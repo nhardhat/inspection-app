@@ -6,6 +6,7 @@ import { backTarget, rememberBack } from "../../app/backTarget";
 import { ConfirmDialog } from "../../app/ConfirmDialog";
 import { NotFound } from "../../app/NotFound";
 import { saveStateLabel, useAutosave } from "../../app/useAutosave";
+import { useRowDrag } from "../../app/useRowDrag";
 import { db } from "../../db/db";
 import { createInspection } from "../../db/inspections";
 import {
@@ -282,6 +283,14 @@ function ContactsEditor({
   };
   const change = (i: number, patch: Partial<Contact>) =>
     update(rows.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  // Drag ≡ to set the order "Add from contacts" offers them in.
+  const reorder = useRowDrag(
+    rows.map((c) => c.id),
+    (order) => {
+      update(order.map((id) => rows.find((c) => c.id === id)!));
+      void autosave.flush();
+    },
+  );
 
   return (
     <>
@@ -291,6 +300,9 @@ function ContactsEditor({
         <table className="memo-recipients" aria-label="Contacts">
           <thead>
             <tr>
+              <th>
+                <span className="sr-only">Reorder</span>
+              </th>
               <th>Company</th>
               <th>Attn</th>
               <th>
@@ -300,7 +312,35 @@ function ContactsEditor({
           </thead>
           <tbody>
             {rows.map((c, i) => (
-              <tr key={c.id}>
+              <tr
+                key={c.id}
+                ref={reorder.rowRef(c.id)}
+                className={
+                  reorder.draggingId === c.id
+                    ? "reorder-row-dragged"
+                    : undefined
+                }
+                style={{
+                  transform: `translateY(${reorder.shift(c.id)}px)`,
+                  transition:
+                    reorder.draggingId === null || reorder.draggingId === c.id
+                      ? "none"
+                      : undefined,
+                }}
+              >
+                <td>
+                  {rows.length > 1 && (
+                    <button
+                      type="button"
+                      className="drag-handle"
+                      aria-label={`Reorder contact ${i + 1}`}
+                      title="Drag to reorder"
+                      {...reorder.handleProps(c.id)}
+                    >
+                      ≡
+                    </button>
+                  )}
+                </td>
                 <td>
                   <input
                     aria-label={`Contact ${i + 1} company`}
