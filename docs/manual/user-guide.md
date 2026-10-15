@@ -126,8 +126,8 @@ Turn on **Select** (the dotted lasso), then tap a mark or draw a loop round seve
 ## The Site Instruction Memo
 
 1. Open **Site memo** and tap **Create memo**. It gets the job's next reference, such as SIM-001.
-2. Check the **recipients**: the client starts as "To". Add others as To or Copy.
-3. Pick the **message** that fits, and tick the **standard conditions** that apply. Your instructions are listed as conditions; each can be reworded for the memo.
+2. Check the **recipients**: the client starts as "To". Add others as To or Copy, and drag ≡ to change their order.
+3. Pick the **message** that fits, and tick the **standard conditions** that apply. Your instructions are listed as conditions; each can be reworded for the memo. Instructions needing photos are marked \*, with one line at the end explaining it. With lots of pins, turn on **Refer to drawings**: one line points the builder to the attached drawings instead of listing every instruction.
 4. Check the **signature** and sign-off.
 5. Read the **preview** beside the editor: it's exactly what will be exported.
 
