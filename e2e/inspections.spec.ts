@@ -319,6 +319,23 @@ test("Settings, About: version, documents (bundled) and what's new", async ({
   await expect(viewer.getByRole("img", { name: "Page 1" })).toBeVisible({
     timeout: 20_000,
   });
+  // Zoomed in, the part on screen is redrawn sharp, at true screen size.
+  await viewer.getByRole("button", { name: "Zoom in" }).click();
+  await viewer.getByRole("button", { name: "Zoom in" }).click();
+  await expect(viewer.getByTestId("pdf-viewer-zoom")).toHaveText("225%");
+  const sharp = viewer.locator("canvas.pdf-viewer-sharp").first();
+  await expect(sharp).toBeAttached({ timeout: 15_000 });
+  const { cssWidth, pixels, dpr } = await sharp.evaluate((c) => ({
+    cssWidth: (c as HTMLCanvasElement).getBoundingClientRect().width,
+    pixels: (c as HTMLCanvasElement).width,
+    dpr: window.devicePixelRatio,
+  }));
+  expect(Math.abs(cssWidth * dpr - pixels)).toBeLessThan(dpr * 2);
+  // Back to fit: no sharp copy needed.
+  await viewer.getByRole("button", { name: "Zoom out" }).click();
+  await viewer.getByRole("button", { name: "Zoom out" }).click();
+  await expect(viewer.getByTestId("pdf-viewer-zoom")).toHaveText("100%");
+  await expect(viewer.locator("canvas.pdf-viewer-sharp")).toHaveCount(0);
   await viewer.getByRole("button", { name: "Back" }).click();
   await expect(viewer).toHaveCount(0);
   await expect(

@@ -4745,12 +4745,23 @@ h1 {
   text-align: center;
 }
 
+/* A page: its image at fit width, and a sharp copy of the part on screen
+   when zoomed, laid over it at true size. */
+.pdf-viewer-sheet {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow-float);
+}
+
 .pdf-viewer-page {
   display: block;
   width: 100%;
-  height: auto;
-  background: #fff;
-  box-shadow: var(--shadow-float);
+  height: 100%;
+}
+
+.pdf-viewer-sharp {
+  position: absolute;
 }
 
 .pdf-viewer-zoom {
