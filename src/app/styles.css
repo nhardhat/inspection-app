@@ -3292,6 +3292,17 @@ button.item-row:hover:not(:disabled) {
   gap: var(--space-4);
 }
 
+/* Step 10d: storage nearly full. */
+.tile-storage-full .ring-value {
+  stroke: var(--accent);
+}
+
+.storage-warning {
+  margin: var(--space-1) 0 0;
+  color: var(--accent);
+  font-size: var(--text-sm);
+}
+
 .storage-ring {
   flex: none;
   width: 96px;

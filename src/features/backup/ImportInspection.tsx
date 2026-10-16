@@ -1,4 +1,5 @@
 import { FileDown } from "lucide-react";
+import { STORAGE_FULL_MESSAGE, isStorageFull } from "../../db/storage";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -86,7 +87,11 @@ export function ImportInspection() {
       navigate(tabPath(id, "details"));
     } catch (e) {
       console.error("Import failed", e);
-      setError("The import didn't finish. Nothing was changed; try again.");
+      setError(
+        isStorageFull(e)
+          ? `The import didn't finish; nothing was changed. ${STORAGE_FULL_MESSAGE}`
+          : "The import didn't finish. Nothing was changed; try again.",
+      );
       setChosen(null);
     } finally {
       setBusy(false);

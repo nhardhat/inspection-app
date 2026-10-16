@@ -8,12 +8,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import { Buddy } from "../../app/Buddy";
 import { appCommit, appVersion } from "../../app/version";
 import { northrop } from "../../brand/northrop";
 import { db } from "../../db/db";
 import { jobInspection } from "../../db/projects";
 import {
+  NEARLY_FULL,
   formatBytes,
   getStorageStatus,
   type StorageStatus,
@@ -343,11 +345,12 @@ function StorageTile() {
   const quota = storage?.quota;
   const known = usage !== undefined && !!quota;
   const used = known ? Math.min(100, (usage / quota) * 100) : 0;
+  const nearlyFull = known && used >= NEARLY_FULL * 100;
   const r = 30;
   const length = 2 * Math.PI * r;
   return (
     <section
-      className="tile tile-plain tile-storage"
+      className={`tile tile-plain tile-storage${nearlyFull ? " tile-storage-full" : ""}`}
       aria-labelledby="storage-heading"
     >
       <svg viewBox="0 0 76 76" className="storage-ring" aria-hidden="true">
@@ -383,6 +386,12 @@ function StorageTile() {
               </>
             )}
           </span>
+        )}
+        {nearlyFull && (
+          <p className="storage-warning" data-testid="storage-warning">
+            Nearly full ({Math.round(used)}%). Back up and delete finished
+            inspections in <Link to="/settings">Settings</Link>.
+          </p>
         )}
       </div>
     </section>

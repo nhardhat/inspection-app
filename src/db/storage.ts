@@ -38,6 +38,32 @@ export async function getStorageStatus(
   return { usage: estimate?.usage, quota: estimate?.quota, persisted };
 }
 
+/**
+ * Whether saving failed because the app's storage on the device is full
+ * (step 10d): IndexedDB's QuotaExceededError, as Dexie reports it (the
+ * browser's error may be inside).
+ */
+export function isStorageFull(error: unknown): boolean {
+  let e: unknown = error;
+  for (let depth = 0; e && depth < 5; depth++) {
+    const { name, inner, cause } = e as {
+      name?: string;
+      inner?: unknown;
+      cause?: unknown;
+    };
+    if (name === "QuotaExceededError") return true;
+    e = inner ?? cause;
+  }
+  return false;
+}
+
+/** What to tell the engineer when storage is full. */
+export const STORAGE_FULL_MESSAGE =
+  "There isn't enough space on this iPad to save it. Back up and delete inspections you've finished (Settings, Storage and backup), then try again.";
+
+/** Storage this full or more (0..1) gets a warning on the Dashboard. */
+export const NEARLY_FULL = 0.8;
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB", "TB"];

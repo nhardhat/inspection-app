@@ -12,7 +12,11 @@ import {
   reorderDrawings,
 } from "../../db/drawings";
 import type { Drawing } from "../../db/types";
-import { formatBytes } from "../../db/storage";
+import {
+  STORAGE_FULL_MESSAGE,
+  formatBytes,
+  isStorageFull,
+} from "../../db/storage";
 import { drawingPages } from "./document/documentLayout";
 import { storePdf } from "./drawingFiles";
 
@@ -79,6 +83,10 @@ export function DrawingsSection({
         );
       } catch (e) {
         console.error("Could not add drawing", e);
+        if (isStorageFull(e)) {
+          failed.push(`${file.name}: ${STORAGE_FULL_MESSAGE}`);
+          break;
+        }
         failed.push(`${file.name} couldn't be opened as a PDF.`);
       }
     }

@@ -1,4 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
+import { STORAGE_FULL_MESSAGE, isStorageFull } from "../../db/storage";
 import { Camera, Images, Share } from "lucide-react";
 import { useRef, useState } from "react";
 import { db } from "../../db/db";
@@ -93,6 +94,10 @@ export function PhotoSet({
       if (processed.length) await onAdd(processed);
     } catch (e) {
       console.error("Saving photos failed", e);
+      if (isStorageFull(e)) {
+        setStatus(null);
+        return setError(STORAGE_FULL_MESSAGE);
+      }
       failed = files.length;
     }
     setStatus(null);

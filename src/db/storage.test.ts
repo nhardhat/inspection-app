@@ -5,6 +5,7 @@ import { ensureSeeded } from "./seed";
 import {
   formatBytes,
   getStorageStatus,
+  isStorageFull,
   requestPersistentStorageOnce,
 } from "./storage";
 import { SETTINGS_ID } from "./types";
@@ -71,4 +72,14 @@ test("formatBytes", () => {
   expect(formatBytes(2048)).toBe("2.0 KB");
   expect(formatBytes(150 * 1024 ** 2)).toBe("150 MB");
   expect(formatBytes(1024 ** 3)).toBe("1.0 GB");
+});
+
+describe("isStorageFull", () => {
+  test("knows the quota error, also inside Dexie's", () => {
+    const quota = new DOMException("full", "QuotaExceededError");
+    expect(isStorageFull(quota)).toBe(true);
+    expect(isStorageFull({ name: "AbortError", inner: quota })).toBe(true);
+    expect(isStorageFull(new Error("not a PDF"))).toBe(false);
+    expect(isStorageFull(undefined)).toBe(false);
+  });
 });

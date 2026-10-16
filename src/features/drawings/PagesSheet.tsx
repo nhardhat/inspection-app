@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
 import { db } from "../../db/db";
+import { STORAGE_FULL_MESSAGE, isStorageFull } from "../../db/storage";
 import { drawingNameFromFile, moveDrawing } from "../../db/drawings";
 import {
   countUnmarked,
@@ -212,7 +213,11 @@ export function PagesSheet({
         );
       } catch (e) {
         console.error("Could not add drawing", e);
-        setStatus(`${file.name} couldn't be opened as a PDF.`);
+        setStatus(
+          isStorageFull(e)
+            ? `${file.name}: ${STORAGE_FULL_MESSAGE}`
+            : `${file.name} couldn't be opened as a PDF.`,
+        );
         return;
       }
     }

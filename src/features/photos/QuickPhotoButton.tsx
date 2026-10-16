@@ -1,4 +1,5 @@
 import { Camera } from "lucide-react";
+import { STORAGE_FULL_MESSAGE, isStorageFull } from "../../db/storage";
 import { useRef, useState } from "react";
 import { db } from "../../db/db";
 import { addPhotos, type NewPhoto } from "../../db/photos";
@@ -26,6 +27,12 @@ export function QuickPhotoButton({ inspectionId }: { inspectionId: string }) {
       );
     } catch (e) {
       console.error("Could not add photo", e);
+      if (isStorageFull(e)) {
+        // Long enough to read.
+        setStatus(STORAGE_FULL_MESSAGE);
+        window.setTimeout(() => setStatus(null), 10_000);
+        return;
+      }
       setStatus("That photo couldn't be added.");
     }
     window.setTimeout(() => setStatus(null), 3000);

@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { waitForServiceWorker } from "./helpers";
+import {
+  TYPICAL_DRAWING,
+  buildSyntheticDrawing,
+} from "../src/features/drawings/fixtures/syntheticDrawing";
+import { openTab, startInspection, waitForServiceWorker } from "./helpers";
 
 test("loads the shell with Inspections and Settings only", async ({ page }) => {
   await page.goto("./");
@@ -74,4 +78,50 @@ test("makes no requests to other origins", async ({ page, baseURL }) => {
   await page.waitForLoadState("networkidle");
 
   expect(external).toEqual([]);
+});
+
+test("storage: a nearly full iPad is flagged on the Dashboard", async ({
+  page,
+}) => {
+  // Pretend 90% of the app's storage is used.
+  await page.addInitScript(() => {
+    StorageManager.prototype.estimate = async () => ({
+      usage: 900_000_000,
+      quota: 1_000_000_000,
+    });
+  });
+  await page.goto("./");
+  await startInspection(page, { jobNumber: "SY000001", jobName: "Example" });
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Dashboard" })
+    .click();
+  await expect(page.getByTestId("storage-warning")).toContainText(
+    "Nearly full (90%)",
+  );
+});
+
+test("storage: when the iPad is full, adding a drawing says so", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await startInspection(page, { jobNumber: "SY000001", jobName: "Example" });
+  await openTab(page, "Inspection");
+  // From now on, saving a file runs out of space.
+  await page.evaluate(() => {
+    const add = IDBObjectStore.prototype.add;
+    IDBObjectStore.prototype.add = function (...args) {
+      if (this.name === "blobs")
+        throw new DOMException("full", "QuotaExceededError");
+      return add.apply(this, args);
+    };
+  });
+  await page.getByTestId("drawing-file-input").setInputFiles({
+    name: "S-101 Level 3.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(await buildSyntheticDrawing(TYPICAL_DRAWING)),
+  });
+  await expect(page.getByRole("alert").first()).toContainText(
+    "There isn't enough space on this iPad",
+  );
 });
