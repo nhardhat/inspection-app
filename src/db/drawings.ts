@@ -10,7 +10,7 @@ import type { Drawing, Item } from "./types";
 
 export interface NewDrawing {
   name: string;
-  /** PDF bytes. Copied, so the caller can keep using its array. */
+  /** PDF bytes (IndexedDB stores its own copy). */
   pdf: Uint8Array;
   pageCount: number;
   /** Each page's [width, height] in points. */
@@ -36,7 +36,13 @@ export async function addDrawing(
       const pdfBlobId = crypto.randomUUID();
       await db.blobs.add({
         id: pdfBlobId,
-        data: drawing.pdf.slice().buffer,
+        // Its whole buffer as it is (no extra copy of a big set); a view
+        // into a larger buffer is cut out.
+        data:
+          drawing.pdf.byteOffset === 0 &&
+          drawing.pdf.byteLength === drawing.pdf.buffer.byteLength
+            ? (drawing.pdf.buffer as ArrayBuffer)
+            : drawing.pdf.slice().buffer,
         type: "application/pdf",
         size: drawing.pdf.byteLength,
       });
