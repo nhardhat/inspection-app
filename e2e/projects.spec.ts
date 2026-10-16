@@ -210,6 +210,28 @@ test("recipients typed into a memo become the project's contacts", async ({
   );
 });
 
+test("a project's own memo reference letters", async ({ page }) => {
+  await page.goto("./");
+  await startInspection(page, PROJECT);
+  await openProjects(page);
+  await page.getByRole("link", { name: /^SY000001/ }).click();
+  await expect(page.getByTestId("reference-example")).toContainText(
+    "SIM001, SIM002",
+  );
+  await page.getByLabel("Memo reference letters").fill("ssi");
+  await expect(page.getByTestId("reference-example")).toContainText(
+    "SSI001, SSI002",
+  );
+  await page.getByLabel("Memo reference letters").blur();
+  await expect(page.getByTestId("save-state")).toHaveText("Saved");
+  await page.getByRole("button", { name: "New inspection" }).click();
+  await openTab(page, "Site memo");
+  await page.getByRole("button", { name: "Create memo" }).click();
+  await expect(page.getByLabel("Reference", { exact: true })).toHaveValue(
+    "SSI001",
+  );
+});
+
 test("deleting a project says how many inspections go with it", async ({
   page,
 }) => {

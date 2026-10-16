@@ -85,7 +85,7 @@ test("create a memo from the instructions, with a live preview", async ({
 
   await createMemo(page);
   await expect(page).toHaveURL(/\/memo$/);
-  await expect(field(page, "Reference")).toHaveValue("SIM-001");
+  await expect(field(page, "Reference")).toHaveValue("SIM001");
   await expect(
     page.locator('[data-testid="memo-preview"][data-ready="true"]'),
   ).toBeVisible({ timeout: 20_000 });
@@ -153,7 +153,7 @@ test("create a memo from the instructions, with a live preview", async ({
   // Edits are kept; the tab opens the memo once there is one.
   await openTab(page, "Site memo");
   await expect(
-    page.getByRole("heading", { name: "Site Instruction Memo · SIM-001" }),
+    page.getByRole("heading", { name: "Site Instruction Memo · SIM001" }),
   ).toBeVisible();
   await field(page, "Salutation").fill("Hi Alex,");
   await expect(page.getByTestId("memo-save-state")).toHaveText("Saved", {
@@ -180,13 +180,13 @@ test("a memo needs a job number and name; references count per job", async ({
 
   await newInspection(page);
   await createMemo(page);
-  await expect(field(page, "Reference")).toHaveValue("SIM-001");
+  await expect(field(page, "Reference")).toHaveValue("SIM001");
   // No instructions: the memo says Ok to proceed.
   await expect(page.getByTestId("memo-lead-in")).toHaveText("Ok to proceed.");
 
   await newInspection(page, true);
   await createMemo(page);
-  await expect(field(page, "Reference")).toHaveValue("SIM-002");
+  await expect(field(page, "Reference")).toHaveValue("SIM002");
 });
 
 // Tagged @offline: runs in the Chromium project only (see playwright.config.ts).
@@ -407,7 +407,7 @@ test("export the PDF pack: memo then the marked-up page; warns when letters chan
   await card.getByRole("button", { name: "Export PDF" }).click();
   const file = card.getByTestId("export-file");
   await expect(file).toContainText(
-    "SY000001_SIM-001_Level-3-slab-reinforcement.pdf",
+    "SY000001-SIM001-A-Level 3 slab reinforcement.pdf",
     { timeout: 30_000 },
   );
   await expect(file).toContainText("2 pages");

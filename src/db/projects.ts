@@ -18,6 +18,7 @@ export interface ProjectPatch {
   jobNumber?: string;
   jobName?: string;
   client?: Partial<Client>;
+  referencePrefix?: string;
 }
 
 /** One edit to the job details: the project's part and the inspection's. */

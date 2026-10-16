@@ -18,6 +18,11 @@ export interface Project {
   client: Client;
   /** Memo recipients used before, offered when adding recipients. */
   contacts: Contact[];
+  /**
+   * The letters its memo references start with (engineer, 2026-10-16:
+   * projects differ, e.g. SSI): "SSI" gives SSI001. Missing: SIM.
+   */
+  referencePrefix?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -256,7 +261,7 @@ export interface Memo {
   id: string;
   inspectionId: string;
   templateId: string;
-  /** SIM-NNN, per job number (SPEC 7a). Editable. */
+  /** Prefix + NNN (SIM001; the project's letters), per job number (SPEC 7a). Editable. */
   reference: string;
   recipients: Recipient[];
   /** Null: the default (client name, client company). */

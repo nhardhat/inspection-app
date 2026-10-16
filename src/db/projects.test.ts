@@ -85,7 +85,7 @@ describe("projects", () => {
     expect((await loadJobInspection(db, inspection.id))?.jobNumber).toBe(
       "SY000002",
     );
-    expect((await db.memos.get(memo.id))?.reference).toBe("SIM-001");
+    expect((await db.memos.get(memo.id))?.reference).toBe("SIM001");
   });
 
   test("a new project for an unsorted inspection starts from its old details", async () => {

@@ -191,7 +191,7 @@ describe("inspection file", () => {
     expect(comparable(again.data)).toEqual(comparable(file.data));
     for (const blob of again.blobs)
       expect(new Uint8Array(blob.data)).toEqual(file.blobs.get(blob.id));
-    // The memo counter moved up, so the next memo for the job is SIM-002.
+    // The memo counter moved up, so the next memo for the job is SIM002.
     expect((await target.memoCounters.get("SY000001"))?.lastSeq).toBe(1);
   });
 

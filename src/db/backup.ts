@@ -215,9 +215,9 @@ function withNewIds(data: InspectionData): InspectionData {
   };
 }
 
-/** "SIM-007" -> 7 (0 when it isn't in that form). */
+/** "SIM007", "SSI007" or "SIM-007" -> 7 (0 when it isn't in that form). */
 function simNumber(reference: string): number {
-  const match = /^SIM-(\d+)$/i.exec(reference.trim());
+  const match = /^[A-Z]{1,6}-?(\d+)$/i.exec(reference.trim());
   return match ? Number(match[1]) : 0;
 }
 

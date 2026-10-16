@@ -136,7 +136,9 @@ test("memo, then pinned drawing pages, then the appendix, numbered through", asy
     blobLoader(db),
     (p) => fractions.push(p.fraction),
   );
-  expect(pack.filename).toBe("SY000001_SIM-001_Level-3-slab-reinforcement.pdf");
+  expect(pack.filename).toBe(
+    "SY000001-SIM001-A-Level 3 slab reinforcement.pdf",
+  );
   expect(pack.pages).toBe(4);
   expect(fractions[fractions.length - 1]).toBe(1);
 

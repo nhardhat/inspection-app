@@ -10,9 +10,21 @@ import {
 
 export const MEMO_TEMPLATE_ID = "northrop";
 
-/** "SIM-001" for sequence 1 (SPEC 7a). */
-export function memoReference(seq: number): string {
-  return `SIM-${String(seq).padStart(3, "0")}`;
+/** The letters a reference starts with when a project sets none. */
+export const DEFAULT_REFERENCE_PREFIX = "SIM";
+
+/** A project's reference letters, cleaned: capitals only, up to 6; else SIM. */
+export function referencePrefix(typed: string | undefined): string {
+  const letters = (typed ?? "").toUpperCase().replace(/[^A-Z]/g, "");
+  return letters.slice(0, 6) || DEFAULT_REFERENCE_PREFIX;
+}
+
+/**
+ * "SIM001" for sequence 1, or with the project's letters ("SSI001";
+ * engineer, 2026-10-16: no hyphen, three digits). SPEC 7a.
+ */
+export function memoReference(seq: number, prefix?: string): string {
+  return `${referencePrefix(prefix)}${String(seq).padStart(3, "0")}`;
 }
 
 /** A new memo's starting values (SPEC section 4). */
@@ -65,8 +77,9 @@ export async function getMemo(
 const DEFAULT_BODY_ID = "body-works-generally-in-accordance";
 
 /**
- * Creates the inspection's memo with the job's next SIM reference, or
- * returns the one it already has. Needs a job number and job name.
+ * Creates the inspection's memo with the job's next reference (the
+ * project's letters, else SIM), or returns the one it already has. Needs a
+ * job number and job name.
  */
 export async function createMemo(
   db: InspectionDb,
@@ -93,17 +106,20 @@ export async function createMemo(
       if (!jobNumber || !inspection.jobName.trim())
         throw new Error("A memo needs a job number and job name");
 
-      // SIM references count per job number and are never reused.
+      // References count per job number and are never reused.
       const counter = await db.memoCounters.get(jobNumber);
       const seq = (counter?.lastSeq ?? 0) + 1;
       await db.memoCounters.put({ jobNumber, lastSeq: seq });
+      const project = inspection.projectId
+        ? await db.projects.get(inspection.projectId)
+        : undefined;
 
       const settings = await db.settings.get(SETTINGS_ID);
       const bodies = await db.snippets.where("kind").equals("body").toArray();
       const body = bodies.find((s) => s.id === DEFAULT_BODY_ID) ?? bodies[0];
       const memo = blankMemo(
         inspection,
-        memoReference(seq),
+        memoReference(seq, project?.referencePrefix),
         {
           inspectorName: settings?.inspectorName ?? "",
           inspectorTitle: settings?.inspectorTitle ?? "",

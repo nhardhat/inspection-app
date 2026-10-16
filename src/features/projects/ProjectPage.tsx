@@ -8,6 +8,7 @@ import { NotFound } from "../../app/NotFound";
 import { saveStateLabel, useAutosave } from "../../app/useAutosave";
 import { useRowDrag } from "../../app/useRowDrag";
 import { db } from "../../db/db";
+import { memoReference } from "../../db/memos";
 import { createInspection } from "../../db/inspections";
 import {
   deleteProject,
@@ -70,6 +71,7 @@ function ProjectFor({ initial }: { initial: Project }) {
     date: "",
     inspector: "",
   }));
+  const [prefix, setPrefix] = useState(initial.referencePrefix ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const autosave = useAutosave<ProjectPatch>(
     (patch) => updateProject(db, id, patch),
@@ -155,6 +157,27 @@ function ProjectFor({ initial }: { initial: Project }) {
             }}
             onBlur={() => void autosave.flush()}
           />
+          {/* Engineer, 2026-10-16: some projects number memos differently. */}
+          <label className="field reference-prefix">
+            <span>Memo reference letters</span>
+            <input
+              value={prefix}
+              placeholder="SIM"
+              autoCapitalize="characters"
+              autoComplete="off"
+              maxLength={6}
+              onChange={(e) => {
+                setPrefix(e.target.value);
+                autosave.queue({ referencePrefix: e.target.value });
+              }}
+              onBlur={() => void autosave.flush()}
+            />
+          </label>
+          <p className="muted small" data-testid="reference-example">
+            New memos are numbered {memoReference(1, prefix)},{" "}
+            {memoReference(2, prefix)}… per job number. Memos already made keep
+            their reference.
+          </p>
           {duplicates.length > 0 && (
             <p className="notice" data-testid="duplicate-job">
               Another project also has job number {duplicates[0].jobNumber}:{" "}

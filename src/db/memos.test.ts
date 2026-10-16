@@ -40,16 +40,24 @@ async function inspectionFor(
 }
 
 describe("memos", () => {
-  test("references count per job number: SIM-001, SIM-002...", async () => {
+  test("references count per job number: SIM001, SIM002...", async () => {
     const a = await createMemo(db, (await inspectionFor("SY000001")).id);
     const b = await createMemo(db, (await inspectionFor("SY000001")).id);
     const c = await createMemo(db, (await inspectionFor("SY000002")).id);
     expect([a.reference, b.reference, c.reference]).toEqual([
-      "SIM-001",
-      "SIM-002",
-      "SIM-001",
+      "SIM001",
+      "SIM002",
+      "SIM001",
     ]);
-    expect(memoReference(12)).toBe("SIM-012");
+    expect(memoReference(12)).toBe("SIM012");
+    expect(memoReference(3, "ssi")).toBe("SSI003");
+    expect(memoReference(3, " 1-2 ")).toBe("SIM003");
+  });
+
+  test("a project's own letters start its references", async () => {
+    const inspection = await inspectionFor("SY000003");
+    await db.projects.update(inspection.projectId!, { referencePrefix: "SSI" });
+    expect((await createMemo(db, inspection.id)).reference).toBe("SSI001");
   });
 
   test("an inspection has one memo; creating again returns it", async () => {
@@ -102,6 +110,6 @@ describe("memos", () => {
     await deleteInspection(db, inspection.id);
     expect(await db.memos.count()).toBe(0);
     const next = await createMemo(db, (await inspectionFor("SY000001")).id);
-    expect(next.reference).toBe("SIM-002");
+    expect(next.reference).toBe("SIM002");
   });
 });

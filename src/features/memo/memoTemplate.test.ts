@@ -41,15 +41,15 @@ describe("memo template text", () => {
 });
 
 describe("memoFilename", () => {
-  test("joins job number, reference and item inspected", () => {
+  test("job number, reference, A, item inspected", () => {
     expect(
-      memoFilename("SY000001", "SIM-001", "Level 3 slab reinforcement"),
-    ).toBe("SY000001_SIM-001_Level-3-slab-reinforcement.pdf");
+      memoFilename("SY000001", "SIM001", "Level 3 slab reinforcement"),
+    ).toBe("SY000001-SIM001-A-Level 3 slab reinforcement.pdf");
   });
 
-  test("strips characters that break file systems", () => {
-    expect(memoFilename("SY/01", "SIM-002", 'Slab: "east" pour?')).toBe(
-      "SY-01_SIM-002_Slab-east-pour.pdf",
+  test("strips characters that break file systems, keeping spaces", () => {
+    expect(memoFilename("SY/01", "SSI002", 'Slab:  "east" pour?')).toBe(
+      "SY 01-SSI002-A-Slab east pour.pdf",
     );
   });
 
