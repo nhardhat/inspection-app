@@ -3,6 +3,7 @@ import { memoFilename } from "./memoFilename";
 import {
   conditionsLeadIn,
   confirmationParagraph,
+  confirmationParts,
   formatMemoDate,
   referenceLine,
 } from "./memoTemplate";
@@ -22,10 +23,13 @@ describe("memo template text", () => {
     );
   });
 
-  test("confirmation paragraph", () => {
+  test("confirmation paragraph, the item inspected in italics", () => {
     expect(confirmationParagraph("Level 3 slab reinforcement")).toBe(
       "We confirm having inspected the Level 3 slab reinforcement as highlighted on the drawing attached.",
     );
+    expect(confirmationParts("Level 3 slab").filter((p) => p.italic)).toEqual([
+      { text: "Level 3 slab", italic: true },
+    ]);
   });
 
   test("reference line", () => {

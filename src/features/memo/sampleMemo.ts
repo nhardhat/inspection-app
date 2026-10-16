@@ -1,5 +1,5 @@
 import starterSnippets from "../../content/snippets.json";
-import { confirmationParagraph } from "./memoTemplate";
+import { confirmationParts } from "./memoTemplate";
 import type { MemoPdfInput } from "./pdf/renderMemoPdf";
 
 const itemInspected = "Level 3 slab reinforcement";
@@ -49,7 +49,7 @@ export const sampleMemo: MemoPdfInput = {
     signOffTitle: "Structural Engineer",
   },
   bodyParagraphs: [
-    confirmationParagraph(itemInspected),
+    confirmationParts(itemInspected),
     worksGenerallyInAccordance,
   ],
   conditions: [

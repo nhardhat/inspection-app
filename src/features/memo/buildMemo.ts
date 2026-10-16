@@ -13,7 +13,7 @@ import type {
   Snippet,
 } from "../../db/types";
 import { indexForLetter } from "../items/letters";
-import { confirmationParagraph } from "./memoTemplate";
+import { confirmationParts } from "./memoTemplate";
 import type { MemoPdfInput } from "./pdf/renderMemoPdf";
 
 export const COMPLETE_ITEMS_ID = "condition-complete-listed-items";
@@ -206,9 +206,9 @@ export function buildMemoPdfInput(
     reference: memo.reference,
     fields: memoFields(memo, inspection),
     bodyParagraphs: [
-      confirmationParagraph(inspection.itemInspected),
+      confirmationParts(inspection.itemInspected),
       memo.bodyText.trim(),
-    ].filter(Boolean),
+    ].filter((p) => p.length > 0),
     conditions: memoConditions(memo, items, conditionSnippets, refer).map(
       (c) => c.text,
     ),

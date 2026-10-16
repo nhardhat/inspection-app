@@ -22,9 +22,29 @@ export const RECIPIENT_HEADINGS = {
   attn: "Attn:",
 } as const;
 
-/** Body paragraph 1 (SPEC section 4). */
+/** Part of a body paragraph; italic for the item inspected. */
+export interface TextPart {
+  text: string;
+  italic?: boolean;
+}
+
+/**
+ * Body paragraph 1 (SPEC section 4), with the item inspected in italics
+ * (engineer, 2026-10-16).
+ */
+export function confirmationParts(itemInspected: string): TextPart[] {
+  return [
+    { text: "We confirm having inspected the " },
+    { text: itemInspected, italic: true },
+    { text: " as highlighted on the drawing attached." },
+  ];
+}
+
+/** Body paragraph 1 as plain text. */
 export function confirmationParagraph(itemInspected: string): string {
-  return `We confirm having inspected the ${itemInspected} as highlighted on the drawing attached.`;
+  return confirmationParts(itemInspected)
+    .map((part) => part.text)
+    .join("");
 }
 
 /**

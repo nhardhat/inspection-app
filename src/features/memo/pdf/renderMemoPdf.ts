@@ -17,14 +17,18 @@ import {
   formatMemoDate,
   referenceLine,
 } from "../memoTemplate";
+import type { TextPart } from "../memoTemplate";
 import { toEncodable, wrapRuns, wrapText, type Run } from "./text";
 
 /** Everything the memo page shows that varies per job. */
 export interface MemoPdfInput {
   reference: string;
   fields: MemoFields;
-  /** Paragraphs after the salutation (confirmation, then body message). */
-  bodyParagraphs: string[];
+  /**
+   * Paragraphs after the salutation (confirmation, then body message);
+   * a paragraph can mix italic parts (the item inspected).
+   */
+  bodyParagraphs: (string | TextPart[])[];
   /** Bulleted conditions. None gives "Ok to proceed." and no list. */
   conditions: string[];
   /** Joins the lead-in when an instruction needs photos (else empty). */
@@ -543,12 +547,23 @@ function drawDetails(w: MemoWriter, fields: MemoFields) {
   }
 }
 
-function drawParagraph(w: MemoWriter, text: string, gap: number) {
-  const { regular } = w.fonts;
-  const lines = w.wrap(text, regular, BODY.size, CONTENT_W);
-  lines.forEach((line, i) => {
+function drawParagraph(w: MemoWriter, text: string | TextPart[], gap: number) {
+  const { regular, italic } = w.fonts;
+  if (typeof text === "string") {
+    const lines = w.wrap(text, regular, BODY.size, CONTENT_W);
+    lines.forEach((line, i) => {
+      const baseline = w.baseline(i === 0 ? gap : BODY.pitch);
+      w.text(line, LEFT, baseline, regular, BODY.size);
+    });
+    return;
+  }
+  const runs: Run[] = text.map((part) => {
+    const font = part.italic ? italic : regular;
+    return { text: toEncodable(part.text, font), font };
+  });
+  wrapRuns(runs, BODY.size, CONTENT_W).forEach((line, i) => {
     const baseline = w.baseline(i === 0 ? gap : BODY.pitch);
-    w.text(line, LEFT, baseline, regular, BODY.size);
+    w.runs(line, LEFT, baseline, BODY.size, GREY);
   });
 }
 

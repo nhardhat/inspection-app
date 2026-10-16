@@ -51,7 +51,7 @@ import { PhotosSection } from "../photos/PhotosSection";
 import { SignatureField } from "../signature/SignatureField";
 import { CreateMemo } from "./CreateMemo";
 import { MemoPreview } from "./MemoPreview";
-import { conditionsLeadIn, confirmationParagraph } from "./memoTemplate";
+import { conditionsLeadIn, confirmationParts } from "./memoTemplate";
 
 const MAX_RECIPIENTS = 10;
 const SENT_VIA: SentVia[] = ["Aconex", "Email"];
@@ -562,7 +562,9 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
               onBlur={() => void memoSave.flush()}
             />
             <p className="memo-fixed" data-testid="memo-paragraph-1">
-              {confirmationParagraph(inspection.itemInspected)}
+              {confirmationParts(inspection.itemInspected).map((part, i) =>
+                part.italic ? <em key={i}>{part.text}</em> : part.text,
+              )}
             </p>
             <label className="field">
               <span>Message</span>

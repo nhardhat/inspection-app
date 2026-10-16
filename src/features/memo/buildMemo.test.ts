@@ -243,7 +243,11 @@ describe("defaults", () => {
   test("the PDF gets the confirmation paragraph, then the body message", () => {
     const input = buildMemoPdfInput(memo(), inspection, [], conditionSnippets);
     expect(input.bodyParagraphs).toEqual([
-      "We confirm having inspected the Level 3 slab reinforcement as highlighted on the drawing attached.",
+      [
+        { text: "We confirm having inspected the " },
+        { text: "Level 3 slab reinforcement", italic: true },
+        { text: " as highlighted on the drawing attached." },
+      ],
       "At the time of the inspection…",
     ]);
     expect(input.conditions).toEqual([]);
