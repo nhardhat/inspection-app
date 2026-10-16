@@ -387,7 +387,7 @@ export interface Markup {
 
 /**
  * "photoNote": the memo line explaining the * on instructions needing
- * photo confirmation (the last bullet of the list).
+ * photo confirmation, joined to the conditions lead-in.
  */
 /** "referDrawings": the line replacing the instructions (Refer to drawings). */
 export type SnippetKind =

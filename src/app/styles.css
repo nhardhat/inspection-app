@@ -1523,8 +1523,7 @@ dl.facts dd {
   font-weight: 600;
 }
 
-.memo-refer-line,
-.memo-photo-line {
+.memo-refer-line {
   margin: var(--space-2) 0 0;
   padding-left: var(--space-3);
   border-left: 3px solid var(--line);

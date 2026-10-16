@@ -27,6 +27,8 @@ export interface MemoPdfInput {
   bodyParagraphs: string[];
   /** Bulleted conditions. None gives "Ok to proceed." and no list. */
   conditions: string[];
+  /** Joins the lead-in when an instruction needs photos (else empty). */
+  photoLine?: string;
 }
 
 /** Signature image (PNG), printed between the sign-off and the name. */
@@ -564,7 +566,7 @@ function drawBody(
   }
   drawParagraph(
     w,
-    conditionsLeadIn(input.conditions.length),
+    conditionsLeadIn(input.conditions.length, input.photoLine),
     BODY.paragraphGap,
   );
 

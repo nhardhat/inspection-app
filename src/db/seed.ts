@@ -1,5 +1,5 @@
 import starterSnippets from "../content/snippets.json";
-import { OLD_PHOTO_NOTE } from "../features/memo/buildMemo";
+import { OLD_PHOTO_TEXTS } from "../features/memo/buildMemo";
 import type { InspectionDb } from "./schema";
 import { SETTINGS_ID, type Settings, type Snippet } from "./types";
 
@@ -19,7 +19,7 @@ const SINGLE_KINDS: Snippet["kind"][] = ["photoNote", "referDrawings"];
  * snippets exactly once. Snippets the engineer has edited or deleted are
  * never touched again. A single-message kind added in a later version (the
  * photo note) is added once on devices that don't have it yet. The photo
- * note became the * line (engineer, 2026-10-16): the old starter text is
+ * note became the * line (engineer, 2026-10-16): earlier starter texts are
  * replaced once; text the engineer wrote is kept.
  */
 export async function ensureSeeded(db: InspectionDb): Promise<void> {
@@ -33,7 +33,7 @@ export async function ensureSeeded(db: InspectionDb): Promise<void> {
         .where("kind")
         .equals("photoNote")
         .modify((s) => {
-          if (s.text.trim() !== OLD_PHOTO_NOTE) return;
+          if (!OLD_PHOTO_TEXTS.includes(s.text.trim())) return;
           s.text = starterLine.text;
           s.label = starterLine.label;
         });

@@ -36,11 +36,11 @@ describe("ensureSeeded", () => {
     await ensureSeeded(db);
     const notes = await db.snippets.where("kind").equals("photoNote").toArray();
     expect(notes.map((n) => n.text)).toEqual([
-      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
+      "Items marked * to be closed out with photos",
     ]);
   });
 
-  test("the old photo note becomes the * line once; the engineer's own text stays", async () => {
+  test("earlier photo texts become the * line once; the engineer's own text stays", async () => {
     await ensureSeeded(db);
     const id = (await db.snippets.where("kind").equals("photoNote").first())!
       .id;
@@ -50,7 +50,7 @@ describe("ensureSeeded", () => {
     });
     await ensureSeeded(db);
     expect((await db.snippets.get(id))?.text).toBe(
-      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
+      "Items marked * to be closed out with photos",
     );
     expect((await db.snippets.get(id))?.label).toBe("Photo confirmation line");
     await db.snippets.update(id, { text: "Photos for items marked *." });

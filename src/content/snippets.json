@@ -51,7 +51,7 @@
     "id": "photoNote-photo-confirmation-line",
     "kind": "photoNote",
     "label": "Photo confirmation line",
-    "text": "Items marked * are to be closed out with photos confirming completion prior to proceeding."
+    "text": "Items marked * to be closed out with photos"
   },
   {
     "id": "referDrawings-refer-to-drawings",

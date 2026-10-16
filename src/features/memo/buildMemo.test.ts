@@ -12,6 +12,7 @@ import {
   memoConditions,
   memoFields,
   photoLine,
+  photoLineFor,
   referLine,
   DEFAULT_REFER_LINE,
 } from "./buildMemo";
@@ -79,38 +80,42 @@ describe("conditions", () => {
       "Complete items A–B listed below.",
       "A. Add N12 bar at grid C/4 *",
       "B. Prop spacing per shop drawing",
-      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
   });
 
-  test("photo confirmation: a * on the instruction and one line at the end", () => {
+  test("photo confirmation: a * on the instruction, a line for the lead-in", () => {
     const a = item("A", "Add bar", { requiresPhotoConfirmation: true });
     const b = item("B", "Prop spacing");
-    const texts = (line?: string, items = [a, b]) =>
+    expect(
       memoConditions(
         memo({ itemOverrides: { [a.id]: "Add N16 bar" } }),
-        items,
+        [a, b],
         conditionSnippets,
-        line,
-      ).map((c) => c.text);
-    // Reworded for the memo, it still carries the *.
-    expect(texts()).toEqual([
+      ).map((c) => c.text),
+    ).toEqual([
       "Complete items A–B listed below.",
+      // Reworded for the memo, it still carries the *.
       "A. Add N16 bar *",
       "B. Prop spacing",
-      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
-    expect(texts("Photos for items marked *.").at(-1)).toBe(
+    expect(photoLineFor([a, b])).toBe(
+      "Items marked * to be closed out with photos",
+    );
+    expect(photoLineFor([a, b], "Photos for items marked *.")).toBe(
       "Photos for items marked *.",
     );
-    // An empty line (Settings) leaves just the *.
-    expect(texts("")).toEqual([
-      "Complete items A–B listed below.",
-      "A. Add N16 bar *",
-      "B. Prop spacing",
-    ]);
-    // No instruction needs photos: no line.
-    expect(texts(undefined, [b]).at(-1)).toBe("B. Prop spacing");
+    // An empty line (Settings) or no instruction needing photos: none.
+    expect(photoLineFor([a, b], "")).toBe("");
+    expect(photoLineFor([b])).toBe("");
+    // Observations don't count.
+    expect(
+      photoLineFor([
+        item("A", "Crack", {
+          kind: "observation",
+          requiresPhotoConfirmation: true,
+        }),
+      ]),
+    ).toBe("");
   });
 
   test("Refer to drawings: one line replaces the instructions", () => {
@@ -122,14 +127,11 @@ describe("conditions", () => {
         memo({ referToDrawings: true }),
         [a, b, c],
         conditionSnippets,
-        undefined,
         refer,
       ).map((x) => x.text);
     expect(texts()).toEqual([
       "Complete items A–C listed below.",
       "Complete the instructions marked on the attached drawings (items A–C).",
-      // The * is on the drawings' notes boxes.
-      "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
     ]);
     expect(texts("See drawings for [letters].")[1]).toBe(
       "See drawings for A–C.",

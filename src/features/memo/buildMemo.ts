@@ -20,15 +20,21 @@ export const COMPLETE_ITEMS_ID = "condition-complete-listed-items";
 
 /**
  * Photo confirmation (engineer, 2026-10-16): an instruction needing it is
- * marked * (memo and notes box), and the memo's list ends with this line
- * when any is. A Settings message; this is the text when none is stored.
+ * marked * (memo and notes box), and when any is this line joins the
+ * conditions lead-in ("Ok to proceed subject to the following. Items marked
+ * * to be closed out with photos:"). A Settings message; this is the text
+ * when none is stored.
  */
-export const DEFAULT_PHOTO_LINE =
-  "Items marked * are to be closed out with photos confirming completion prior to proceeding.";
+export const DEFAULT_PHOTO_LINE = "Items marked * to be closed out with photos";
 
-/** The note after each such instruction until 2026-10-16 (replaced once). */
-export const OLD_PHOTO_NOTE =
-  "(provide photos confirming completion before proceeding)";
+/**
+ * Earlier starter texts, replaced once on update: the note after each
+ * instruction (until 2026-10-16), then the first wording of the line.
+ */
+export const OLD_PHOTO_TEXTS = [
+  "(provide photos confirming completion before proceeding)",
+  "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
+];
 
 /** The marker after an instruction that needs photo confirmation. */
 export const PHOTO_MARK = "*";
@@ -99,12 +105,9 @@ export function conditionTicked(
 }
 
 export interface MemoCondition {
-  /**
-   * Snippet id (standard condition), item id (instruction), "refer-line"
-   * or "photo-line".
-   */
+  /** Snippet id (standard condition), item id (instruction) or "refer-line". */
   key: string;
-  kind: "standard" | "instruction" | "refer" | "photo";
+  kind: "standard" | "instruction" | "refer";
   text: string;
   /** Instructions: reworded for this memo rather than the item's text. */
   reworded?: boolean;
@@ -114,15 +117,13 @@ export interface MemoCondition {
  * The bulleted conditions: ticked standard conditions first ("[letters]"
  * filled in, e.g. "A–D"), then each instruction as "A. text", reworded
  * where the engineer changed it for this memo, marked * when it needs
- * photo confirmation, then the photo line when any is. With Refer to
- * drawings on, one line ("[letters]" filled in) replaces the instructions;
- * the photo line stays (the notes boxes carry the *).
+ * photo confirmation (the body explains the *). With Refer to drawings on,
+ * one line ("[letters]" filled in) replaces the instructions.
  */
 export function memoConditions(
   memo: Pick<Memo, "conditionChoices" | "itemOverrides" | "referToDrawings">,
   items: Item[],
   conditionSnippets: Snippet[],
-  line = DEFAULT_PHOTO_LINE,
   refer = DEFAULT_REFER_LINE,
 ): MemoCondition[] {
   const instructions = memoInstructions(items);
@@ -144,10 +145,6 @@ export function memoConditions(
       reworded: override !== undefined,
     };
   });
-  const photo: MemoCondition[] =
-    line && instructions.some((item) => item.requiresPhotoConfirmation)
-      ? [{ key: "photo-line", kind: "photo", text: line }]
-      : [];
   const listed: MemoCondition[] =
     memo.referToDrawings && instructions.length > 0
       ? [
@@ -158,7 +155,7 @@ export function memoConditions(
           },
         ]
       : lines;
-  return [...standard, ...listed, ...photo];
+  return [...standard, ...listed];
 }
 
 /** Memo fields for the page: job details from the inspection, the rest from the memo. */
@@ -185,6 +182,17 @@ export function memoFields(memo: Memo, inspection: JobInspection): MemoFields {
   };
 }
 
+/**
+ * The photo line for the lead-in when any instruction needs photo
+ * confirmation (else nothing).
+ */
+export function photoLineFor(items: Item[], line = DEFAULT_PHOTO_LINE) {
+  return line &&
+    memoInstructions(items).some((item) => item.requiresPhotoConfirmation)
+    ? line
+    : "";
+}
+
 /** Everything the memo PDF needs. */
 export function buildMemoPdfInput(
   memo: Memo,
@@ -201,8 +209,9 @@ export function buildMemoPdfInput(
       confirmationParagraph(inspection.itemInspected),
       memo.bodyText.trim(),
     ].filter(Boolean),
-    conditions: memoConditions(memo, items, conditionSnippets, line, refer).map(
+    conditions: memoConditions(memo, items, conditionSnippets, refer).map(
       (c) => c.text,
     ),
+    photoLine: photoLineFor(items, line),
   };
 }

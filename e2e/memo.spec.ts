@@ -99,10 +99,10 @@ test("create a memo from the instructions, with a live preview", async ({
     "We confirm having inspected the Level 3 slab reinforcement as highlighted on the drawing attached.",
   );
 
-  // Conditions: standard first. A needs photos: the note goes on A, and the
-  // general photo condition stays off unless ticked.
+  // Conditions: standard first. A needs photos: A is marked *, the lead-in
+  // says what * means, and the general photo condition stays off.
   await expect(page.getByTestId("memo-lead-in")).toHaveText(
-    "Ok to proceed subject to the following:",
+    "Ok to proceed subject to the following. Items marked * to be closed out with photos:",
   );
   await expect(
     page.getByLabel("Complete items A–B listed below."),
@@ -115,9 +115,6 @@ test("create a memo from the instructions, with a live preview", async ({
   const instructions = page.getByRole("list", { name: "Instructions" });
   await expect(instructions.getByRole("listitem")).toHaveCount(2);
   await expect(instructions.getByTestId("memo-photo-mark")).toHaveCount(1);
-  await expect(page.getByTestId("memo-photo-line")).toHaveText(
-    "Items marked * are to be closed out with photos confirming completion prior to proceeding.",
-  );
 
   // Reword A for the memo only, then go back to the item's text.
   const a = page.getByLabel("Instruction A in the memo");
@@ -127,13 +124,15 @@ test("create a memo from the instructions, with a live preview", async ({
   await page.getByRole("button", { name: "Use item text" }).click();
   await expect(a).toHaveValue("Add N12 bar at grid C/4");
 
-  // Refer to drawings: one line instead of the list; the * line stays.
+  // Refer to drawings: one line instead of the list; the lead-in keeps *.
   await page.getByLabel(/Refer to drawings/).check();
   await expect(instructions).toHaveCount(0);
   await expect(page.getByTestId("memo-refer-line")).toHaveText(
     "Complete the instructions marked on the attached drawings (items A–B).",
   );
-  await expect(page.getByTestId("memo-photo-line")).toBeVisible();
+  await expect(page.getByTestId("memo-lead-in")).toHaveText(
+    "Ok to proceed subject to the following. Items marked * to be closed out with photos:",
+  );
   await page.getByLabel(/Refer to drawings/).uncheck();
   await expect(instructions.getByRole("listitem")).toHaveCount(2);
 

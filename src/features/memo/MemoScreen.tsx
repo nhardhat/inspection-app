@@ -605,7 +605,7 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
           >
             <h2 id="conditions-heading">Conditions</h2>
             <p className="memo-fixed" data-testid="memo-lead-in">
-              {conditionsLeadIn(input.conditions.length)}
+              {conditionsLeadIn(input.conditions.length, input.photoLine)}
             </p>
             <fieldset className="memo-conditions">
               <legend>Standard conditions</legend>
@@ -708,13 +708,6 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                 })}
               </ol>
             )}
-            {/* The list's last bullet when any instruction needs photos. */}
-            {instructions.some((i) => i.requiresPhotoConfirmation) &&
-              photoLine(snippets) && (
-                <p className="memo-photo-line" data-testid="memo-photo-line">
-                  {photoLine(snippets)}
-                </p>
-              )}
             <p className="muted">
               Instructions come from the pins; add or change them on the
               drawings. Rewording one here changes only the memo.

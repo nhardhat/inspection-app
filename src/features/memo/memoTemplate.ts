@@ -30,11 +30,19 @@ export function confirmationParagraph(itemInspected: string): string {
 /**
  * The conditions lead-in: with one or more conditions the list follows
  * "Ok to proceed subject to the following:"; with none, "Ok to proceed."
+ * With a photo line (an instruction needs photo confirmation; engineer,
+ * 2026-10-16) it joins the lead-in: "Ok to proceed subject to the
+ * following. Items marked * to be closed out with photos:".
  */
-export function conditionsLeadIn(conditionCount: number): string {
-  return conditionCount > 0
-    ? "Ok to proceed subject to the following:"
-    : "Ok to proceed.";
+export function conditionsLeadIn(
+  conditionCount: number,
+  photoLine = "",
+): string {
+  if (conditionCount === 0) return "Ok to proceed.";
+  const photo = photoLine.trim().replace(/[\s.:;]+$/, "");
+  return photo
+    ? `Ok to proceed subject to the following. ${photo}:`
+    : "Ok to proceed subject to the following:";
 }
 
 /** "SIM-001 – Level 3 slab reinforcement" (SPEC section 4). */

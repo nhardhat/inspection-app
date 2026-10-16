@@ -16,8 +16,8 @@ These seed the Snippet table. The engineer can edit them in the app. Add new one
 - Noted for information: "Noted for information:"
 - Noted for information (long): "The following items are noted for information only and do not form conditions of this instruction:"
 
-## Photo confirmation line (kind: photoNote, one only; instructions needing photo confirmation are marked * in the memo and the notes box, and this line is the last bullet of the memo's list when any is)
-- Photo confirmation line: "Items marked * are to be closed out with photos confirming completion prior to proceeding."
+## Photo confirmation line (kind: photoNote, one only; instructions needing photo confirmation are marked * in the memo and the notes box, and when any is the memo's lead-in reads "Ok to proceed subject to the following. [this line]:")
+- Photo confirmation line: "Items marked * to be closed out with photos"
 
 ## Refer to drawings (kind: referDrawings, one only; with the memo's Refer to drawings switch on, this line replaces the A, B, C… instructions; [letters] becomes the instruction letters, e.g. A–M)
 - Refer to drawings: "Complete the instructions marked on the attached drawings (items [letters])."

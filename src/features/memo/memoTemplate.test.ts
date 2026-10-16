@@ -11,6 +11,15 @@ describe("memo template text", () => {
   test("conditions lead-in depends on whether there are conditions", () => {
     expect(conditionsLeadIn(2)).toBe("Ok to proceed subject to the following:");
     expect(conditionsLeadIn(0)).toBe("Ok to proceed.");
+    // Instructions needing photos: the photo line joins it.
+    expect(
+      conditionsLeadIn(2, "Items marked * to be closed out with photos."),
+    ).toBe(
+      "Ok to proceed subject to the following. Items marked * to be closed out with photos:",
+    );
+    expect(conditionsLeadIn(2, "  ")).toBe(
+      "Ok to proceed subject to the following:",
+    );
   });
 
   test("confirmation paragraph", () => {
