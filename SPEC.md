@@ -236,7 +236,7 @@ Zipped with fflate (bundled; works offline); PDFs and photos are stored as they 
 
 ## 10. Offline and storage
 
-- Service worker precaches the app shell; the app loads and works with no connection.
+- Service worker precaches the app shell; the app loads and works with no connection. Automated offline checks (Chromium, no network after the first load): adding drawings and pins, the memo and its preview, exporting the PDF pack, backing up and importing (step 10e, 2026-10-16); the iPad is checked in airplane mode (docs/test-plans/step10e-offline.md).
 - Request **persistent storage** (`navigator.storage.persist()`) on first run.
 - Show a storage meter and a clear **Back up now** action (exports the inspection file). Built step 9: each inspection's Pre-inspection step has a **Backup** card ("Not backed up yet", "Backed up" or "Changed since last backup" with the time; **Back up now** builds the file, then **Share…** opens the Share sheet, Save to Files; a desktop downloads it). It counts as backed up once the file is shared or saved (`Inspection.backedUpAt`); any edit after that (pins, photos, memo, drawings, job details) makes it "changed". Settings, **Storage and backup** has **Back up all** (one file per inspection, working copies only, shared together). The Dashboard's Needs attention tile lists inspections with drawings or items that aren't backed up, linking to their Pre-inspection.
 - **Removing the app from the Home Screen deletes its data** (a home-screen web app has its own storage). Settings, Storage and backup opens with a warning not to remove Hardhat from the Home Screen and to back up first (engineer, 2026-10-07).
