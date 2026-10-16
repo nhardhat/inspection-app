@@ -42,23 +42,25 @@ export async function appendDrawingPages(
 ): Promise<number> {
   const total = input.pages.length;
   let done = 0;
-  // Group by drawing, keeping document order, so each PDF is opened once.
-  const byDrawing: PinnedPage[][] = [];
+  // Runs of pages from one PDF, keeping document order, so each PDF is
+  // opened once per run (a page moved in from another drawing shows that
+  // drawing's PDF).
+  const byPdf: PinnedPage[][] = [];
   for (const page of input.pages) {
-    const last = byDrawing[byDrawing.length - 1];
-    if (last && last[0].drawing.id === page.drawing.id) last.push(page);
-    else byDrawing.push([page]);
+    const last = byPdf[byPdf.length - 1];
+    if (last && last[0].pdfDrawing.id === page.pdfDrawing.id) last.push(page);
+    else byPdf.push([page]);
   }
-  for (const group of byDrawing) {
-    const drawing = group[0].drawing;
+  for (const group of byPdf) {
+    const pdfDrawing = group[0].pdfDrawing;
     let source: PDFDocument;
     try {
-      source = await PDFDocument.load(await input.loadPdf(drawing), {
+      source = await PDFDocument.load(await input.loadPdf(pdfDrawing), {
         ignoreEncryption: true,
         updateMetadata: false,
       });
     } catch (e) {
-      throw new DrawingReadError(drawing.name, e);
+      throw new DrawingReadError(pdfDrawing.name, e);
     }
     const copied = await doc.copyPages(
       source,
@@ -67,7 +69,7 @@ export async function appendDrawingPages(
     group.forEach((pinned, i) => {
       const page = doc.addPage(copied[i]);
       const box = input.boxes.find(
-        (b) => b.drawingId === drawing.id && b.page === pinned.position,
+        (b) => b.drawingId === pinned.drawing.id && b.page === pinned.position,
       );
       drawPageMarkup(
         page,

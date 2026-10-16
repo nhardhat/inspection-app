@@ -679,7 +679,9 @@ export function DocumentViewer(props: Props) {
   // Tell the parent which drawings' PDFs are needed.
   const activeDrawingsKey = [
     ...new Set(
-      [...activeKeys].map((k) => pagesByKey.get(k)?.drawingId).filter(Boolean),
+      [...activeKeys]
+        .map((k) => pagesByKey.get(k)?.pdfDrawingId)
+        .filter(Boolean),
     ),
   ]
     .sort()
@@ -2259,7 +2261,7 @@ export function DocumentViewer(props: Props) {
               <DocPage
                 key={page.key}
                 page={page}
-                doc={docs.get(page.drawingId)}
+                doc={docs.get(page.pdfDrawingId)}
                 active={activeKeys.has(page.key)}
                 view={settled}
                 moving={moving}

@@ -28,6 +28,11 @@ export interface DrawingInput {
 export interface PageLayout {
   key: string;
   drawingId: string;
+  /**
+   * The drawing whose PDF it shows: its own, or another's for a page moved
+   * in from there (saved images and drawing use this one).
+   */
+  pdfDrawingId: string;
   /** 1-based position in the drawing's pages (what items refer to). */
   page: number;
   /** 1-based page of the PDF it shows. */
@@ -58,10 +63,13 @@ export function pageKey(drawingId: string, page: number): string {
 
 export function layoutDocument(drawings: DrawingInput[]): DocumentLayout {
   const pages: PageLayout[] = [];
+  const sizesOf = new Map(drawings.map((d) => [d.id, d.pageSizes]));
   let y = 0;
   for (const drawing of drawings) {
     drawingPages(drawing).forEach((entry, i) => {
-      const size = drawing.pageSizes[entry.source - 1];
+      const pdfDrawingId = entry.from ?? drawing.id;
+      const pdfSizes = sizesOf.get(pdfDrawingId) ?? [];
+      const size = pdfSizes[entry.source - 1];
       if (entry.hidden || !size) return;
       const [width, height] = size;
       const scale = DOC_WIDTH / width;
@@ -69,9 +77,10 @@ export function layoutDocument(drawings: DrawingInput[]): DocumentLayout {
       pages.push({
         key: pageKey(drawing.id, i + 1),
         drawingId: drawing.id,
+        pdfDrawingId,
         page: i + 1,
         source: entry.source,
-        pageCount: drawing.pageSizes.length,
+        pageCount: pdfSizes.length,
         number: pages.length + 1,
         size: { width, height },
         scale,

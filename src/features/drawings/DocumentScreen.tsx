@@ -1197,7 +1197,8 @@ function InspectionDocument({ inspectionId }: { inspectionId: string }) {
     return <NotFound what="Inspection" />;
   }
 
-  const currentDrawing = drawings.find((d) => d.id === current?.drawingId);
+  // The drawing whose sheet it shows (another's for a page moved in).
+  const currentDrawing = drawings.find((d) => d.id === current?.pdfDrawingId);
   const showList = drawings.length === 0 || adding.busy || adding.failed;
   const loadError = [...errors.values()][0] ?? backfillError;
 

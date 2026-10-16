@@ -79,7 +79,8 @@ export function DrawingLab() {
   }, []);
 
   const drawing = drawings?.find((d) => d.id === drawingId) ?? drawings?.[0];
-  const pages = drawing?.pages.filter((p) => !p.hidden) ?? [];
+  // Its own sheets (a page moved in from another drawing shows that one's).
+  const pages = drawing?.pages.filter((p) => !p.hidden && !p.from) ?? [];
   const source = pages[pageNumber - 1]?.source ?? 1;
 
   /** The middle of the page, a screen's worth, at this zoom. */

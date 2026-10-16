@@ -90,6 +90,24 @@ describe("pinnedPages", () => {
   });
 });
 
+describe("pinnedPages with a page moved in from another drawing", () => {
+  test("it goes in among its new drawing's pages, from its own PDF", () => {
+    const d1 = drawing("d1", [{ source: 1 }]);
+    const d2 = drawing("d2", [{ source: 1 }, { source: 3, from: "d1" }]);
+    const items = [
+      item({ drawingId: "d2", page: 2, letter: "B" }),
+      item({ drawingId: "d1", page: 1, letter: "A" }),
+    ];
+    const pages = pinnedPages([d1, d2], items);
+    expect(
+      pages.map((p) => [p.drawing.id, p.position, p.pdfDrawing.id, p.source]),
+    ).toEqual([
+      ["d1", 1, "d1", 1],
+      ["d2", 2, "d1", 3],
+    ]);
+  });
+});
+
 describe("pinnedPages with general notes", () => {
   test("a general note (no pin) adds no pages: only pages with pins or markup go in", () => {
     const d1 = drawing("d1", [{ source: 1 }, { source: 2 }, { source: 3 }]);

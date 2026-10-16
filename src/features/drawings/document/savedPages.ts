@@ -105,7 +105,7 @@ export function useSavePagesAhead({
     void prunePageImages(db).catch(() => {});
   }, []);
 
-  const drawingIds = [...new Set(layout.pages.map((p) => p.drawingId))]
+  const drawingIds = [...new Set(layout.pages.map((p) => p.pdfDrawingId))]
     .sort()
     .join(",");
   useEffect(() => {
@@ -125,7 +125,7 @@ export function useSavePagesAhead({
       baseTarget(page.size, page.scale, fitQuality);
     const idOf = (page: PageLayout) => {
       const t = target(page);
-      return pageImageId(page.drawingId, page.source, t.width, t.height);
+      return pageImageId(page.pdfDrawingId, page.source, t.width, t.height);
     };
 
     /** The nearest page not saved yet (off screen, its PDF open). */
@@ -148,7 +148,7 @@ export function useSavePagesAhead({
             return (
               !known.has(id) &&
               !activeRef.current.has(page.key) &&
-              docs.has(page.drawingId)
+              docs.has(page.pdfDrawingId)
             );
           }) ?? null
       );
@@ -157,7 +157,7 @@ export function useSavePagesAhead({
     function saveNext() {
       if (stopped) return;
       const page = nextPage();
-      const doc = page && docs.get(page.drawingId);
+      const doc = page && docs.get(page.pdfDrawingId);
       if (!page || !doc) return;
       const id = idOf(page);
       cancel = queuePageDrawing(2, (done) => {
@@ -181,7 +181,7 @@ export function useSavePagesAhead({
         void (async () => {
           try {
             const t = target(page);
-            drawing = drawPage(doc, page.drawingId, {
+            drawing = drawPage(doc, page.pdfDrawingId, {
               source: page.source,
               scale: t.scale,
               width: t.width,
@@ -193,7 +193,7 @@ export function useSavePagesAhead({
             if (over) return;
             if (!data) throw new Error("The page image couldn't be encoded");
             await savePageImage(db, {
-              drawingId: page.drawingId,
+              drawingId: page.pdfDrawingId,
               source: page.source,
               width: t.width,
               height: t.height,

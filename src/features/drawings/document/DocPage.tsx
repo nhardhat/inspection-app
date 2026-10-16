@@ -166,7 +166,7 @@ export function DocPage({
       );
       stat.base = diag;
       let current = true;
-      loadSavedPage(page.drawingId, page.source, target.width, target.height)
+      loadSavedPage(page.pdfDrawingId, page.source, target.width, target.height)
         .then((canvas) => {
           if (!current) {
             if (canvas) releaseCanvas(canvas);
@@ -205,7 +205,7 @@ export function DocPage({
         "base",
       );
       stat.base = diag;
-      const d = drawPage(doc, page.drawingId, {
+      const d = drawPage(doc, page.pdfDrawingId, {
         source: page.source,
         scale,
         width: target.width,
@@ -218,7 +218,7 @@ export function DocPage({
           endRender(diag, "done");
           done();
           // Next time it shows at once (savedPages.ts).
-          savePageSoon(png, page.drawingId, page.source, target);
+          savePageSoon(png, page.pdfDrawingId, page.source, target);
           if (!canvas) return;
           if (!current) return releaseCanvas(canvas);
           canvas.className = "viewer-base";
@@ -257,6 +257,7 @@ export function DocPage({
     page.size.width,
     page.size.height,
     page.drawingId,
+    page.pdfDrawingId,
     page.number,
   ]);
 

@@ -55,7 +55,12 @@ export interface PinnedPage {
   drawing: Drawing;
   /** 1-based position in Drawing.pages (what items refer to). */
   position: number;
-  /** 1-based page of the drawing's PDF it shows. */
+  /**
+   * The drawing whose PDF it shows: `drawing`, or another for a page moved
+   * in from there.
+   */
+  pdfDrawing: Drawing;
+  /** 1-based page of that PDF it shows. */
   source: number;
   /** Items pinned here (copies too): observations, then instructions, each in letter order. */
   items: Item[];
@@ -106,6 +111,7 @@ export function pinnedPages(
             {
               drawing,
               position,
+              pdfDrawing: drawings.find((d) => d.id === entry.from) ?? drawing,
               source: entry.source,
               items: onPage,
               pins,

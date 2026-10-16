@@ -81,8 +81,11 @@ export function DrawingThumb({ inspectionId }: { inspectionId: string }) {
       best = { drawingId, page: Number(page), count };
     }
     const drawing = drawings.find((d) => d.id === best.drawingId) ?? first;
+    // A page moved in from another drawing shows that drawing's PDF.
+    const from = drawing.pages?.[best.page - 1]?.from;
+    const pdf = drawings.find((d) => d.id === from) ?? drawing;
     return {
-      pdfBlobId: drawing.pdfBlobId,
+      pdfBlobId: pdf.pdfBlobId,
       page: best.page,
       source: drawing.pages?.[best.page - 1]?.source ?? best.page,
       pins: spots

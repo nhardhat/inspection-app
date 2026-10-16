@@ -190,7 +190,7 @@ export function useSharpImages({
         kind,
       );
       if (kind === "sharp") stat().sharp = diag;
-      const d = drawPage(doc, page.drawingId, {
+      const d = drawPage(doc, page.pdfDrawingId, {
         source: page.source,
         scale,
         width,
