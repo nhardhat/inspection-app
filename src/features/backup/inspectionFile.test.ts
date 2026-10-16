@@ -204,6 +204,17 @@ describe("inspection file", () => {
   });
 
   test("keep both: a second copy with new ids, wired together", async () => {
+    // A page naming the drawing whose PDF it shows (as a page moved in from
+    // another drawing does) follows the new id.
+    const original = (await source.drawings
+      .where("inspectionId")
+      .equals(inspectionId)
+      .first())!;
+    await source.drawings.update(original.id, {
+      pages: original.pages.map((p, i) =>
+        i === 0 ? { ...p, from: original.id } : p,
+      ),
+    });
     const file = await exportFile();
     const id = await importInspection(
       source,
@@ -220,6 +231,7 @@ describe("inspection file", () => {
       .toArray();
     expect(items).toHaveLength(2);
     expect(drawings).toHaveLength(1);
+    expect(drawings[0].pages[0].from).toBe(drawings[0].id);
     for (const item of items) {
       expect(item.drawingId).toBe(drawings[0].id);
       for (const copy of item.copies ?? [])

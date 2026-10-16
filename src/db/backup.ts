@@ -165,6 +165,8 @@ function withNewIds(data: InspectionData): InspectionData {
       id: id(d.id),
       inspectionId: id(d.inspectionId),
       pdfBlobId: id(d.pdfBlobId),
+      // Pages moved in from another drawing name it.
+      pages: d.pages?.map((p) => (p.from ? { ...p, from: id(p.from) } : p)),
     })),
     items: data.items.map((item) => ({
       ...item,

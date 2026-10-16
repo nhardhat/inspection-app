@@ -607,20 +607,23 @@ export async function updateCopy(
 /**
  * The item with its first copy in document order (drawing order, then
  * page, then placement) made the original pin, leaving out copies on
- * `skipDrawingId`. Null when there is no copy to promote.
+ * `skip` (a drawing, or which copies). Null when there is no copy to
+ * promote.
  */
 export function promoteCopy(
   item: Item,
   drawingOrder: string[],
-  skipDrawingId?: string,
+  skip?: string | ((copy: { drawingId: string; page: number }) => boolean),
 ): Item | null {
   const rank = (id: string) => {
     const i = drawingOrder.indexOf(id);
     return i < 0 ? Infinity : i;
   };
-  const candidates = (item.copies ?? []).filter(
-    (c) => c.drawingId !== skipDrawingId,
-  );
+  const skipped =
+    typeof skip === "function"
+      ? skip
+      : (c: { drawingId: string }) => c.drawingId === skip;
+  const candidates = (item.copies ?? []).filter((c) => !skipped(c));
   if (candidates.length === 0) return null;
   const first = [...candidates].sort(
     (a, b) => rank(a.drawingId) - rank(b.drawingId) || a.page - b.page,

@@ -62,6 +62,11 @@ export interface DrawingPage {
   source: number;
   /** Left out of the document, its numbering and the PDF pack; restorable. */
   hidden?: boolean;
+  /**
+   * The drawing whose PDF it shows, when moved here from another drawing
+   * (engineer, 2026-10-16); missing: this drawing's own PDF.
+   */
+  from?: string;
 }
 
 export interface Drawing {

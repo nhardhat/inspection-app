@@ -2,17 +2,19 @@ import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import {
   addDrawing,
+  deleteDrawing,
   listDrawings,
   moveDrawing,
   reorderDrawings,
 } from "./drawings";
 import { createInspection } from "./inspections";
-import { createItem } from "./items";
+import { addCopy, createItem } from "./items";
 import {
   countUnmarked,
   duplicatePage,
   hideUnmarkedPages,
   movePage,
+  movePageTo,
   pageMoveTarget,
   setPagesHidden,
 } from "./pages";
@@ -172,5 +174,106 @@ describe("moving pages and drawings", () => {
     await expect(
       reorderDrawings(db, inspection.id, [a.id, b.id]),
     ).rejects.toThrow();
+  });
+});
+
+describe("moving pages between drawings (engineer, 2026-10-16)", () => {
+  test("a page moves into another drawing with its pins, box and markup", async () => {
+    const a = await drawing(3);
+    const b = await drawing(2);
+    const onA1 = await pin(a.id, 1);
+    const onA2 = await pin(a.id, 2);
+    const onA3 = await pin(a.id, 3);
+    const onB2 = await pin(b.id, 2);
+    await db.markups.add({
+      id: "mark",
+      inspectionId: inspection.id,
+      drawingId: a.id,
+      page: 2,
+      tool: "pen",
+      points: [0, 0, 1, 1],
+      colour: "#000",
+      width: 1,
+      createdAt: 1,
+    } as never);
+    // A2 goes after B1.
+    expect(await movePageTo(db, a.id, 2, b.id, 2)).toEqual({
+      drawingId: b.id,
+      page: 2,
+    });
+    expect((await db.drawings.get(a.id))!.pages).toEqual([
+      { source: 1 },
+      { source: 3 },
+    ]);
+    expect((await db.drawings.get(b.id))!.pages).toEqual([
+      { source: 1 },
+      { source: 2, from: a.id },
+      { source: 2 },
+    ]);
+    const spots = async (id: string) => {
+      const item = (await db.items.get(id))!;
+      return [item.drawingId === a.id ? "a" : "b", item.page, item.letter];
+    };
+    // Document order now: A1, A3, B1, (A2), B2.
+    expect(await spots(onA1.id)).toEqual(["a", 1, "A"]);
+    expect(await spots(onA3.id)).toEqual(["a", 2, "B"]);
+    expect(await spots(onA2.id)).toEqual(["b", 2, "C"]);
+    expect(await spots(onB2.id)).toEqual(["b", 3, "D"]);
+    const mark = (await db.markups.get("mark"))!;
+    expect([mark.drawingId, mark.page]).toEqual([b.id, 2]);
+    const boxes = (await db.observationBoxes.toArray())
+      .map((box) => `${box.drawingId === a.id ? "a" : "b"}${box.page}`)
+      .sort();
+    expect(boxes).toEqual(["a1", "a2", "b2", "b3"]);
+
+    // Back home: its own PDF again.
+    await movePageTo(db, b.id, 2, a.id, 2);
+    expect((await db.drawings.get(a.id))!.pages).toEqual([
+      { source: 1 },
+      { source: 2 },
+      { source: 3 },
+    ]);
+    expect(await spots(onA2.id)).toEqual(["a", 2, "B"]);
+  });
+
+  test("copies follow, and duplicating a moved page keeps its PDF", async () => {
+    const a = await drawing(2);
+    const b = await drawing(1);
+    const item = await pin(b.id, 1);
+    await addCopy(
+      db,
+      item.id,
+      { drawingId: a.id, page: 2, x: 0.1, y: 0.1 },
+      BOX,
+    );
+    await movePageTo(db, a.id, 2, b.id, 1);
+    const copy = (await db.items.get(item.id))!.copies![0];
+    expect([copy.drawingId, copy.page]).toEqual([b.id, 1]);
+    expect((await db.items.get(item.id))!.page).toBe(2);
+    await duplicatePage(db, b.id, 1);
+    expect((await db.drawings.get(b.id))!.pages).toEqual([
+      { source: 2, from: a.id },
+      { source: 2, from: a.id },
+      { source: 1 },
+    ]);
+  });
+
+  test("deleting a drawing removes its pages moved elsewhere, with their pins", async () => {
+    const a = await drawing(2);
+    const b = await drawing(2);
+    await movePageTo(db, a.id, 2, b.id, 1);
+    const onMoved = await pin(b.id, 1);
+    const onB = await pin(b.id, 3);
+    await deleteDrawing(db, a.id);
+    expect((await db.drawings.get(b.id))!.pages).toEqual([
+      { source: 1 },
+      { source: 2 },
+    ]);
+    expect(await db.items.get(onMoved.id)).toBeUndefined();
+    const kept = (await db.items.get(onB.id))!;
+    expect([kept.page, kept.letter]).toEqual([2, "A"]);
+    expect(
+      (await db.observationBoxes.toArray()).map((box) => box.page),
+    ).toEqual([2]);
   });
 });

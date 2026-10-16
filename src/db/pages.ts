@@ -7,9 +7,19 @@
  * along.
  */
 import { itemSpots } from "../features/items/spots";
-import { reletterInspection, touchInspection } from "./items";
+import {
+  deleteItemRecords,
+  promoteCopy,
+  reletterInspection,
+  touchInspection,
+} from "./items";
 import type { InspectionDb } from "./schema";
 import type { Drawing, DrawingPage, Item, Markup } from "./types";
+
+/** The drawing whose PDF a page shows (its own, unless moved here). */
+export function pdfDrawingOf(drawingId: string, page: DrawingPage): string {
+  return page.from ?? drawingId;
+}
 
 function pagesOf(drawing: Drawing): DrawingPage[] {
   return (
@@ -128,7 +138,10 @@ export async function duplicatePage(
       if (!original) throw new Error(`No page ${position} on ${drawing.name}`);
       const next = [
         ...pages.slice(0, position),
-        { source: original.source },
+        // A copy of a page moved in still shows the other drawing's PDF.
+        original.from
+          ? { source: original.source, from: original.from }
+          : { source: original.source },
         ...pages.slice(position),
       ];
       await db.drawings.update(drawingId, { pages: next });
@@ -180,6 +193,148 @@ export function pageMoveTarget(
   return null;
 }
 
+/** Where a page goes: a drawing and a 1-based position in its pages. */
+interface Spot {
+  drawingId: string;
+  page: number;
+}
+
+/**
+ * Moves every page reference (items and their copies, notes boxes, markup)
+ * of an inspection through `remap`, which returns where a drawing's page
+ * now is (or null to leave it).
+ */
+async function remapPages(
+  db: InspectionDb,
+  inspectionId: string,
+  drawingIds: string[],
+  remap: (spot: Spot) => Spot | null,
+): Promise<void> {
+  const moved = (spot: Spot) => remap(spot) ?? spot;
+  await db.items
+    .where("inspectionId")
+    .equals(inspectionId)
+    .modify((item) => {
+      if (drawingIds.includes(item.drawingId)) {
+        const to = moved(item);
+        item.drawingId = to.drawingId;
+        item.page = to.page;
+      }
+      if (item.copies?.some((c) => drawingIds.includes(c.drawingId)))
+        item.copies = item.copies.map((c) =>
+          drawingIds.includes(c.drawingId) ? { ...c, ...moved(c) } : c,
+        );
+    });
+  await db.observationBoxes
+    .filter((box) => drawingIds.includes(box.drawingId))
+    .modify((box) => {
+      const to = moved(box);
+      box.drawingId = to.drawingId;
+      box.page = to.page;
+    });
+  await db.markups
+    .where("drawingId")
+    .anyOf(drawingIds)
+    .modify((mark) => {
+      const to = moved(mark);
+      mark.drawingId = to.drawingId;
+      mark.page = to.page;
+    });
+}
+
+/**
+ * Moves a page to `toPosition` (1-based, its place once moved) in any of
+ * the inspection's drawings, its own included (engineer, 2026-10-16:
+ * pages can move between drawings). Its pins, notes box and markup go with
+ * it; letters follow the new order. A page moved into another drawing
+ * keeps showing its own PDF page (`from`) and then belongs to that
+ * drawing (it moves with it when drawings are reordered). Returns where
+ * it landed.
+ */
+export async function movePageTo(
+  db: InspectionDb,
+  drawingId: string,
+  position: number,
+  toDrawingId: string,
+  toPosition: number,
+  now = Date.now(),
+): Promise<Spot> {
+  return db.transaction(
+    "rw",
+    [db.inspections, db.drawings, db.items, db.observationBoxes, db.markups],
+    async () => {
+      const here = { drawingId, page: position };
+      const drawing = await db.drawings.get(drawingId);
+      const target = await db.drawings.get(toDrawingId);
+      if (!drawing || !target) return here;
+      const pages = pagesOf(drawing);
+      const page = pages[position - 1];
+      if (!page) return here;
+      if (toDrawingId === drawingId) {
+        const to = Math.min(Math.max(1, toPosition), pages.length);
+        if (to === position) return here;
+        // Old positions in their new order.
+        const order = pages.map((_, i) => i + 1);
+        order.splice(position - 1, 1);
+        order.splice(to - 1, 0, position);
+        const newPosition = new Map(order.map((old, i) => [old, i + 1]));
+        await db.drawings.update(drawingId, {
+          pages: order.map((old) => pages[old - 1]),
+        });
+        await remapPages(db, drawing.inspectionId, [drawingId], (spot) => ({
+          drawingId,
+          page: newPosition.get(spot.page) ?? spot.page,
+        }));
+      } else {
+        const targetPages = pagesOf(target);
+        const to = Math.min(Math.max(1, toPosition), targetPages.length + 1);
+        const moved: DrawingPage = {
+          ...page,
+          from: pdfDrawingOf(drawingId, page),
+        };
+        // Back in its own drawing: its own PDF again.
+        if (moved.from === toDrawingId) delete moved.from;
+        await db.drawings.update(drawingId, {
+          pages: pages.filter((_, i) => i !== position - 1),
+        });
+        await db.drawings.update(toDrawingId, {
+          pages: [
+            ...targetPages.slice(0, to - 1),
+            moved,
+            ...targetPages.slice(to - 1),
+          ],
+        });
+        await remapPages(
+          db,
+          drawing.inspectionId,
+          [drawingId, toDrawingId],
+          (spot) => {
+            if (spot.drawingId === drawingId) {
+              if (spot.page === position)
+                return { drawingId: toDrawingId, page: to };
+              return spot.page > position
+                ? { drawingId, page: spot.page - 1 }
+                : null;
+            }
+            return spot.page >= to
+              ? { drawingId: toDrawingId, page: spot.page + 1 }
+              : null;
+          },
+        );
+      }
+      await reletterInspection(db, drawing.inspectionId);
+      await touchInspection(db, drawing.inspectionId, now);
+      return {
+        drawingId: toDrawingId,
+        page:
+          toDrawingId === drawingId
+            ? Math.min(Math.max(1, toPosition), pages.length)
+            : Math.min(Math.max(1, toPosition), pagesOf(target).length + 1),
+      };
+    },
+  );
+}
+
 /**
  * Moves a page within its drawing, past the next visible page in that
  * direction. Its pins, notes box and markup go with it, and letters follow the new
@@ -192,51 +347,58 @@ export async function movePage(
   direction: -1 | 1,
   now = Date.now(),
 ): Promise<number> {
-  return db.transaction(
-    "rw",
-    [db.inspections, db.drawings, db.items, db.observationBoxes, db.markups],
-    async () => {
-      const drawing = await db.drawings.get(drawingId);
-      if (!drawing) return position;
-      const pages = pagesOf(drawing);
-      const target = pageMoveTarget(pages, position, direction);
-      if (target === null) return position;
-      // Old positions in their new order.
-      const order = pages.map((_, i) => i + 1);
-      order.splice(position - 1, 1);
-      order.splice(target - 1, 0, position);
-      const newPosition = new Map(order.map((old, i) => [old, i + 1]));
-      await db.drawings.update(drawingId, {
-        pages: order.map((old) => pages[old - 1]),
+  const drawing = await db.drawings.get(drawingId);
+  if (!drawing) return position;
+  const target = pageMoveTarget(pagesOf(drawing), position, direction);
+  if (target === null) return position;
+  return (await movePageTo(db, drawingId, position, drawingId, target, now))
+    .page;
+}
+
+/**
+ * Removes pages of a drawing with what's on them: their notes boxes and
+ * markup, and pins (an item pinned elsewhere too carries on from its next
+ * pin; otherwise it goes, with its photos). Later pages move up. For pages
+ * moved in from a drawing being deleted (its PDF goes). Run inside a
+ * transaction with drawings, items, photos, blobs, notes boxes and markup;
+ * the caller re-letters.
+ */
+export async function removePages(
+  db: InspectionDb,
+  drawing: Drawing,
+  positions: number[],
+  drawingOrder: string[],
+): Promise<void> {
+  const removed = new Set(positions);
+  if (removed.size === 0) return;
+  const gone = (spot: Spot) =>
+    spot.drawingId === drawing.id && removed.has(spot.page);
+  const items = await db.items
+    .where("inspectionId")
+    .equals(drawing.inspectionId)
+    .toArray();
+  const doomed: Item[] = [];
+  for (const item of items) {
+    if (gone(item)) {
+      const promoted = promoteCopy(item, drawingOrder, gone);
+      if (promoted) await db.items.put(promoted);
+      else doomed.push(item);
+    } else if (item.copies?.some(gone))
+      await db.items.update(item.id, {
+        copies: item.copies.filter((c) => !gone(c)),
       });
-      await db.items
-        .where("drawingId")
-        .equals(drawingId)
-        .modify((item) => {
-          item.page = newPosition.get(item.page) ?? item.page;
-        });
-      await db.observationBoxes
-        .filter((box) => box.drawingId === drawingId)
-        .modify((box) => {
-          box.page = newPosition.get(box.page) ?? box.page;
-        });
-      await db.markups
-        .where("drawingId")
-        .equals(drawingId)
-        .modify((mark) => {
-          mark.page = newPosition.get(mark.page) ?? mark.page;
-        });
-      await remapCopies(
-        db,
-        drawing.inspectionId,
-        drawingId,
-        (page) => newPosition.get(page) ?? page,
-      );
-      await reletterInspection(db, drawing.inspectionId);
-      await touchInspection(db, drawing.inspectionId, now);
-      return target;
-    },
-  );
+  }
+  await deleteItemRecords(db, doomed);
+  await db.observationBoxes.filter(gone).delete();
+  await db.markups.where("drawingId").equals(drawing.id).filter(gone).delete();
+  await db.drawings.update(drawing.id, {
+    pages: pagesOf(drawing).filter((_, i) => !removed.has(i + 1)),
+  });
+  const before = (page: number) => positions.filter((p) => p < page).length;
+  await remapPages(db, drawing.inspectionId, [drawing.id], (spot) => ({
+    drawingId: drawing.id,
+    page: spot.page - before(spot.page),
+  }));
 }
 
 /** How many visible pages across an inspection's drawings have no pins or markup. */

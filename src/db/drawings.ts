@@ -4,6 +4,7 @@ import {
   reletterInspection,
   touchInspection,
 } from "./items";
+import { removePages } from "./pages";
 import type { InspectionDb } from "./schema";
 import type { Drawing, Item } from "./types";
 
@@ -124,9 +125,16 @@ export async function deleteDrawing(
     async () => {
       const drawing = await db.drawings.get(id);
       if (!drawing) return;
-      const order = (await listDrawings(db, drawing.inspectionId)).map(
-        (d) => d.id,
-      );
+      const drawings = await listDrawings(db, drawing.inspectionId);
+      const order = drawings.map((d) => d.id);
+      // Its pages moved into other drawings show its PDF: they go too.
+      for (const other of drawings) {
+        if (other.id === id) continue;
+        const borrowed = (other.pages ?? []).flatMap((p, i) =>
+          p.from === id ? [i + 1] : [],
+        );
+        await removePages(db, other, borrowed, order);
+      }
       const all = await db.items
         .where("inspectionId")
         .equals(drawing.inspectionId)
