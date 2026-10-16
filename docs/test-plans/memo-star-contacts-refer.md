@@ -9,10 +9,10 @@ Reply with step numbers and what you saw.
 **Photo confirmation as \***
 
 1. **Update.** Open the app, accept the update if offered, and check Settings shows the new commit.
-2. **Settings.** Settings, Prefilled messages: **Photo confirmation line** reads "Items marked \* are to be closed out with photos confirming completion prior to proceeding." (If you'd changed the old note, your text is kept: change it to suit.)
-3. **Memo.** In an inspection with two instructions, turn on **Photo confirmation required** for one. Site memo: that instruction shows **\* photo confirmation** by its letter, and the line above shows under the list. In the preview: "A. … \*" and the line as the last bullet. The other instruction has no \*.
+2. **Settings.** Settings, Prefilled messages: **Photo confirmation line** reads "Items marked \* to be closed out with photos". (If you'd changed the old note, your text is kept: change it to suit.)
+3. **Memo.** In an inspection with two instructions, turn on **Photo confirmation required** for one. Site memo: that instruction shows **\* photo confirmation** by its letter, and the line above the conditions reads "Ok to proceed subject to the following. Items marked \* to be closed out with photos:". The preview shows the same, with "A. … \*" in the list. The other instruction has no \*.
 4. **Notes box.** On the drawing, the notes box shows that instruction with \* at the end. Export the PDF pack: the drawing page shows the same.
-5. **No photos.** Turn photo confirmation off on both: the \* and the line disappear from the memo.
+5. **No photos.** Turn photo confirmation off on both: the \* goes, and the lead-in is back to "Ok to proceed subject to the following:".
 
 **Reordering contacts**
 
@@ -21,7 +21,7 @@ Reply with step numbers and what you saw.
 
 **Refer to drawings**
 
-8. **Switch.** In the memo, turn on **Refer to drawings** (above the instructions). The instruction list is replaced by "Complete the instructions marked on the attached drawings (items A–B)." Ticked standard conditions and the \* line still show, in the preview too.
+8. **Switch.** In the memo, turn on **Refer to drawings** (above the instructions). The instruction list is replaced by "Complete the instructions marked on the attached drawings (items A–B)." Ticked standard conditions still show, and the lead-in still explains the \*, in the preview too.
 9. **Off again.** Turn it off: the instructions come back, with any rewording you'd made.
 10. **Settings.** Settings, Prefilled messages, **Refer to drawings**: change the wording, keeping [letters]. The memo follows.
 11. **Export.** With it on, export the PDF pack: the memo has the one line; the drawing pages still list every instruction in their notes boxes.
