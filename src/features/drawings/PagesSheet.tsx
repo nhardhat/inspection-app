@@ -7,6 +7,7 @@ import {
   duplicatePage,
   hideUnmarkedPages,
   movePage,
+  movePageTo,
   pageMoveTarget,
   setPagesHidden,
 } from "../../db/pages";
@@ -17,6 +18,7 @@ import { itemSpots } from "../items/spots";
 import { storePdf } from "./drawingFiles";
 import { ReorderDrawingsDialog } from "./ReorderDrawingsDialog";
 import type { PDFDocumentProxy } from "./pdf/pdfjs";
+import { usePageDrag, type DragEntry, type DropTarget } from "./usePageDrag";
 
 interface Props {
   open: boolean;
@@ -39,6 +41,8 @@ interface PageEntry {
   position: number;
   /** 1-based PDF page it shows. */
   source: number;
+  /** The drawing whose PDF that is (another's for a page moved in). */
+  pdfDrawingId: string;
   hidden: boolean;
   /** Number through the document (visible pages only). */
   number: number;
@@ -68,6 +72,7 @@ function entriesFor(
         drawing,
         position: i + 1,
         source: page.source,
+        pdfDrawingId: page.from ?? drawing.id,
         hidden,
         number: hidden ? 0 : number,
         pins: pins.get(i + 1) ?? 0,
@@ -82,7 +87,8 @@ function entriesFor(
 
 /**
  * Every page of the inspection's drawings as thumbnails (GoodNotes style):
- * tap one to go to it; each has a menu (go to, duplicate, hide); Select
+ * tap one to go to it; hold one and drag it to move it, into another
+ * drawing too; each has a menu (go to, duplicate, hide, move); Select
  * mode hides or duplicates several at once, or hides every page without
  * pins. Hidden pages are listed at the bottom with Restore; the PDFs never
  * change.
@@ -98,6 +104,7 @@ export function PagesSheet({
   onClose,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const body = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
@@ -213,6 +220,44 @@ export function PagesSheet({
   }
 
   const chosen = visible.filter((e) => selected.has(e.key));
+  /** The drawing whose sheet a page shows (another's for a page moved in). */
+  const sheetName = (entry: PageEntry) =>
+    drawings.find((d) => d.id === entry.pdfDrawingId)?.name ??
+    entry.drawing.name;
+
+  // Hold a page and drag it anywhere, into another drawing too.
+  const dragEntries: DragEntry[] = visible.map((e) => ({
+    key: e.key,
+    drawingId: e.drawing.id,
+    drawingName: e.drawing.name,
+    position: e.position,
+    number: e.number,
+  }));
+  const pageDrag = usePageDrag(
+    dragEntries,
+    body,
+    (entry: DragEntry, target: DropTarget) =>
+      void (async () => {
+        const to = await movePageTo(
+          db,
+          entry.drawingId,
+          entry.position,
+          target.drawingId,
+          target.toPosition,
+        );
+        const name = drawings.find((d) => d.id === to.drawingId)?.name ?? "";
+        setMenu(null);
+        setStatus(
+          to.drawingId === entry.drawingId
+            ? "Page moved."
+            : `Page moved into ${name}.`,
+        );
+      })(),
+    open && !selecting,
+  );
+  const dragged = pageDrag.drag
+    ? visible.find((e) => e.key === pageDrag.drag!.key)
+    : undefined;
 
   /** Moves a page within its drawing; the menu follows it. */
   async function movePageOf(entry: PageEntry, direction: -1 | 1) {
@@ -271,7 +316,12 @@ export function PagesSheet({
           </button>
         </div>
 
-        <div className="pages-sheet-body">
+        <div className="pages-sheet-body" ref={body}>
+          {!selecting && (
+            <p className="pages-hint muted small">
+              Hold a page, then drag it to move it, even into another drawing.
+            </p>
+          )}
           {status && (
             <p className="pages-status" role="status">
               {status}
@@ -279,7 +329,18 @@ export function PagesSheet({
           )}
           <ul className="pages-grid" aria-label="Document pages">
             {visible.map((entry) => (
-              <li key={entry.key} className="pages-cell">
+              <li
+                key={entry.key}
+                className={`pages-cell${pageDrag.drag?.key === entry.key ? " pages-cell-lifted" : ""}`}
+                data-drag-key={entry.key}
+              >
+                {pageDrag.drag?.target?.key === entry.key && (
+                  <span
+                    className={`page-drop-slot page-drop-${pageDrag.drag.target.side}`}
+                    data-testid="page-drop-slot"
+                    aria-hidden="true"
+                  />
+                )}
                 <button
                   type="button"
                   className={[
@@ -290,16 +351,19 @@ export function PagesSheet({
                     .filter(Boolean)
                     .join(" ")}
                   data-testid="page-thumb"
-                  aria-label={`Page ${entry.number}: ${entry.drawing.name} page ${entry.source}`}
+                  aria-label={`Page ${entry.number}: ${sheetName(entry)} page ${entry.source}`}
                   aria-pressed={selecting ? selected.has(entry.key) : undefined}
+                  onPointerDown={(e) => pageDrag.pointerDown(entry.key, e)}
+                  onContextMenu={(e) => e.preventDefault()}
                   onClick={() => {
+                    if (pageDrag.wasDragged()) return;
                     if (selecting) return toggle(entry.key);
                     close();
                     onGoTo(entry.key);
                   }}
                 >
                   <Thumb
-                    doc={docs.get(entry.drawing.id)}
+                    doc={docs.get(entry.pdfDrawingId)}
                     source={entry.source}
                     active={open}
                   />
@@ -492,19 +556,19 @@ export function PagesSheet({
                   <li key={entry.key} className="pages-cell page-hidden">
                     <div className="page-thumb">
                       <Thumb
-                        doc={docs.get(entry.drawing.id)}
+                        doc={docs.get(entry.pdfDrawingId)}
                         source={entry.source}
                         active={open}
                       />
                     </div>
                     <div className="page-thumb-caption">
                       <span className="page-thumb-drawing">
-                        {entry.drawing.name} p{entry.source}
+                        {sheetName(entry)} p{entry.source}
                       </span>
                       <button
                         type="button"
                         className="quiet"
-                        aria-label={`Restore ${entry.drawing.name} page ${entry.source}`}
+                        aria-label={`Restore ${sheetName(entry)} page ${entry.source}`}
                         onClick={() =>
                           void setPagesHidden(
                             db,
@@ -523,6 +587,27 @@ export function PagesSheet({
             </section>
           )}
         </div>
+
+        {pageDrag.drag && dragged && (
+          <div
+            className="page-drag-ghost"
+            style={{ left: pageDrag.drag.x, top: pageDrag.drag.y }}
+            aria-hidden="true"
+          >
+            <div className="page-thumb">
+              <Thumb
+                doc={docs.get(dragged.pdfDrawingId)}
+                source={dragged.source}
+                active={open}
+              />
+            </div>
+            {pageDrag.drag.target && (
+              <span className="page-drag-label" data-testid="page-drag-label">
+                {pageDrag.drag.target.label}
+              </span>
+            )}
+          </div>
+        )}
 
         {selecting && (
           <div className="pages-actions">

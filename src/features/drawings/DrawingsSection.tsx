@@ -107,6 +107,13 @@ export function DrawingsSection({
 
   const busy = status !== null;
   const deletingCount = deleting ? (counts?.get(deleting.id) ?? 0) : 0;
+  // Its pages moved into other drawings show its PDF: they go with it.
+  const deletingLent = deleting
+    ? (drawings ?? [])
+        .filter((d) => d.id !== deleting.id)
+        .flatMap((d) => d.pages ?? [])
+        .filter((p) => p.from === deleting.id).length
+    : 0;
 
   return (
     <div className="drawings-section" aria-labelledby="drawings-heading">
@@ -272,6 +279,14 @@ export function DrawingsSection({
             ? ` and its ${deletingCount} ${deletingCount === 1 ? "item" : "items"} will be removed from this device.`
             : " will be removed from this device."}
         </p>
+        {deletingLent > 0 && (
+          <p>
+            {deletingLent === 1
+              ? "Its page moved into another drawing goes too"
+              : `Its ${deletingLent} pages moved into other drawings go too`}
+            , with any pins and markup on {deletingLent === 1 ? "it" : "them"}.
+          </p>
+        )}
         <p>
           This can't be undone. Remaining items are re-lettered so there are no
           gaps.

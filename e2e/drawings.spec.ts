@@ -1714,6 +1714,64 @@ async function dragHandle(page: Page, handle: Locator, toRow: Locator) {
   await mouseDrag(page, at, { x: at.x, y: row.y + 4 });
 }
 
+test("pages: hold a page and drag it into another drawing", async ({
+  page,
+}) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [
+    await typicalPdf("S-101 Level 3.pdf"),
+    await typicalPdf("S-102 Level 4.pdf"),
+  ]);
+  await openDrawing(page, "S-101 Level 3");
+  await addPinAt(page, 0.3, 0.3);
+  await sheet(page).getByRole("button", { name: "Done" }).first().click();
+
+  await openPages(page);
+  const pages = page.getByRole("dialog", { name: "Pages" });
+  const from = pages.getByRole("button", {
+    name: "Page 1: S-101 Level 3 page 1",
+  });
+  const onto = pages.getByRole("button", {
+    name: "Page 4: S-102 Level 4 page 1",
+  });
+  await expect(from).toContainText("1 pin");
+  // Hold, then drag onto the right half of S-102's first page.
+  const start = await centre(from);
+  const box = (await onto.boundingBox())!;
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2, {
+    steps: 12,
+  });
+  await expect(pages.getByTestId("page-drag-label")).toHaveText(
+    "Move to S-102 Level 4, after page 4",
+  );
+  await page.mouse.up();
+  await expect(pages.getByRole("status")).toHaveText(
+    "Page moved into S-102 Level 4.",
+  );
+  // It sits after S-102's first page, still its own sheet, with its pin.
+  await expect(
+    pages.getByRole("button", { name: "Page 1: S-101 Level 3 page 2" }),
+  ).toBeVisible();
+  await expect(
+    pages.getByRole("button", { name: "Page 3: S-102 Level 4 page 1" }),
+  ).toBeVisible();
+  await expect(
+    pages.getByRole("button", { name: "Page 4: S-101 Level 3 page 1" }),
+  ).toContainText("1 pin");
+  // A plain tap still goes to a page.
+  await pages
+    .getByRole("button", { name: "Page 4: S-101 Level 3 page 1" })
+    .click();
+  await expect(pages).toBeHidden();
+  await expect(page.getByTestId("page-indicator")).toHaveAttribute(
+    "data-label",
+    /S-101 Level 3 · page 1 of 3/,
+  );
+});
+
 test("pages: move a page within its drawing and reorder drawings", async ({
   page,
 }) => {
