@@ -64,7 +64,7 @@ Run typecheck, lint and tests before saying a task is done.
 - Branding is hard-coded to Northrop for the POC but must live in one module (`src/brand/northrop.ts`), not scattered through layout code.
 - Items are either `instruction` or `observation`. Only instructions appear in the memo, in the "Ok to proceed subject to the following:" list. Observations never appear in the memo; they go in a draggable text box burned into the marked-up drawing page (see SPEC section 5).
 - Exported drawing pages keep their native page size.
-- Memo references are `SIM-NNN` per job number (see SPEC section 7a). No re-inspection or open/closed item status in the POC.
+- Memo references are the project's letters (default SIM) + three digits, e.g. `SIM001`, per job number (see SPEC section 7a). No re-inspection or open/closed item status in the POC.
 - Prefilled messages live in the Snippet table and are user-editable. Do not hard-code them into components.
 - Brand tokens: red `#DA1A32`, cream `#FFF2DF`, maroon `#580B07`, grey `#3B3B3B`, font Figtree, A4.
 

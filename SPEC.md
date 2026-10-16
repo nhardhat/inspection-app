@@ -59,7 +59,7 @@ The sample is a one-page **Site Instruction Memo**, not a long report. Anatomy:
 | Date | defaults to today |
 | Job number | text, from the project |
 | Job name | text, from the project |
-| Memo reference | auto-generated per job (e.g. `SIM-001`, `SIM-002`), editable. Shown in the memo header with the item inspected, e.g. "SIM-001 – Level 3 slab reinforcement". The sample template has no reference field; it is placed in the right-hand header column on its own line under Job name, in the same style as Job name. |
+| Memo reference | auto-generated per job (e.g. `SIM001`, `SIM002`; the project's own letters, e.g. `SSI001`, section 7a), editable. Shown in the memo header with the item inspected, e.g. "SIM001 – Level 3 slab reinforcement". The sample template has no reference field; it is placed in the right-hand header column on its own line under Job name, in the same style as Job name. |
 | Recipients table | up to 10 rows (5 until 2026-10-05): Company, Attn, and To or Copy (checkbox pair; at least one "To", warned if none); drag a row's ≡ to reorder them (their order in the memo; engineer, 2026-10-16). A new memo starts with the client as the first "To". **Add from contacts** offers the project's contacts not already listed (added as "To" if there is none yet, otherwise "Copy"); a recipient typed in is added to the project's contacts when you leave its row (no duplicates: same company and attn, ignoring case and spaces), and a new memo's client is added too. |
 | Site visit requested by | defaults to "client name, client company"; editable, with Reset |
 | Reason for visit | the item inspected (e.g. "Level 3 slab reinforcement"); prefilled from the inspection's Item inspected |
@@ -158,9 +158,9 @@ Export must work offline. It runs on the device (pdf-lib), reading drawings and 
 
 ### 7a. Memo reference and filename
 
-- Reference format `SIM-NNN`, counted per job number, generated when the memo is created and editable afterwards.
-- Because there is no sync, two devices could both create `SIM-002` for the same job. Mitigation for the POC: memos are created on the iPad, desktop is for editing imported inspections, and the reference stays editable. Flag this for the sync phase.
-- Exported filename: `{jobNumber}_{reference}_{itemInspected}.pdf` (sanitised).
+- Reference format: the project's **memo reference letters** then three digits, no hyphen (engineer, 2026-10-16: some projects use other letters, e.g. SSI): `SIM001` by default, `SSI001` with SSI. Set on the project page ("Memo reference letters": capitals, up to 6, shown with an example; empty means SIM; `Project.referencePrefix`). Counted per job number, generated when the memo is created and editable afterwards; memos made before keep their reference (older ones read `SIM-001`). Only the reference changes: the memo is still titled Site Instruction Memo.
+- Because there is no sync, two devices could both create `SIM002` for the same job. Mitigation for the POC: memos are created on the iPad, desktop is for editing imported inspections, and the reference stays editable. Flag this for the sync phase.
+- Exported filename: `{jobNumber}-{reference}-A-{itemInspected}.pdf`, e.g. "SY000001-SIM001-A-Level 3 slab.pdf" (engineer, 2026-10-16; the A is always A; spaces kept, characters that break Windows, iOS Files or email removed).
 
 ## 8. Data model
 
@@ -201,7 +201,7 @@ Memo           { id, inspectionId, templateId, reference, recipients[], siteVisi
                // The signature is the memo's own copy (PNG in blobs), so it travels with the inspection.
                // exportedAt / exportedLetters: the last PDF pack export and each item's letter then
                // (warns when letters change before sending)
-MemoCounter    { jobNumber, lastSeq }   // drives SIM-001, SIM-002 ... per job number
+MemoCounter    { jobNumber, lastSeq }   // drives SIM001, SIM002 ... per job number
 MemoTemplate   { id, name, branding{ colours, logoBlobId, fonts }, fixedText{ disclaimer, officeBlock } }
                // POC: a single hard-coded Northrop template (see section 4a)
 ObservationBox { id, drawingId, page, x, y }   // normalised 0..1 top-left; one per drawing page with pins
@@ -303,7 +303,7 @@ Top-level navigation has separate areas: **Dashboard** and **Inspections** (scre
 ## 15. Assumptions and open questions
 
 - [x] Lettered items can be instructions or neutral observations (decided). Observations go in a draggable text box on the drawing, not in the memo; heading defaults to "Noted for information:" (decided).
-- [x] Memos get an auto-numbered reference per job (SIM-001...), shown together with the item inspected (decided; placed under Job name in the memo header, see sections 4 and 7a).
+- [x] Memos get an auto-numbered reference per job (SIM001...), shown together with the item inspected (decided; placed under Job name in the memo header, see sections 4 and 7a).
 - [x] Drawings keep native size in the export (decided).
 - [x] Branding hard-coded to Northrop for the POC (decided).
 - [ ] Is "Aconex / Email" the full list for "Sent via"?

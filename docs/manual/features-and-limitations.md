@@ -74,7 +74,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 
 ## Site Instruction Memo
 
-- One memo per inspection, referenced **SIM-001**, **SIM-002**… per job number.
+- One memo per inspection, referenced **SIM001**, **SIM002**… per job number (each project can use its own letters, e.g. SSI001); the PDF is named like "SY000001-SIM001-A-Level 3 slab.pdf".
 - Filled from the project and inspection: client, address, job, item inspected, inspector, date.
 - Recipients (To or Copy), saved to the project's contacts for next time.
 - **Prefilled messages** for the body, the standard conditions and the notes box heading, all editable in Settings.
