@@ -19,7 +19,11 @@ import {
 import { northrop } from "../../brand/northrop";
 import type { Item, Markup } from "../../db/types";
 import { arrowMetrics, arrowShape } from "../drawings/arrows";
-import { defaultBoxPosition, type BoxLine } from "../drawings/observationBox";
+import {
+  defaultBoxPosition,
+  type BoxStyle,
+  type BoxLine,
+} from "../drawings/observationBox";
 import type { Point } from "../drawings/viewer/viewTransform";
 import {
   SHAPE_FILL_OPACITY,
@@ -43,8 +47,11 @@ export interface PageMarkup {
   pins: PagePin[];
   /** Pen and highlighter marks, drawn first (under everything else). */
   marks: Markup[];
-  /** The notes box's top-left, normalised on the page (null: default spot). */
-  box: Point | null;
+  /**
+   * The notes box's top-left, normalised on the page, and its own width and
+   * text size if changed (null: default spot and size).
+   */
+  box: (Point & BoxStyle) | null;
   /** From boxLines(): what the notes box says. */
   boxLines: BoxLine[];
 }
@@ -252,8 +259,12 @@ function drawNotesBox(
   fonts: MarkupFonts,
 ) {
   const font = (bold: boolean) => (bold ? fonts.bold : fonts.regular);
-  const layout = layoutNotesBox(markup.boxLines, size, (text, bold, s) =>
-    font(bold).widthOfTextAtSize(toEncodable(text, font(bold)), s),
+  const layout = layoutNotesBox(
+    markup.boxLines,
+    size,
+    (text, bold, s) =>
+      font(bold).widthOfTextAtSize(toEncodable(text, font(bold)), s),
+    markup.box ?? {},
   );
   const box = markup.box ?? defaultBoxPosition(size);
   const left = box.x * size.width;

@@ -4977,3 +4977,58 @@ h1 {
 .drawing-lab-output canvas {
   display: block;
 }
+
+/* The notes box selected (engineer, 2026-10-20): width handles and the
+   text size bar, sized in page units by the overlay. */
+.observation-box-selected {
+  outline: 2px dashed var(--ink);
+  outline-offset: 4px;
+}
+
+.observation-box-handle {
+  position: absolute;
+  top: 50%;
+  background: #fff;
+  border: solid var(--ink);
+  border-radius: 999px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+/* Just inside the box's sides, so a box at the sheet's edge keeps both. */
+.observation-box-handle-left {
+  left: 0;
+  transform: translate(-30%, -50%);
+}
+
+.observation-box-handle-right {
+  left: 100%;
+  transform: translate(-70%, -50%);
+}
+
+.observation-box-sizes {
+  position: absolute;
+  right: 0;
+  display: flex;
+  border-radius: 999px;
+  background: var(--charcoal, #2a2523);
+  text-transform: none;
+  font-family: var(--font-sans, sans-serif);
+}
+
+.observation-box-sizes button {
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.observation-box-sizes button[aria-pressed="true"] {
+  background: #fff;
+  color: #2a2523;
+  font-weight: 600;
+}

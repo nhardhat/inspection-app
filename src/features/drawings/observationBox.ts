@@ -5,7 +5,7 @@
  * Sizes are in page units (PDF points) and scale with the sheet.
  */
 import { northrop } from "../../brand/northrop";
-import type { Item, Snippet } from "../../db/types";
+import type { BoxTextSize, Item, Snippet } from "../../db/types";
 import { formatDdMmYyyy } from "../../lib/dates";
 import { indexForLetter } from "../items/letters";
 import type { Point, Size } from "./viewer/viewTransform";
@@ -29,27 +29,59 @@ const POINTS_PER_MM = 72 / 25.4;
  */
 export const BOX_INSET_MM = 15;
 
+/** A box's own size, if changed (engineer, 2026-10-20). */
+export interface BoxStyle {
+  /** Fraction of the page width. */
+  width?: number;
+  textSize?: BoxTextSize;
+}
+
+/** Text size multipliers: M is the original size. */
+export const BOX_TEXT_SCALE: Record<BoxTextSize, number> = {
+  S: 0.8,
+  M: 1,
+  L: 1.3,
+};
+
+/** The narrowest a box can be, in text heights. */
+const MIN_WIDTH_EMS = 12;
+
 /**
- * Text is 1.2% of the sheet's short side: about 20 pt on A1, 10 pt on A3 and
- * 7 pt on A4. The box is 50 text-heights wide, so a typical header (in
- * capitals) fits on one line.
+ * Text is 1.2% of the sheet's short side at M: about 20 pt on A1, 10 pt on
+ * A3 and 7 pt on A4 (S and L scale it). The box is 50 text-heights wide
+ * unless resized, so a typical header (in capitals) fits on one line.
  */
-export function boxMetrics(page: Size): BoxMetrics {
+export function boxMetrics(page: Size, style: BoxStyle = {}): BoxMetrics {
   const short = Math.min(page.width, page.height);
-  const fontSize = short * 0.012;
+  const fontSize = short * 0.012 * BOX_TEXT_SCALE[style.textSize ?? "M"];
+  const max = page.width * 0.9;
+  const min = Math.min(fontSize * MIN_WIDTH_EMS, max);
+  const width = style.width
+    ? Math.min(Math.max(style.width * page.width, min), max)
+    : Math.min(fontSize * 50, max);
   return {
     fontSize,
     lineHeight: fontSize * 1.3,
     padding: fontSize * 0.6,
-    width: Math.min(fontSize * 50, page.width * 0.9),
+    width,
     margin: BOX_INSET_MM * POINTS_PER_MM,
     borderWidth: Math.max(0.5, fontSize * 0.06),
   };
 }
 
 /** Width as a fraction of the page width (positions are stored 0..1). */
-export function boxWidthFraction(page: Size): number {
-  return boxMetrics(page).width / page.width;
+export function boxWidthFraction(page: Size, style: BoxStyle = {}): number {
+  return boxMetrics(page, style).width / page.width;
+}
+
+/** The narrowest and widest a box can be, as fractions of the page width. */
+export function boxWidthLimits(page: Size, style: BoxStyle = {}) {
+  const { fontSize } = boxMetrics(page, style);
+  const max = 0.9;
+  return {
+    min: Math.min((fontSize * MIN_WIDTH_EMS) / page.width, max),
+    max,
+  };
 }
 
 /** Default spot: top right, inset by the margin (BOX_INSET_MM). */
@@ -62,9 +94,16 @@ export function defaultBoxPosition(page: Size): Point {
 }
 
 /** Keeps the box's top-left on the page with the whole box width inside. */
-export function clampBoxPosition(p: Point, page: Size): Point {
+export function clampBoxPosition(
+  p: Point,
+  page: Size,
+  style: BoxStyle = {},
+): Point {
   return {
-    x: Math.min(Math.max(0, p.x), Math.max(0, 1 - boxWidthFraction(page))),
+    x: Math.min(
+      Math.max(0, p.x),
+      Math.max(0, 1 - boxWidthFraction(page, style)),
+    ),
     y: Math.min(Math.max(0, p.y), 0.98),
   };
 }

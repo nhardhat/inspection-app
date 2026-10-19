@@ -392,11 +392,16 @@ export async function reorderItems(
  * Puts a page's notes box at `to`, making its record if the page had none
  * yet (a page with only general notes shows one at the default spot).
  */
+/**
+ * Saves a page's notes box: where it is (`x`, `y`), and its width and text
+ * size if changed (undefined clears them back to the default). Creates its
+ * record if the page had none.
+ */
 export async function placeObservationBox(
   db: InspectionDb,
   drawingId: string,
   page: number,
-  to: { x: number; y: number },
+  to: Pick<ObservationBox, "x" | "y" | "width" | "textSize">,
   inspectionId: string,
   now = Date.now(),
 ): Promise<void> {

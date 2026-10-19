@@ -330,7 +330,16 @@ export interface ObservationBox {
   /** Normalised top-left (0..1). */
   x: number;
   y: number;
+  /**
+   * Width as a fraction of the page width, once resized (engineer,
+   * 2026-10-20); missing: the default width for its text size.
+   */
+  width?: number;
+  /** Text size, S, M or L (missing: M, the original size). */
+  textSize?: BoxTextSize;
 }
+
+export type BoxTextSize = "S" | "M" | "L";
 
 /** Shapes (slice 2b), each drawn by a drag from corner to corner. */
 export const SHAPES = ["line", "arrow", "rect", "ellipse", "cloud"] as const;

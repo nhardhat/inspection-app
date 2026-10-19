@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { readPlace, writePlace } from "../../app/sessionPlace";
 import { NotFound } from "../../app/NotFound";
-import { peekUndo, redoLast, undoLast, useUndo } from "../../app/undo";
+import {
+  peekUndo,
+  pushUndo,
+  redoLast,
+  undoLast,
+  useUndo,
+} from "../../app/undo";
 import { db } from "../../db/db";
 import { listDrawings, setPageSizes } from "../../db/drawings";
 import { listMarkups, type MarkupPatch } from "../../db/markups";
@@ -1177,15 +1183,29 @@ function InspectionDocument({ inspectionId }: { inspectionId: string }) {
               observationHeading: heading ?? DEFAULT_OBSERVATION_HEADING,
               items: [...generalNotes, ...pageItems],
             })}
-            onMoveEnd={(to) =>
-              void placeObservationBox(
-                db,
-                page.drawingId,
-                page.page,
-                to,
-                inspectionId,
-              )
-            }
+            onChange={(to, label) => {
+              // Undoable (engineer, 2026-10-20), moves too.
+              const before = {
+                x: shownBox.x,
+                y: shownBox.y,
+                width: shownBox.width,
+                textSize: shownBox.textSize,
+              };
+              const save = (values: typeof to) =>
+                placeObservationBox(
+                  db,
+                  page.drawingId,
+                  page.page,
+                  values,
+                  inspectionId,
+                );
+              void save(to);
+              pushUndo(inspectionId, {
+                label,
+                undo: () => save(before),
+                redo: () => save(to),
+              });
+            }}
           />
         )}
       </>

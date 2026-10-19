@@ -400,6 +400,63 @@ test("dragged pins and boxes keep their new positions", async ({ page }) => {
   expect(Number(await obsBox.getAttribute("data-y"))).toBeGreaterThan(0.7);
 });
 
+test("the notes box: tap to select, drag a side to resize, S/M/L text, undo", async ({
+  page,
+}) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [await typicalPdf()]);
+  await openDrawing(page, "S-101 Level 3");
+  await addPinAt(page, 0.4, 0.5);
+  await typeItem(page, "Add N12 bar at grid C/4");
+  await sheet(page).getByRole("button", { name: "Done" }).first().click();
+
+  const obsBox = page.getByTestId("observation-box");
+  const width = async () => Number(await obsBox.getAttribute("data-width"));
+  const before = await width();
+  // A tap selects it: handles and the size bar show.
+  const b = (await obsBox.boundingBox())!;
+  await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  const right = page.getByTestId("box-handle-right");
+  await expect(right).toBeVisible();
+  const sizes = page.getByRole("toolbar", { name: "Notes box text size" });
+  await expect(
+    sizes.getByRole("button", { name: "Text size M" }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  // Narrower: drag the right handle in by a third of the box.
+  const h = (await right.boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2 - b.width / 3, h.y + h.height / 2, {
+    steps: 6,
+  });
+  await page.mouse.up();
+  await expect.poll(width).toBeLessThan(before * 0.8);
+  const narrow = await width();
+
+  // Large text.
+  await sizes.getByRole("button", { name: "Text size L" }).click();
+  await expect(obsBox).toHaveAttribute("data-text-size", "L");
+
+  // Undo goes back a step at a time.
+  const undo = page.getByRole("button", { name: "Undo" });
+  await undo.click();
+  await expect(obsBox).toHaveAttribute("data-text-size", "M");
+  await undo.click();
+  await expect.poll(width).toBeCloseTo(before, 3);
+  await page.getByRole("button", { name: "Redo" }).click();
+  await expect.poll(width).toBeCloseTo(narrow, 3);
+
+  // A tap on the drawing lets go; it's kept after a reload.
+  await page.waitForTimeout(300);
+  await page.reload();
+  await expect(
+    page.locator('[data-testid="drawing-viewer"][data-ready="true"]'),
+  ).toBeVisible();
+  await expect.poll(width).toBeCloseTo(narrow, 3);
+  await expect(page.getByTestId("box-handle-right")).toHaveCount(0);
+});
+
 test("a pinch moves a snapshot and lays out once, around the fingers", async ({
   page,
 }) => {

@@ -76,7 +76,9 @@ export async function appendDrawingPages(
         {
           pins: pinned.pins,
           marks: pinned.marks,
-          box: box ? { x: box.x, y: box.y } : null,
+          box: box
+            ? { x: box.x, y: box.y, width: box.width, textSize: box.textSize }
+            : null,
           boxLines: boxLines({
             header: input.header,
             observationHeading: input.observationHeading,

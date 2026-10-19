@@ -3,6 +3,7 @@ import type { Item } from "../../db/types";
 import {
   boxHeader,
   boxMetrics,
+  boxWidthLimits,
   clampBoxPosition,
   defaultBoxPosition,
   boxLines,
@@ -27,6 +28,20 @@ describe("box size", () => {
       expect(p.x * page.width + m.width).toBeCloseTo(page.width - m.margin);
       expect(p.y * page.height).toBeCloseTo(m.margin);
     }
+  });
+
+  test("its own width and text size (engineer, 2026-10-20)", () => {
+    const m = boxMetrics(A1);
+    // L text is 1.3 times M; unresized, the box widens with it.
+    expect(boxMetrics(A1, { textSize: "L" }).fontSize).toBeCloseTo(
+      m.fontSize * 1.3,
+    );
+    expect(boxMetrics(A1, { textSize: "S" }).width).toBeCloseTo(m.width * 0.8);
+    // A set width stays, within limits.
+    expect(boxMetrics(A1, { width: 0.2 }).width).toBeCloseTo(A1.width * 0.2);
+    const { min, max } = boxWidthLimits(A1);
+    expect(boxMetrics(A1, { width: 0.001 }).width).toBeCloseTo(min * A1.width);
+    expect(boxMetrics(A1, { width: 2 }).width).toBeCloseTo(max * A1.width);
   });
 
   test("clamps a dragged box onto the page", () => {

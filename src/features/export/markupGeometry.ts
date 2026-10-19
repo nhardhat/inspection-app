@@ -4,7 +4,11 @@
  * are in page units (PDF points) and scale with the sheet, like the notes
  * box and arrows in the viewer.
  */
-import { boxMetrics, type BoxLine } from "../drawings/observationBox";
+import {
+  boxMetrics,
+  type BoxStyle,
+  type BoxLine,
+} from "../drawings/observationBox";
 import type { Size } from "../drawings/viewer/viewTransform";
 
 export interface PinMetrics {
@@ -116,8 +120,9 @@ export function layoutNotesBox(
   lines: BoxLine[],
   page: Size,
   measure: Measure,
+  style: BoxStyle = {},
 ): NotesBoxLayout {
-  const m = boxMetrics(page);
+  const m = boxMetrics(page, style);
   const inner = m.width - 2 * (m.padding + m.borderWidth);
   const out: NotesBoxText[] = [];
   let top = m.borderWidth + m.padding;
