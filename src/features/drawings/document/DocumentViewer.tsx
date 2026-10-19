@@ -1226,7 +1226,7 @@ export function DocumentViewer(props: Props) {
       return;
     }
     if (cancelled) return clearInk();
-    // A tap (no stroke) on a mark picks it instead of leaving a dot.
+    // (A drawing tool's tap never picks a mark: it draws.)
     if (!stroke.held && stroke.travel < TAP_SLOP && tapMarkAt(stroke.start))
       return clearInk();
     if (stroke.shape) {
@@ -1308,20 +1308,19 @@ export function DocumentViewer(props: Props) {
     );
   }
 
-  /** Whether a tap on a mark picks it (no tool, or a drawing tool). */
+  /**
+   * Whether a tap on a mark picks it: only with no tool on. With the pen,
+   * highlighter or a shape on, a tap draws (engineer, 2026-10-20: lifting
+   * and putting the Pencil down while writing picked nearby strokes);
+   * select with the Select tool instead.
+   */
   function tapsSelect() {
-    const tool = latest.current.tool;
-    return (
-      tool === null ||
-      tool === "pen" ||
-      tool === "highlighter" ||
-      tool === "shapes"
-    );
+    return latest.current.tool === null;
   }
 
   /**
-   * A tap at `p` (viewer px) with no tool or a drawing tool: if it lands on
-   * a mark, that mark is picked (Select comes on) and true is returned.
+   * A tap at `p` (viewer px) with no tool on: if it lands on a mark, that
+   * mark is picked (Select comes on) and true is returned.
    */
   function tapMarkAt(p: Point): boolean {
     if (!tapsSelect()) return false;

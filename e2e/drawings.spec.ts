@@ -2758,7 +2758,7 @@ test("general notes: no pin, lettered first, listed in every notes box; export k
   await expect(boxes.first()).toContainText("A. CRACK AT GRID 4");
 });
 
-test("a tap on a drawn mark picks it and turns Select on; letting go goes back", async ({
+test("a tap on a drawn mark picks it with no tool on; drawing tools keep drawing", async ({
   page,
 }) => {
   await setupInspection(page);
@@ -2774,34 +2774,33 @@ test("a tap on a drawn mark picks it and turns Select on; letting go goes back",
     y: box.y + box.height * fy,
   });
 
-  // Draw a rectangle, then tap it with the Rectangle tool still on.
-  await tool("Rectangle").click();
-  await drawLine(page, [0.35, 0.4], [0.55, 0.5]);
-  await expect(page.locator('[data-tool="rect"]')).toHaveCount(1);
+  // A pen stroke, then a tap right on it with the Pen still on (as when
+  // writing): it makes a dot and selects nothing (engineer, 2026-10-20).
+  await tool("Pen").click();
+  await drawLine(page, [0.35, 0.45], [0.55, 0.45]);
+  await expect(page.getByTestId("mark")).toHaveCount(1);
   const on = at(0.45, 0.45);
   await page.mouse.click(on.x, on.y);
+  await expect(page.getByTestId("mark")).toHaveCount(2);
+  await expect(selection).toHaveCount(0);
+  await expect(tool("Pen")).toHaveAttribute("aria-pressed", "true");
+
+  // A shape tool's tap on it doesn't pick it either.
+  await tool("Rectangle").click();
+  await page.mouse.click(on.x, on.y);
+  await expect(selection).toHaveCount(0);
+  await expect(tool("Rectangle")).toHaveAttribute("aria-pressed", "true");
+
+  // With no tool on, a tap picks it and Select comes on; letting go goes
+  // back to no tool.
+  await tool("Rectangle").click();
+  await touchTap(page, on);
   await expect(tool("Select")).toHaveAttribute("aria-pressed", "true");
   await expect(selection).toHaveAttribute("data-count", "1");
-  await expect(page.getByTestId("handle-rotate")).toBeVisible();
-  await expect(page.getByTestId("handle-se")).toBeVisible();
-  // A tap on open space lets go: the Rectangle tool is back.
   const off = at(0.85, 0.85);
   await page.mouse.click(off.x, off.y);
   await expect(selection).toHaveCount(0);
-  await expect(tool("Rectangle")).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator('[data-tool="rect"]')).toHaveCount(1);
-
-  // With no tool on, a finger tap picks it too.
-  await tool("Rectangle").click();
-  await touchTap(page, on);
-  await expect(selection).toHaveAttribute("data-count", "1");
-  await page.mouse.click(off.x, off.y);
   await expect(tool("Select")).toHaveAttribute("aria-pressed", "false");
-
-  // With the Pen, a tap on blank paper still makes a dot.
-  await tool("Pen").click();
-  await page.mouse.click(off.x, off.y);
-  await expect(page.getByTestId("mark")).toHaveCount(2);
 });
 
 test("diagnostics: off by default, switched on in Settings, shows each page on screen", async ({

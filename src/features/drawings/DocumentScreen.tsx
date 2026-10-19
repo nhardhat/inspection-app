@@ -640,10 +640,10 @@ function InspectionDocument({ inspectionId }: { inspectionId: string }) {
   }
 
   /**
-   * A tap on a drawn mark with no tool or a drawing tool on (engineer,
-   * 2026-10-07): it's picked and Select comes on, so it can be resized,
-   * rotated or changed straight away. Something open closes first, as with
-   * any tap on the drawing.
+   * A tap on a drawn mark with no tool on (engineer, 2026-10-07; drawing
+   * tools no longer pick, 2026-10-20): it's picked and Select comes on, so
+   * it can be resized, rotated or changed straight away. Something open
+   * closes first, as with any tap on the drawing.
    */
   function tapMark(sel: MarkSelection, hit: { page: PageLayout; at: Point }) {
     if (draftRef.current || pendingOpen.current || selectedId || itemsOpen)
