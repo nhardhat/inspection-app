@@ -68,7 +68,7 @@ The item's editor opens: type the instruction or observation. For an instruction
 - Tap a pin (with any tool) to open it again; drag it to move it.
 - **Add arrow** points the pin at more spots; **Copy pin** puts the same item at another spot.
 - Letters are automatic: instructions A, B, C… and observations A, B, C… in order through the drawings.
-- The **notes box** on each page lists its items. Drag it somewhere clear: it's printed on the drawing.
+- The **notes box** on each page lists its items. Drag it somewhere clear: it's printed on the drawing. Tap it to change its width (drag a side handle) or its text size (**S**, **M**, **L**); Undo reverses moves and size changes.
 
 ## The Items panel
 

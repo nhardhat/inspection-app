@@ -50,7 +50,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 - **Copy pin** puts the same item at several spots, on any page.
 - Instructions can require **photo confirmation** before the builder proceeds; the memo and the drawing's notes box mark each one \*, and the memo's "Ok to proceed subject to the following" line says those items are to be closed out with photos.
 - **Refer to drawings:** for memos with many pins, one line points the builder to the attached drawings instead of listing every instruction (wording editable in Settings).
-- Each page with pins gets a **notes box** listing its instructions and observations, dragged into a clear spot and burned into the exported page.
+- Each page with pins gets a **notes box** listing its instructions and observations, dragged into a clear spot, resizable (width and S/M/L text) and burned into the exported page as shown.
 - **General notes** are observations with no pin, for things that apply to the whole inspection (such as its extent). They're lettered first and listed in every page's notes box.
 - The Items panel lists everything by page: tap one to jump to its pin, swipe to delete, drag to reorder and multi-select.
 
@@ -117,7 +117,7 @@ These are the known limits of the proof of concept, stated plainly so they can b
 ## Not in the proof of concept
 
 - No re-inspections, and items have no open or closed status.
-- Undo lasts until the app closes, and doesn't cover moving pins or the notes box, or page operations.
+- Undo lasts until the app closes, and doesn't cover moving pins or page operations.
 - Callout text always stays level (callouts move when a group is rotated, but don't turn).
 - No user accounts, sign-in or permissions; one engineer per device.
 - The planned calculators (AS 3600) and standard details library aren't built yet.
@@ -145,4 +145,4 @@ The app was built by David Samson with an AI coding assistant (Anthropic's Claud
 - **Wider use:** decide on hosting (company server or sign-in), and whether syncing between devices is needed. Sync would need a server and accounts, and changes how data is protected.
 - **Calculators:** an AS 3600 calculators area (concrete checks, area of steel, development and lap lengths), kept separate from inspections and never in the memo.
 - **Standard details library:** searchable details that can be attached to a memo item.
-- **Later:** more undo coverage (moving pins and the notes box, page operations).
+- **Later:** more undo coverage (moving pins, page operations).
