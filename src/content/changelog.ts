@@ -4,6 +4,24 @@
  */
 export const CHANGELOG: { version: string; date: string; items: string[] }[] = [
   {
+    version: "0.3.0",
+    date: "20 October 2026",
+    items: [
+      "Busy drawings draw in the background: no more freezes while a sheet sharpens, and the areas round the view are drawn ahead so nearby scrolling is sharp",
+      "Crisp zoom on busy sheets and markup",
+      "Move pages between drawings: hold a page in the Pages view and drag it anywhere",
+      "PDF preview zooms up to 10×, sharp at any zoom, around your fingers",
+      "Memo: instructions needing photos are marked *, explained in the line above the list",
+      "Memo: Refer to drawings, one line instead of a long list of instructions",
+      "Memo: the item inspected in italics",
+      "Drag to reorder memo recipients and a project's contacts",
+      "Each project can set its memo reference letters (SIM001, SSI001); the PDF is named like SY000001-SIM001-A-Level 3 slab.pdf",
+      "A plain message when the iPad runs out of space, and a Dashboard warning when it's nearly full",
+      "Diagnostics and the drawing lab moved to Settings, Developer (password)",
+      "Checked to work end to end with no connection: drawings, memo, export, backup and import",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "7 October 2026",
     items: [
