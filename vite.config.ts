@@ -73,6 +73,10 @@ export default defineConfig({
         ],
         navigateFallback: "index.html",
         cleanupOutdatedCaches: true,
+        // Workbox skips files over 2 MiB by default, silently: the main
+        // bundle is about 1.9 MB, so a little growth would have dropped it
+        // from the precache and broken offline use (found 2026-10-20).
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
     }),
   ],
