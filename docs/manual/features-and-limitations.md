@@ -38,7 +38,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 
 - Any number of drawing PDFs per inspection, shown as **one continuous document**, every page at the same width. It scrolls with iOS's own smooth scrolling and pinch-zooms around the fingers.
 - Large sheets render only what is on screen, at a resolution suited to the zoom.
-- A **Pages** view of thumbnails: go to a page, duplicate a sheet, hide pages that aren't needed (restorable), move pages (hold and drag, even into another drawing) and reorder drawings. The original PDFs never change.
+- A **Pages** view of thumbnails: go to a page, duplicate a sheet, hide pages that aren't needed (restorable), move pages (hold and drag, even into another drawing), tick pages without pins for the export, add **sketch pages** (the Northrop calc pad, A4–A1, with a light grid and a scale, filled in from the job) and reorder drawings. The original PDFs never change.
 
 ![The drawings with pins, arrows and the notes box](shots/pins.jpg)
 

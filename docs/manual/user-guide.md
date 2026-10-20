@@ -49,7 +49,7 @@ Your work is stored only on this iPad, and iOS can clear a web app's storage. **
 ## Getting around the drawings
 
 - All the drawings are one long document. **Scroll with one finger**, **pinch with two** to zoom.
-- The **Page** button on the right opens the Pages view: tap a page to go to it. From each page's menu you can duplicate, hide or move it. Hold a page, then drag it to move it anywhere, even into another drawing.
+- The **Page** button on the right opens the Pages view: tap a page to go to it. From each page's menu you can duplicate, hide or move it. Hold a page, then drag it to move it anywhere, even into another drawing. **Include in export** puts a page without pins in the PDF pack, and **Add sketch page after…** inserts a Northrop calc pad sheet (A4–A1, portrait or landscape, with a scale) with a light grid to sketch on; it's filled in from the job and exported with the rest.
 - **Fit page** (bottom right) fits the current page to the screen.
 - The Apple Pencil never scrolls: it's for pins and drawing.
 
