@@ -9,6 +9,9 @@ import { addPhotos } from "../../db/photos";
 import { createProject } from "../../db/projects";
 import { InspectionDb } from "../../db/schema";
 import { ensureSeeded } from "../../db/seed";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { northrop } from "../../brand/northrop";
 import {
   buildRegisterXlsx,
   registerFilename,
@@ -116,7 +119,12 @@ test("one row per item: instructions, then observations with general notes", asy
 test("the workbook: header block, then the table with the builder's columns", async () => {
   const data = await setUp();
   const book = new ExcelJS.Workbook();
-  await book.xlsx.load((await buildRegisterXlsx(data)).buffer as ArrayBuffer);
+  const logo = new Uint8Array(
+    readFileSync(fileURLToPath(northrop.assets.wordmarkRed)),
+  );
+  await book.xlsx.load(
+    (await buildRegisterXlsx(data, logo)).buffer as ArrayBuffer,
+  );
   const sheet = book.getWorksheet("Defect register")!;
   expect(sheet.getCell("A1").value).toBe("Job number");
   expect(sheet.getCell("C1").value).toBe("SY000001");
@@ -139,4 +147,6 @@ test("the workbook: header block, then the table with the builder's columns", as
   expect(sheet.getCell("A8").value).toBe("IA");
   expect(sheet.getCell("I8").value).toBe("Test Engineer");
   expect(sheet.rowCount).toBe(10);
+  // The Northrop logo, top right.
+  expect(sheet.getImages()).toHaveLength(1);
 });

@@ -149,8 +149,14 @@ const COLUMNS: {
 
 const argb = (hex: string) => `FF${hex.slice(1).toUpperCase()}`;
 
-/** Builds the workbook (.xlsx bytes). */
-export async function buildRegisterXlsx(data: PackData): Promise<Uint8Array> {
+/**
+ * Builds the workbook (.xlsx bytes), with the Northrop wordmark (PNG) at
+ * the top right when given (engineer, 2026-10-20).
+ */
+export async function buildRegisterXlsx(
+  data: PackData,
+  logo?: Uint8Array,
+): Promise<Uint8Array> {
   const { Workbook } = (await import("exceljs")).default;
   const book = new Workbook();
   book.creator = northrop.name;
@@ -181,6 +187,17 @@ export async function buildRegisterXlsx(data: PackData): Promise<Uint8Array> {
     row.getCell(1).font = { bold: true, color: { argb: maroon } };
   }
   sheet.addRow([]);
+  if (logo) {
+    const image = book.addImage({
+      buffer: logo.slice().buffer as ArrayBuffer,
+      extension: "png",
+    });
+    // Over the right-hand columns of the header block, 7.2:1 like the PNG.
+    sheet.addImage(image, {
+      tl: { col: COLUMNS.length - 3, row: 0.2 },
+      ext: { width: 216, height: 30 },
+    });
+  }
 
   const head = sheet.addRow(COLUMNS.map((c) => c.header));
   head.eachCell((cell) => {
