@@ -376,7 +376,9 @@ test("a signature drawn in Settings goes on new memos; a memo can upload its own
   ).toBeVisible();
 });
 
-test("export the defect register (Excel)", async ({ page }) => {
+test("export the defect register (Excel) and the memo in Word", async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     const shared: { name: string; size: number }[] = [];
     Object.assign(window, { sharedFiles: shared });
@@ -411,6 +413,18 @@ test("export the defect register (Excel)", async ({ page }) => {
     );
   await expect.poll(async () => (await shared()).length).toBe(1);
   expect((await shared())[0].size).toBeGreaterThan(3000);
+
+  // The memo in Word, beside it.
+  const word = page.getByTestId("word-memo");
+  await word.getByRole("button", { name: "Export Word" }).click();
+  await expect(word).toContainText(
+    "SY000001-SIM001-A-Level 3 slab reinforcement.docx",
+    { timeout: 30_000 },
+  );
+  await word.getByRole("button", { name: "Share Word file…" }).click();
+  await expect.poll(async () => (await shared()).length).toBe(2);
+  // Figtree is inside it.
+  expect((await shared())[1].size).toBeGreaterThan(200_000);
 });
 
 test("export the PDF pack: memo then the marked-up page; warns when letters change after", async ({

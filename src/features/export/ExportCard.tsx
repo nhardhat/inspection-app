@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { PdfViewer } from "../../app/PdfViewer";
-import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
+import { FileDown, FileSpreadsheet, FileText, FileType } from "lucide-react";
 import { useState } from "react";
 import { db } from "../../db/db";
 import { markMemoExported } from "../../db/memos";
@@ -226,6 +226,7 @@ export function ExportCard({ inspectionId }: { inspectionId: string }) {
           )}
         </>
       )}
+      <WordMemo inspectionId={inspectionId} />
       <DefectRegister inspectionId={inspectionId} />
       {previewing && (
         <PdfViewer
@@ -255,9 +256,12 @@ function DefectRegister({ inspectionId }: { inspectionId: string }) {
     try {
       const data = await loadPackData(db, inspectionId);
       if (!data) return setState({ status: "idle" });
-      const { buildRegisterXlsx, registerFilename } =
-        await import("./defectRegister");
-      const bytes = await buildRegisterXlsx(data);
+      const [{ buildRegisterXlsx, registerFilename }, { loadWordmark }] =
+        await Promise.all([
+          import("./defectRegister"),
+          import("../memo/pdf/loadMemoAssets"),
+        ]);
+      const bytes = await buildRegisterXlsx(data, await loadWordmark());
       setState({
         status: "done",
         file: new File([bytes.slice().buffer], registerFilename(data), {
@@ -316,6 +320,98 @@ function DefectRegister({ inspectionId }: { inspectionId: string }) {
               {state.status === "building"
                 ? "Making the register…"
                 : "Export defect register"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The memo and photo appendix as a Word document (engineer, 2026-10-20):
+ * made first, then shared from a tap. The drawings stay in the PDF.
+ */
+function WordMemo({ inspectionId }: { inspectionId: string }) {
+  const [state, setState] = useState<
+    | { status: "idle" | "building" }
+    | { status: "done"; file: File }
+    | { status: "error" }
+  >({ status: "idle" });
+
+  async function make() {
+    setState({ status: "building" });
+    try {
+      const data = await loadPackData(db, inspectionId);
+      if (!data) return setState({ status: "idle" });
+      const [{ buildWordMemo, wordFilename }, { loadWordAssets }] =
+        await Promise.all([
+          import("./wordMemo"),
+          import("../memo/pdf/loadMemoAssets"),
+        ]);
+      const bytes = await buildWordMemo(
+        data,
+        await loadWordAssets(),
+        blobLoader(db),
+      );
+      setState({
+        status: "done",
+        file: new File([bytes.slice().buffer], wordFilename(data), {
+          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        }),
+      });
+    } catch (e) {
+      console.error("Word memo failed", e);
+      setState({ status: "error" });
+    }
+  }
+
+  return (
+    <div className="defect-register" data-testid="word-memo">
+      <h3 className="defect-register-title">
+        <FileType aria-hidden="true" /> Memo in Word
+      </h3>
+      {state.status === "done" ? (
+        <>
+          <p className="muted">
+            <strong className="export-file-name">{state.file.name}</strong>
+            {" · "}
+            {formatBytes(state.file.size)}
+          </p>
+          <div className="button-row">
+            <button
+              type="button"
+              className="emphasis"
+              onClick={() => void saveFiles([state.file])}
+            >
+              Share Word file…
+            </button>
+            <button type="button" onClick={() => void make()}>
+              Make again
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="muted">
+            The memo and photo appendix as an editable Word document (the
+            drawings stay in the PDF).
+          </p>
+          {state.status === "error" && (
+            <p role="alert" className="error">
+              The Word file couldn&rsquo;t be made. Your work is still saved;
+              try again.
+            </p>
+          )}
+          <div className="button-row">
+            <button
+              type="button"
+              disabled={state.status === "building"}
+              onClick={() => void make()}
+            >
+              {state.status === "building"
+                ? "Making the Word file…"
+                : "Export Word"}
             </button>
           </div>
         </>

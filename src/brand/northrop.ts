@@ -80,6 +80,14 @@ export const northrop = {
     /** Red wordmark for the app's top bar. */
     wordmarkRed: new URL("./assets/northrop-wordmark-red.png", import.meta.url)
       .href,
+    /**
+     * The memo's red sidebar as pictures for the Word memo (behind the
+     * page, as in the sample; 4 px per point): with the wordmark on the
+     * first page, plain after.
+     */
+    sidebarFirst: new URL("./assets/memo-sidebar-first.png", import.meta.url)
+      .href,
+    sidebar: new URL("./assets/memo-sidebar.png", import.meta.url).href,
     /** Maroon wordmark for the sketch pad (the Northrop calc pad's). */
     wordmarkMaroon: new URL(
       "./assets/northrop-wordmark-maroon.png",

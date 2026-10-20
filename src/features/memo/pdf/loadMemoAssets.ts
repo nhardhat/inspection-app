@@ -25,3 +25,18 @@ export async function loadMemoAssets(): Promise<MemoAssets> {
     icon: iconBytes,
   };
 }
+
+/** The memo's assets plus the sidebar pictures, for the Word memo. */
+export async function loadWordAssets() {
+  const [memo, sidebarFirst, sidebar] = await Promise.all([
+    loadMemoAssets(),
+    fetchBytes(northrop.assets.sidebarFirst),
+    fetchBytes(northrop.assets.sidebar),
+  ]);
+  return { memo, sidebarFirst, sidebar };
+}
+
+/** The red wordmark (the defect register's logo). */
+export function loadWordmark(): Promise<Uint8Array> {
+  return fetchBytes(northrop.assets.wordmarkRed);
+}
