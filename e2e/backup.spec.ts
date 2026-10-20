@@ -193,6 +193,14 @@ test(
       { timeout: 30_000 },
     );
     await exportCard.getByRole("button", { name: "Share…" }).click();
+    // The defect register too (its library comes from the app's cache).
+    const register = page.getByTestId("defect-register");
+    await register
+      .getByRole("button", { name: "Export defect register" })
+      .click();
+    await expect(register).toContainText("Defect register.xlsx", {
+      timeout: 30_000,
+    });
 
     // The backup.
     await openTab(page, "Pre-inspection");

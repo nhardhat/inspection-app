@@ -376,6 +376,41 @@ test("a signature drawn in Settings goes on new memos; a memo can upload its own
   ).toBeVisible();
 });
 
+test("export the defect register (Excel)", async ({ page }) => {
+  await page.addInitScript(() => {
+    const shared: { name: string; size: number }[] = [];
+    Object.assign(window, { sharedFiles: shared });
+    Object.defineProperty(navigator, "canShare", {
+      value: (data: { files?: File[] }) => !!data.files?.length,
+    });
+    Object.defineProperty(navigator, "share", {
+      value: async (data: { files: File[] }) => {
+        for (const f of data.files) shared.push({ name: f.name, size: f.size });
+      },
+    });
+  });
+  const home = await newInspection(page);
+  await addItems(page);
+  await page.goto(home);
+  await createMemo(page);
+  const register = page.getByTestId("defect-register");
+  await register
+    .getByRole("button", { name: "Export defect register" })
+    .click();
+  await expect(register).toContainText(
+    "SY000001-SIM001-A-Level 3 slab reinforcement - Defect register.xlsx",
+    { timeout: 30_000 },
+  );
+  await register.getByRole("button", { name: "Share register…" }).click();
+  const shared = await page.evaluate(
+    () =>
+      (window as unknown as { sharedFiles: { name: string; size: number }[] })
+        .sharedFiles,
+  );
+  expect(shared).toHaveLength(1);
+  expect(shared[0].size).toBeGreaterThan(3000);
+});
+
 test("export the PDF pack: memo then the marked-up page; warns when letters change after", async ({
   page,
 }) => {
