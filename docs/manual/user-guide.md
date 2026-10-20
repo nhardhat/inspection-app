@@ -141,6 +141,8 @@ Turn on **Select** (the dotted lasso), then tap a mark or draw a loop round seve
 2. When it's ready, tap **Share…** to send it by Mail, save it to Files or upload it to Aconex.
 3. The pack holds the memo, the marked-up drawing pages and the photo appendix.
 
+Under it, **Export defect register** makes an Excel file with one row per item (references, descriptions, sheets, photo references) and empty Status, Date closed and Comments columns for the builder; **Share register…** sends it.
+
 > If you change pins after exporting, the letters may change. The app warns you and lists what changed: export again before sending.
 
 ![The Export card, ready to share](shots/export.png)

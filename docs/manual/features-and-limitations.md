@@ -87,6 +87,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 ## Export and backup
 
 - **PDF pack:** the memo, then each drawing page with pins or markup (at its native sheet size, original vector content kept, pins, arrows, notes box and markup burned in), then the photo appendix. Page numbers run through the pack.
+- **Defect register:** an Excel file, one row per item (reference, type, description, sheet, photo confirmation, photo references), with empty Status, Date closed and Comments columns for the builder to close items out.
 - If letters change after a memo was exported, the app says what changed before it is sent again.
 - Exported PDFs and these documents open inside the app with a Back button.
 - **Inspection files:** one file per inspection holding its drawings, photos, items, markup and memo, to back up or move to another device. Import never silently overwrites.
