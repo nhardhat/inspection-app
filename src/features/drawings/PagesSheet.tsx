@@ -11,6 +11,7 @@ import {
   movePageTo,
   pageMoveTarget,
   setPagesHidden,
+  setPagesIncluded,
 } from "../../db/pages";
 import type { Drawing, Item, Markup } from "../../db/types";
 import { drawingPages, pageKey } from "./document/documentLayout";
@@ -45,6 +46,8 @@ interface PageEntry {
   /** The drawing whose PDF that is (another's for a page moved in). */
   pdfDrawingId: string;
   hidden: boolean;
+  /** Ticked Include in export. */
+  include: boolean;
   /** Number through the document (visible pages only). */
   number: number;
   pins: number;
@@ -75,6 +78,7 @@ function entriesFor(
         source: page.source,
         pdfDrawingId: page.from ?? drawing.id,
         hidden,
+        include: Boolean(page.include),
         number: hidden ? 0 : number,
         pins: pins.get(i + 1) ?? 0,
         marked: marks.some(
@@ -193,6 +197,24 @@ export function PagesSheet({
     setSelected(new Set());
     setStatus(
       `${chosen.length} ${chosen.length === 1 ? "page" : "pages"} duplicated.`,
+    );
+  }
+
+  /** Ticks or unticks pages for the PDF pack (pages with pins always go). */
+  async function include(chosen: PageEntry[], on: boolean) {
+    let count = 0;
+    for (const drawing of drawings) {
+      const positions = chosen
+        .filter((e) => e.drawing.id === drawing.id)
+        .map((e) => e.position);
+      if (positions.length)
+        count += await setPagesIncluded(db, drawing.id, positions, on);
+    }
+    setSelected(new Set());
+    setStatus(
+      on
+        ? `${count} ${count === 1 ? "page" : "pages"} included in the export.`
+        : `${count} ${count === 1 ? "page" : "pages"} left out of the export (pages with pins still go).`,
     );
   }
 
@@ -377,6 +399,14 @@ export function PagesSheet({
                       {entry.pins} {entry.pins === 1 ? "pin" : "pins"}
                     </span>
                   )}
+                  {entry.include && entry.pins === 0 && !entry.marked && (
+                    <span
+                      className="page-thumb-included"
+                      data-testid="page-included"
+                    >
+                      In export
+                    </span>
+                  )}
                   {selecting && (
                     <span
                       className={`page-thumb-check${selected.has(entry.key) ? " on" : ""}`}
@@ -455,6 +485,22 @@ export function PagesSheet({
                         : entry.marked
                           ? "Hide (has markup)"
                           : "Hide"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitemcheckbox"
+                      aria-checked={
+                        entry.include || entry.pins > 0 || entry.marked
+                      }
+                      disabled={entry.pins > 0 || entry.marked}
+                      onClick={() => {
+                        setMenu(null);
+                        void include([entry], !entry.include);
+                      }}
+                    >
+                      {entry.pins > 0 || entry.marked
+                        ? "In export (has pins or markup)"
+                        : "Include in export"}
                     </button>
                     <hr className="page-thumb-menu-rule" />
                     <button
@@ -631,6 +677,21 @@ export function PagesSheet({
               onClick={() => void duplicate(chosen)}
             >
               Duplicate
+            </button>
+            <button
+              type="button"
+              disabled={chosen.length === 0}
+              onClick={() =>
+                void include(
+                  chosen,
+                  !chosen.every((e) => e.include || e.pins > 0 || e.marked),
+                )
+              }
+            >
+              {chosen.length > 0 &&
+              chosen.every((e) => e.include || e.pins > 0 || e.marked)
+                ? "Leave out of export"
+                : "Include in export"}
             </button>
             <button
               type="button"

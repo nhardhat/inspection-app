@@ -68,6 +68,11 @@ export interface DrawingPage {
   /** Left out of the document, its numbering and the PDF pack; restorable. */
   hidden?: boolean;
   /**
+   * In the PDF pack even without pins or markup (engineer, 2026-10-20;
+   * pages with them always are).
+   */
+  include?: boolean;
+  /**
    * The drawing whose PDF it shows, when moved here from another drawing
    * (engineer, 2026-10-16); missing: this drawing's own PDF.
    */

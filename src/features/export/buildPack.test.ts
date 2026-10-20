@@ -123,6 +123,7 @@ test("memo, then pinned drawing pages, then the appendix, numbered through", asy
   expect(data).not.toBeNull();
   expect(packSummary(data!)).toEqual({
     drawingPages: 2,
+    includedPages: 0,
     photos: 3,
     appendixPages: 1,
   });

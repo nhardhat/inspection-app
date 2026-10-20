@@ -90,6 +90,21 @@ describe("pinnedPages", () => {
   });
 });
 
+describe("pinnedPages with pages ticked Include in export", () => {
+  test("they go in without pins; hidden pages still don't", () => {
+    const d1 = drawing("d1", [
+      { source: 1 },
+      { source: 2, include: true },
+      { source: 3, include: true, hidden: true },
+    ]);
+    const pages = pinnedPages([d1], [item({ page: 1 })]);
+    expect(pages.map((p) => [p.position, p.items.length])).toEqual([
+      [1, 1],
+      [2, 0],
+    ]);
+  });
+});
+
 describe("pinnedPages with a page moved in from another drawing", () => {
   test("it goes in among its new drawing's pages, from its own PDF", () => {
     const d1 = drawing("d1", [{ source: 1 }]);

@@ -1771,6 +1771,41 @@ async function dragHandle(page: Page, handle: Locator, toRow: Locator) {
   await mouseDrag(page, at, { x: at.x, y: row.y + 4 });
 }
 
+test("pages: tick a page without pins for the export", async ({ page }) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [await typicalPdf()]);
+  await openDrawing(page, "S-101 Level 3");
+  await addPinAt(page, 0.3, 0.3);
+  await sheet(page).getByRole("button", { name: "Done" }).first().click();
+
+  await openPages(page);
+  const pages = page.getByRole("dialog", { name: "Pages" });
+  // A page with pins is always in.
+  await pages.getByRole("button", { name: "Page 1 options" }).click();
+  await expect(
+    pages.getByRole("menuitemcheckbox", {
+      name: "In export (has pins or markup)",
+    }),
+  ).toBeDisabled();
+  await pages.getByRole("heading", { name: /Pages/ }).click();
+  await pages.getByRole("button", { name: "Page 2 options" }).click();
+  await pages
+    .getByRole("menuitemcheckbox", { name: "Include in export" })
+    .click();
+  await expect(pages.getByTestId("page-included")).toHaveCount(1);
+  await expect(pages.getByRole("status")).toHaveText(
+    "1 page included in the export.",
+  );
+  await pages.getByRole("button", { name: "Close" }).click();
+
+  // The Export card counts it.
+  await openTab(page, "Site memo");
+  await page.getByRole("button", { name: "Create memo" }).click();
+  await expect(page.getByTestId("export-card")).toContainText(
+    "2 pages (1 without pins)",
+  );
+});
+
 test("pages: hold a page and drag it into another drawing", async ({
   page,
 }) => {

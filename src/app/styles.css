@@ -3947,6 +3947,18 @@ h1 {
   user-select: none;
 }
 
+.page-thumb-included {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  /* On the white page in both modes. */
+  background: #3b3b3b;
+  color: #fff;
+  font-size: var(--text-xs);
+}
+
 .pages-cell-lifted {
   opacity: 0.3;
 }

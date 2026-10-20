@@ -47,6 +47,8 @@ export type LoadBlob = (
 
 export interface PackSummary {
   drawingPages: number;
+  /** Of those, pages in only because they're ticked Include in export. */
+  includedPages: number;
   photos: number;
   appendixPages: number;
 }
@@ -79,7 +81,10 @@ export interface PagePin {
   arrows: Item["arrows"];
 }
 
-/** The pages that go in the pack (with pins or markup), in document order. */
+/**
+ * The pages that go in the pack, in document order: those with pins or
+ * markup, and those ticked Include in export.
+ */
 export function pinnedPages(
   drawings: Drawing[],
   items: Item[],
@@ -106,7 +111,7 @@ export function pinnedPages(
       const pageMarks = marks
         .filter((m) => m.drawingId === drawing.id && m.page === position)
         .sort((a, b) => a.createdAt - b.createdAt);
-      return onPage.length > 0 || pageMarks.length > 0
+      return onPage.length > 0 || pageMarks.length > 0 || entry.include
         ? [
             {
               drawing,
@@ -132,8 +137,12 @@ export function appendixPages(data: PackData): AppendixPage[] {
 /** What the pack will hold, for the Export card before exporting. */
 export function packSummary(data: PackData): PackSummary {
   const pages = appendixPages(data);
+  const pinned = pinnedPages(data.drawings, data.items, data.marks);
   return {
-    drawingPages: pinnedPages(data.drawings, data.items, data.marks).length,
+    drawingPages: pinned.length,
+    includedPages: pinned.filter(
+      (p) => p.items.length === 0 && p.marks.length === 0,
+    ).length,
     photos: pages
       .flatMap((p) => p.rows)
       .reduce((n, row) => n + row.photos.length, 0),

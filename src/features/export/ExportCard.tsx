@@ -177,7 +177,9 @@ export function ExportCard({ inspectionId }: { inspectionId: string }) {
               <span>Marked-up drawings</span>
               <span className="muted">
                 {summary.drawingPages
-                  ? `${plural(summary.drawingPages, "page")} with pins`
+                  ? summary.includedPages
+                    ? `${plural(summary.drawingPages, "page")} (${summary.includedPages} without pins)`
+                    : `${plural(summary.drawingPages, "page")} with pins`
                   : "None (no pins yet)"}
               </span>
             </li>

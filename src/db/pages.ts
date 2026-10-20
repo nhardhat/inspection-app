@@ -116,6 +116,37 @@ export async function setPagesHidden(
 }
 
 /**
+ * Ticks (or unticks) pages of one drawing for the PDF pack even without
+ * pins or markup; returns how many changed.
+ */
+export async function setPagesIncluded(
+  db: InspectionDb,
+  drawingId: string,
+  positions: number[],
+  include: boolean,
+  now = Date.now(),
+): Promise<number> {
+  return db.transaction("rw", [db.inspections, db.drawings], async () => {
+    const drawing = await db.drawings.get(drawingId);
+    if (!drawing) return 0;
+    const pages = pagesOf(drawing).map((page) => ({ ...page }));
+    let changed = 0;
+    for (const position of positions) {
+      const page = pages[position - 1];
+      if (!page || Boolean(page.include) === include) continue;
+      if (include) page.include = true;
+      else delete page.include;
+      changed++;
+    }
+    if (changed) {
+      await db.drawings.update(drawingId, { pages });
+      await touchInspection(db, drawing.inspectionId, now);
+    }
+    return changed;
+  });
+}
+
+/**
  * Duplicates a page: a copy (of the same PDF page, without its pins or
  * markup) goes right after it, and later pages' pins, notes boxes and
  * markup move along one.

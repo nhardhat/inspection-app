@@ -17,6 +17,7 @@ import {
   movePageTo,
   pageMoveTarget,
   setPagesHidden,
+  setPagesIncluded,
 } from "./pages";
 import { InspectionDb } from "./schema";
 import type { Inspection } from "./types";
@@ -94,6 +95,18 @@ describe("drawing pages", () => {
     expect((await db.items.get(onOne.id))!.page).toBe(1);
     expect((await db.items.get(onThree.id))!.page).toBe(4);
     expect((await db.observationBoxes.get("box3"))!.page).toBe(4);
+  });
+
+  test("pages can be ticked for the export and unticked", async () => {
+    const d = await drawing(2);
+    expect(await setPagesIncluded(db, d.id, [2], true)).toBe(1);
+    expect(await setPagesIncluded(db, d.id, [2], true)).toBe(0);
+    expect((await db.drawings.get(d.id))!.pages[1]).toEqual({
+      source: 2,
+      include: true,
+    });
+    await setPagesIncluded(db, d.id, [2], false);
+    expect((await db.drawings.get(d.id))!.pages[1]).toEqual({ source: 2 });
   });
 
   test("a duplicate of a pinned page starts without pins", async () => {
