@@ -26,7 +26,11 @@ function useSteps(inspectionId: string): Step[] | undefined {
   return useLiveQuery(async () => {
     const [job, drawings, items, memo] = await Promise.all([
       loadJobInspection(db, inspectionId),
-      db.drawings.where("inspectionId").equals(inspectionId).count(),
+      db.drawings
+        .where("inspectionId")
+        .equals(inspectionId)
+        .filter((d) => !d.sketch)
+        .count(),
       db.items.where("inspectionId").equals(inspectionId).count(),
       getMemo(db, inspectionId),
     ]);

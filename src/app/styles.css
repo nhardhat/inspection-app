@@ -5044,3 +5044,10 @@ h1 {
   color: #2a2523;
   font-weight: 600;
 }
+
+/* Add sketch page: sheet, orientation and scale side by side. */
+.sketch-dialog {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}

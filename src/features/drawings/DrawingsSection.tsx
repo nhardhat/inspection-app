@@ -44,8 +44,9 @@ export function DrawingsSection({
   /** Reports adding in progress, and whether any file failed. */
   onActivity?: (state: { busy: boolean; failed: boolean }) => void;
 }) {
+  // Sketch sheets aren't listed: they're pages in the Pages view.
   const drawings = useLiveQuery(
-    () => listDrawings(db, inspectionId),
+    async () => (await listDrawings(db, inspectionId)).filter((d) => !d.sketch),
     [inspectionId],
   );
   const counts = useLiveQuery(async () => {

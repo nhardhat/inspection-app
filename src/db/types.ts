@@ -103,6 +103,18 @@ export interface Drawing {
   pageSizes?: [number, number][];
   /** Drawings appear in the document in the order they were added. */
   createdAt: number;
+  /**
+   * A sketch page's sheet (engineer, 2026-10-20): a one-page PDF made by
+   * the app, its page moved into a drawing after the page it was added
+   * from. Left out of the drawings lists.
+   */
+  sketch?: {
+    size: "A4" | "A3" | "A2" | "A1";
+    orientation: "portrait" | "landscape";
+    scale: "1:10" | "1:20" | "1:50" | "1:100" | "1:200" | "NTS";
+    /** 1 for SK01. */
+    number: number;
+  };
 }
 
 export type ItemKind = "instruction" | "observation";

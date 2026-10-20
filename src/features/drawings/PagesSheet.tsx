@@ -21,6 +21,15 @@ import { storePdf } from "./drawingFiles";
 import { ReorderDrawingsDialog } from "./ReorderDrawingsDialog";
 import type { PDFDocumentProxy } from "./pdf/pdfjs";
 import { usePageDrag, type DragEntry, type DropTarget } from "./usePageDrag";
+import { ConfirmDialog } from "../../app/ConfirmDialog";
+import { SketchDialog } from "./sketch/SketchDialog";
+import {
+  DEFAULT_SKETCH_SHEET,
+  addSketchPage,
+  changeSketchPage,
+  deleteSketchPage,
+  type SketchSheet,
+} from "./sketch/sketchPages";
 
 interface Props {
   open: boolean;
@@ -48,6 +57,8 @@ interface PageEntry {
   hidden: boolean;
   /** Ticked Include in export. */
   include: boolean;
+  /** A sketch page: the drawing holding its sheet, and the sheet. */
+  sketch: { drawingId: string; sheet: SketchSheet } | null;
   /** Number through the document (visible pages only). */
   number: number;
   pins: number;
@@ -61,6 +72,19 @@ function entriesFor(
   marks: Pick<Markup, "drawingId" | "page">[],
 ): PageEntry[] {
   const entries: PageEntry[] = [];
+  const sketchOf = (from: string | undefined) => {
+    const sheet = drawings.find((d) => d.id === from)?.sketch;
+    return from && sheet
+      ? {
+          drawingId: from,
+          sheet: {
+            size: sheet.size,
+            orientation: sheet.orientation,
+            scale: sheet.scale,
+          },
+        }
+      : null;
+  };
   let number = 0;
   for (const drawing of drawings) {
     const pins = new Map<number, number>();
@@ -79,6 +103,7 @@ function entriesFor(
         pdfDrawingId: page.from ?? drawing.id,
         hidden,
         include: Boolean(page.include),
+        sketch: sketchOf(page.from),
         number: hidden ? 0 : number,
         pins: pins.get(i + 1) ?? 0,
         marked: marks.some(
@@ -116,6 +141,14 @@ export function PagesSheet({
   const [menu, setMenu] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+  // Adding a sketch page after a page, or changing a sketch page's sheet.
+  const [sketching, setSketching] = useState<{
+    entry: PageEntry;
+    change: boolean;
+  } | null>(null);
+  const [deletingSketch, setDeletingSketch] = useState<PageEntry | null>(null);
+  // Sketch sheets aren't drawings to move or reorder.
+  const realDrawings = drawings.filter((d) => !d.sketch);
   // Opens upward when the page is in the lower half of the sheet.
   const [menuUp, setMenuUp] = useState(false);
 
@@ -198,6 +231,34 @@ export function PagesSheet({
     setStatus(
       `${chosen.length} ${chosen.length === 1 ? "page" : "pages"} duplicated.`,
     );
+  }
+
+  /** Adds a sketch page after `entry`, or changes its sheet. */
+  async function sketchPage(
+    entry: PageEntry,
+    change: boolean,
+    sheet: SketchSheet,
+  ) {
+    setStatus(change ? "Changing the sketch sheet…" : "Adding a sketch page…");
+    try {
+      if (change && entry.sketch)
+        await changeSketchPage(db, entry.sketch.drawingId, sheet);
+      else
+        await addSketchPage(
+          db,
+          inspectionId,
+          { drawingId: entry.drawing.id, position: entry.position },
+          sheet,
+        );
+      setStatus(change ? "Sketch sheet changed." : "Sketch page added.");
+    } catch (e) {
+      console.error("Sketch page failed", e);
+      setStatus(
+        isStorageFull(e)
+          ? STORAGE_FULL_MESSAGE
+          : "The sketch page couldn't be made. Try again.",
+      );
+    }
   }
 
   /** Ticks or unticks pages for the PDF pack (pages with pins always go). */
@@ -506,6 +567,44 @@ export function PagesSheet({
                     <button
                       type="button"
                       role="menuitem"
+                      onClick={() => {
+                        setMenu(null);
+                        setSketching({ entry, change: false });
+                      }}
+                    >
+                      Add sketch page after…
+                    </button>
+                    {entry.sketch && (
+                      <>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setMenu(null);
+                            setSketching({ entry, change: true });
+                          }}
+                        >
+                          Sketch sheet and scale…
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setMenu(null);
+                            if (entry.pins > 0 || entry.marked)
+                              setDeletingSketch(entry);
+                            else if (entry.sketch)
+                              void deleteSketchPage(db, entry.sketch.drawingId);
+                          }}
+                        >
+                          Delete sketch page
+                        </button>
+                      </>
+                    )}
+                    <hr className="page-thumb-menu-rule" />
+                    <button
+                      type="button"
+                      role="menuitem"
                       disabled={
                         pageMoveTarget(
                           drawingPages(entry.drawing),
@@ -531,13 +630,13 @@ export function PagesSheet({
                     >
                       Move page later
                     </button>
-                    {drawings.length > 1 && (
+                    {realDrawings.length > 1 && (
                       <>
                         <hr className="page-thumb-menu-rule" />
                         <button
                           type="button"
                           role="menuitem"
-                          disabled={drawings[0].id === entry.drawing.id}
+                          disabled={realDrawings[0].id === entry.drawing.id}
                           onClick={() =>
                             void moveDrawing(db, entry.drawing.id, -1)
                           }
@@ -547,7 +646,9 @@ export function PagesSheet({
                         <button
                           type="button"
                           role="menuitem"
-                          disabled={drawings.at(-1)!.id === entry.drawing.id}
+                          disabled={
+                            realDrawings.at(-1)!.id === entry.drawing.id
+                          }
                           onClick={() =>
                             void moveDrawing(db, entry.drawing.id, 1)
                           }
@@ -706,9 +807,37 @@ export function PagesSheet({
       <ReorderDrawingsDialog
         open={open && reordering}
         inspectionId={inspectionId}
-        drawings={drawings}
+        drawings={realDrawings}
         onClose={() => setReordering(false)}
       />
+      {sketching && (
+        <SketchDialog
+          open={open}
+          title={sketching.change ? "Sketch page sheet" : "Add sketch page"}
+          confirmLabel={sketching.change ? "Change" : "Add"}
+          initial={sketching.entry.sketch?.sheet ?? DEFAULT_SKETCH_SHEET}
+          onCancel={() => setSketching(null)}
+          onConfirm={(sheet) => {
+            const { entry, change } = sketching;
+            setSketching(null);
+            void sketchPage(entry, change, sheet);
+          }}
+        />
+      )}
+      <ConfirmDialog
+        open={open && deletingSketch !== null}
+        title="Delete sketch page?"
+        confirmLabel="Delete"
+        danger
+        onCancel={() => setDeletingSketch(null)}
+        onConfirm={() => {
+          const entry = deletingSketch;
+          setDeletingSketch(null);
+          if (entry?.sketch) void deleteSketchPage(db, entry.sketch.drawingId);
+        }}
+      >
+        <p>Its pins and markup go with it. This can't be undone.</p>
+      </ConfirmDialog>
     </>
   );
 }

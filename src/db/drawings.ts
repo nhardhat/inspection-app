@@ -178,7 +178,7 @@ export async function deleteDrawing(
 export async function reorderDrawings(
   db: InspectionDb,
   inspectionId: string,
-  order: string[],
+  given: string[],
   now = Date.now(),
 ): Promise<void> {
   await db.transaction(
@@ -186,6 +186,14 @@ export async function reorderDrawings(
     [db.inspections, db.drawings, db.items],
     async () => {
       const drawings = await listDrawings(db, inspectionId);
+      // Sketch sheets (no pages of their own) needn't be named: they go
+      // after the drawings.
+      const order = [
+        ...given,
+        ...drawings
+          .filter((d) => d.sketch && !given.includes(d.id))
+          .map((d) => d.id),
+      ];
       const ids = new Set(drawings.map((d) => d.id));
       if (order.length !== ids.size || !order.every((id) => ids.has(id)))
         throw new Error("The new order must list every drawing once");
@@ -212,7 +220,10 @@ export async function moveDrawing(
 ): Promise<void> {
   const drawing = await db.drawings.get(drawingId);
   if (!drawing) return;
-  const order = (await listDrawings(db, drawing.inspectionId)).map((d) => d.id);
+  // Past the next real drawing (sketch sheets have no pages of their own).
+  const order = (await listDrawings(db, drawing.inspectionId))
+    .filter((d) => !d.sketch)
+    .map((d) => d.id);
   const from = order.indexOf(drawingId);
   const to = from + direction;
   if (to < 0 || to >= order.length) return;

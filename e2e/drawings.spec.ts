@@ -1806,6 +1806,68 @@ test("pages: tick a page without pins for the export", async ({ page }) => {
   );
 });
 
+test("pages: add a sketch page, change its sheet, delete it", async ({
+  page,
+}) => {
+  await setupInspection(page);
+  await uploadDrawings(page, [await typicalPdf()]);
+  await openDrawing(page, "S-101 Level 3", false);
+
+  await openPages(page);
+  const pages = page.getByRole("dialog", { name: "Pages" });
+  await pages.getByRole("button", { name: "Page 1 options" }).click();
+  await pages.getByRole("menuitem", { name: "Add sketch page after…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add sketch page" });
+  await dialog.getByLabel("Sheet").selectOption("A4");
+  await dialog.getByLabel("Orientation").selectOption("portrait");
+  await dialog.getByLabel("Scale").selectOption("1:50");
+  await dialog.getByRole("button", { name: "Add" }).click();
+  await expect(pages.getByRole("status")).toHaveText("Sketch page added.", {
+    timeout: 15_000,
+  });
+  // Page 2 is the sketch, in the export without pins.
+  const sketch = pages.getByRole("button", {
+    name: "Page 2: Sketch SK01 page 1",
+  });
+  await expect(sketch).toBeVisible();
+  await expect(pages.getByTestId("page-included")).toHaveCount(1);
+
+  // A bigger sheet, in landscape.
+  await pages.getByRole("button", { name: "Page 2 options" }).click();
+  await pages
+    .getByRole("menuitem", { name: "Sketch sheet and scale…" })
+    .click();
+  const change = page.getByRole("dialog", { name: "Sketch page sheet" });
+  await expect(change.getByLabel("Scale")).toHaveValue("1:50");
+  await change.getByLabel("Sheet").selectOption("A1");
+  await change.getByLabel("Orientation").selectOption("landscape");
+  await change.getByRole("button", { name: "Change" }).click();
+  await expect(pages.getByRole("status")).toHaveText("Sketch sheet changed.", {
+    timeout: 15_000,
+  });
+
+  // It opens in the drawings like any page.
+  await pages
+    .getByRole("button", { name: "Page 2: Sketch SK01 page 1" })
+    .click();
+  await expect(page.getByTestId("page-indicator")).toHaveAttribute(
+    "data-label",
+    /Sketch SK01 · page 1 of 1/,
+  );
+  // Not a drawing in the Pre-inspection list.
+  await openTab(page, "Pre-inspection");
+  await expect(page.getByText("Sketch SK01")).toHaveCount(0);
+
+  // Deleted (no pins: no question).
+  await openTab(page, "Inspection");
+  await openPages(page);
+  await pages.getByRole("button", { name: "Page 2 options" }).click();
+  await pages.getByRole("menuitem", { name: "Delete sketch page" }).click();
+  await expect(pages.getByRole("button", { name: /Sketch SK01/ })).toHaveCount(
+    0,
+  );
+});
+
 test("pages: hold a page and drag it into another drawing", async ({
   page,
 }) => {

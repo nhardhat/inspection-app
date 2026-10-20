@@ -56,7 +56,10 @@ async function measured<T>(
 
 export function DrawingLab() {
   const unlocked = isDeveloperUnlocked();
-  const drawings = useLiveQuery(() => db.drawings.toArray(), []);
+  const drawings = useLiveQuery(
+    async () => (await db.drawings.toArray()).filter((d) => !d.sketch),
+    [],
+  );
   const [drawingId, setDrawingId] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [zoom, setZoom] = useState(2);

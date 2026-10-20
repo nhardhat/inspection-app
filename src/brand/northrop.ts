@@ -55,6 +55,19 @@ export const northrop = {
   },
   strapline: ["REAL PEOPLE", "REAL PARTNERSHIPS", "REAL IMPACT"],
   /**
+   * Sketch pages (engineer, 2026-10-20): the title strip of Northrop's A4
+   * calc pad (BB-002 Bluebeam drawing templates), rebuilt, without PARTNERS.
+   */
+  sketchLabels: {
+    project: "PROJECTS:",
+    jobNumber: "JOB NO:",
+    sketchNumber: "SKETCH NO:",
+    revision: "REV NO:",
+    designed: "DESIGNED:",
+    scale: "SCALE :",
+    date: "DATE :",
+  },
+  /**
    * Asset URLs, bundled by Vite and precached for offline use. Vite only
    * rewrites `new URL("literal", import.meta.url)`, so keep the paths literal.
    */
@@ -67,6 +80,11 @@ export const northrop = {
     /** Red wordmark for the app's top bar. */
     wordmarkRed: new URL("./assets/northrop-wordmark-red.png", import.meta.url)
       .href,
+    /** Maroon wordmark for the sketch pad (the Northrop calc pad's). */
+    wordmarkMaroon: new URL(
+      "./assets/northrop-wordmark-maroon.png",
+      import.meta.url,
+    ).href,
     /** Red "N" roundel for the footer (sample image3.png). */
     icon: new URL("./assets/northrop-icon.png", import.meta.url).href,
     /** Static Figtree TTFs for PDF embedding (SIL OFL, see assets/fonts/OFL.txt). */
