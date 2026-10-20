@@ -14,6 +14,9 @@ const defaultSettings: Settings = {
 /** Kinds with exactly one message, which can't be deleted. */
 const SINGLE_KINDS: Snippet["kind"][] = ["photoNote", "referDrawings"];
 
+/** Kinds with several messages added after the first seeding. */
+const LATER_KINDS: Snippet["kind"][] = ["inspectionType"];
+
 /**
  * First-run setup: creates the settings record and seeds the starter
  * snippets exactly once. Snippets the engineer has edited or deleted are
@@ -37,6 +40,18 @@ export async function ensureSeeded(db: InspectionDb): Promise<void> {
           s.text = starterLine.text;
           s.label = starterLine.label;
         });
+      // Kinds with several messages added in a later version: seeded once
+      // (inspection types, 2026-10-20), never again if deleted.
+      const seeded = settings.seededKinds ?? [];
+      for (const kind of LATER_KINDS) {
+        if (seeded.includes(kind)) continue;
+        await db.snippets.bulkPut(
+          (starterSnippets as Snippet[]).filter((s) => s.kind === kind),
+        );
+        seeded.push(kind);
+      }
+      if (seeded.length !== (settings.seededKinds ?? []).length)
+        await db.settings.update(SETTINGS_ID, { seededKinds: seeded });
       for (const kind of SINGLE_KINDS) {
         if ((await db.snippets.where("kind").equals(kind).count()) > 0)
           continue;
@@ -48,6 +63,10 @@ export async function ensureSeeded(db: InspectionDb): Promise<void> {
     }
 
     await db.snippets.bulkPut(starterSnippets as Snippet[]);
-    await db.settings.put({ ...settings, snippetsSeeded: true });
+    await db.settings.put({
+      ...settings,
+      snippetsSeeded: true,
+      seededKinds: [...LATER_KINDS],
+    });
   });
 }

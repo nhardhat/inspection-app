@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { InspectionTypes } from "./InspectionTypes";
 import { ArrowRight, FolderSearch, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { rememberBack } from "../../app/backTarget";
@@ -208,6 +209,7 @@ function PreInspectionFor({ id }: { id: string }) {
               onChange={change}
               onBlur={() => void autosave.flush()}
             />
+            <InspectionTypes inspectionId={id} />
           </section>
 
           {/* Drawings are loaded here before going to site. */}

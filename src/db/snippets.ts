@@ -7,6 +7,7 @@ const NEW_LABELS: Record<SnippetKind, string> = {
   heading: "New heading",
   photoNote: "Photo confirmation line",
   referDrawings: "Refer to drawings",
+  inspectionType: "New inspection type",
 };
 
 export async function addSnippet(

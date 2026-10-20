@@ -22,6 +22,11 @@ These seed the Snippet table. The engineer can edit them in the app. Add new one
 ## Refer to drawings (kind: referDrawings, one only; with the memo's Refer to drawings switch on, this line replaces the A, B, C… instructions; [letters] becomes the instruction letters, e.g. A–M)
 - Refer to drawings: "Complete the instructions marked on the attached drawings (items [letters])."
 
+## Inspection types (kind: inspectionType; picked on Pre-inspection; each line of the text becomes a general note; the engineer supplies the wording)
+- General concrete: "[Add general concrete notes in Settings]"
+- General steel: "[Add general steel notes in Settings]"
+- General piling: "[Add general piling notes in Settings]"
+
 ## Rules (template logic, not snippets)
 - Conditions lead-in: with one or more instruction items, one line "Ok to proceed subject to the following:" then the list, whichever body message is chosen. With no instruction items, "Ok to proceed." and no list.
 - Observations never appear in the memo. They go in a draggable text box on each drawing page that has them, and the box is hidden on pages with none.

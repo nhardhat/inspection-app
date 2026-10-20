@@ -18,7 +18,7 @@ describe("ensureSeeded", () => {
   test("seeds the 9 starter snippets and settings on first run", async () => {
     await ensureSeeded(db);
 
-    expect(await db.snippets.count()).toBe(10);
+    expect(await db.snippets.count()).toBe(13);
     expect(await db.snippets.where("kind").equals("body").count()).toBe(4);
     expect(await db.snippets.where("kind").equals("condition").count()).toBe(2);
     expect(await db.snippets.where("kind").equals("heading").count()).toBe(2);
@@ -64,7 +64,7 @@ describe("ensureSeeded", () => {
     await ensureSeeded(db);
     await ensureSeeded(db);
 
-    expect(await db.snippets.count()).toBe(10);
+    expect(await db.snippets.count()).toBe(13);
   });
 
   test("never overwrites an edited snippet or restores a deleted one", async () => {
@@ -79,7 +79,7 @@ describe("ensureSeeded", () => {
       "Edited by the engineer",
     );
     expect(await db.snippets.get(second.id)).toBeUndefined();
-    expect(await db.snippets.count()).toBe(9);
+    expect(await db.snippets.count()).toBe(12);
   });
 
   test("keeps existing settings values", async () => {

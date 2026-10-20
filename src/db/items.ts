@@ -110,6 +110,7 @@ export async function createGeneralNote(
   db: InspectionDb,
   inspectionId: string,
   now = Date.now(),
+  init: Pick<Item, "text" | "fromType"> = { text: "" },
 ): Promise<Item> {
   return db.transaction(
     "rw",
@@ -133,7 +134,7 @@ export async function createGeneralNote(
         general: true,
         letter: letterForIndex(existing.length),
         kind: "observation",
-        text: "",
+        ...init,
         requiresPhotoConfirmation: false,
         photoIds: [],
         createdAt,

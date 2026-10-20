@@ -7,7 +7,12 @@
  */
 
 export type SnippetKind =
-  "body" | "condition" | "heading" | "photoNote" | "referDrawings";
+  | "body"
+  | "condition"
+  | "heading"
+  | "photoNote"
+  | "referDrawings"
+  | "inspectionType";
 
 export interface SnippetRecord {
   id: string;
@@ -22,6 +27,7 @@ const SECTION_KINDS: [prefix: string, kind: SnippetKind][] = [
   ["Observations box heading", "heading"],
   ["Photo confirmation line", "photoNote"],
   ["Refer to drawings", "referDrawings"],
+  ["Inspection types", "inspectionType"],
 ];
 
 const BULLET = /^- (.+?): "(.+)"\s*$/;

@@ -58,5 +58,23 @@
     "kind": "referDrawings",
     "label": "Refer to drawings",
     "text": "Complete the instructions marked on the attached drawings (items [letters])."
+  },
+  {
+    "id": "inspectionType-general-concrete",
+    "kind": "inspectionType",
+    "label": "General concrete",
+    "text": "[Add general concrete notes in Settings]"
+  },
+  {
+    "id": "inspectionType-general-steel",
+    "kind": "inspectionType",
+    "label": "General steel",
+    "text": "[Add general steel notes in Settings]"
+  },
+  {
+    "id": "inspectionType-general-piling",
+    "kind": "inspectionType",
+    "label": "General piling",
+    "text": "[Add general piling notes in Settings]"
   }
 ]

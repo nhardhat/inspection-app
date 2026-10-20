@@ -5051,3 +5051,34 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
 }
+
+/* Pre-inspection: the inspection's types (engineer, 2026-10-20). */
+.inspection-types {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.inspection-types .chip-row {
+  margin: 0;
+}
+
+.inspection-types p {
+  margin: 0;
+}
+
+.inspection-types .field-label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.inspection-types .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip-toggle {
+  border-radius: var(--radius-pill);
+}

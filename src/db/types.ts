@@ -55,6 +55,11 @@ export interface Inspection {
   updatedAt: number;
   /** When it was last saved to an inspection file (Back up now); edits after it need a new backup. */
   backedUpAt?: number;
+  /**
+   * Its types (inspectionType snippet ids; engineer, 2026-10-20), each
+   * adding its general notes.
+   */
+  types?: string[];
 }
 
 /** An inspection with its project's job details, as screens and the memo read them. */
@@ -151,6 +156,12 @@ export interface Item {
    * photos. The original position above decides the letter; copies never
    * re-letter anything. Each copy has its own arrows.
    */
+  /**
+   * A general note added by an inspection type: the type's snippet id and
+   * the text it started with (removing the type removes it, asking first if
+   * it was edited since).
+   */
+  fromType?: { snippetId: string; text: string };
   copies?: PinCopy[];
   /**
    * A general note (engineer, 2026-10-07): an observation with no pin,
@@ -425,9 +436,18 @@ export interface Markup {
  * "photoNote": the memo line explaining the * on instructions needing
  * photo confirmation, joined to the conditions lead-in.
  */
-/** "referDrawings": the line replacing the instructions (Refer to drawings). */
+/**
+ * "referDrawings": the line replacing the instructions (Refer to drawings).
+ * "inspectionType": a type of inspection (label, e.g. "General concrete");
+ * each line of its text becomes a general note when it's picked.
+ */
 export type SnippetKind =
-  "body" | "condition" | "heading" | "photoNote" | "referDrawings";
+  | "body"
+  | "condition"
+  | "heading"
+  | "photoNote"
+  | "referDrawings"
+  | "inspectionType";
 
 export interface Snippet {
   id: string;
@@ -446,6 +466,8 @@ export interface Settings {
   defaultSentVia: SentVia;
   /** Set once the starter snippets have been seeded; they are never re-seeded. */
   snippetsSeeded: boolean;
+  /** Snippet kinds added in a later version and seeded once since. */
+  seededKinds?: SnippetKind[];
   /** My signature (PNG in blobs), copied into each new memo. */
   signatureBlobId?: string | null;
   /** Result of the first-run navigator.storage.persist() request. */

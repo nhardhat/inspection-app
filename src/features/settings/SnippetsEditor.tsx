@@ -42,6 +42,11 @@ const GROUPS: {
     hint: "With Refer to drawings on in a memo, this line replaces the instructions list. [letters] becomes the instruction letters, e.g. A–M.",
     single: true,
   },
+  {
+    kind: "inspectionType",
+    title: "Inspection types",
+    hint: "Picked on Pre-inspection (the name is the button). Each line of the text becomes a general note on the inspection.",
+  },
 ];
 
 /**

@@ -294,6 +294,36 @@ test("drawings can be added on Pre-inspection, before going to site", async ({
   ).toBeVisible({ timeout: 20_000 });
 });
 
+test("inspection types add their general notes; removing asks if edited", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await startInspection(page, { jobNumber: "SY000001", jobName: "Example" });
+  const types = page.getByRole("group", { name: "Inspection type" });
+  const concrete = types.getByRole("button", { name: "General concrete" });
+  await concrete.click();
+  await expect(concrete).toHaveAttribute("aria-pressed", "true");
+
+  // Its note is a general note on the inspection.
+  await openTab(page, "Inspection");
+  await page
+    .getByRole("button", { name: "Add synthetic test drawing" })
+    .click();
+  await page.getByRole("button", { name: /^Items/ }).click();
+  const note = page.getByRole("listitem").filter({
+    hasText: "[Add general concrete notes in Settings]",
+  });
+  await expect(note).toHaveCount(1);
+
+  // Removed again: the note goes (it wasn't edited).
+  await openTab(page, "Pre-inspection");
+  await concrete.click();
+  await expect(concrete).toHaveAttribute("aria-pressed", "false");
+  await openTab(page, "Inspection");
+  await page.getByRole("button", { name: /^Items/ }).click();
+  await expect(note).toHaveCount(0);
+});
+
 test("Settings, About: version, documents (bundled) and what's new", async ({
   page,
 }) => {
