@@ -28,8 +28,11 @@ afterEach(async () => {
   await db.delete();
 });
 
-const notes = () =>
-  db.items.where("inspectionId").equals(inspection.id).toArray();
+/** The inspection's items in letter order (the database's order is by id). */
+const notes = async () =>
+  (await db.items.where("inspectionId").equals(inspection.id).toArray()).sort(
+    (a, b) => a.letter.localeCompare(b.letter),
+  );
 
 describe("inspection types", () => {
   test("each line of a type is a general note", () => {

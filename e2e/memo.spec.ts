@@ -402,13 +402,15 @@ test("export the defect register (Excel)", async ({ page }) => {
     { timeout: 30_000 },
   );
   await register.getByRole("button", { name: "Share register…" }).click();
-  const shared = await page.evaluate(
-    () =>
-      (window as unknown as { sharedFiles: { name: string; size: number }[] })
-        .sharedFiles,
-  );
-  expect(shared).toHaveLength(1);
-  expect(shared[0].size).toBeGreaterThan(3000);
+  // Sharing reads the file first: wait for it.
+  const shared = () =>
+    page.evaluate(
+      () =>
+        (window as unknown as { sharedFiles: { name: string; size: number }[] })
+          .sharedFiles,
+    );
+  await expect.poll(async () => (await shared()).length).toBe(1);
+  expect((await shared())[0].size).toBeGreaterThan(3000);
 });
 
 test("export the PDF pack: memo then the marked-up page; warns when letters change after", async ({
