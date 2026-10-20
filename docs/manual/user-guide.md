@@ -85,6 +85,8 @@ For something about the whole inspection rather than one spot, such as "Inspecti
 
 General notes are observations with no pin. They're lettered first (A, B…), before the pinned observations, and every page's notes box lists them. Edit or delete them from the Items panel like any item.
 
+On Pre-inspection, the **Inspection type** buttons (General concrete, piling, steel…) add each type's standard general notes in one go; tapping a type again takes them away (it asks first if you edited one). The types and their notes are in Settings, Prefilled messages, **Inspection types**.
+
 ## Photos
 
 - In an item's editor: **Take photo** (camera) or **Choose photos** (library).

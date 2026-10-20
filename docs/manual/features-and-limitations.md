@@ -51,7 +51,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 - Instructions can require **photo confirmation** before the builder proceeds; the memo and the drawing's notes box mark each one \*, and the memo's "Ok to proceed subject to the following" line says those items are to be closed out with photos.
 - **Refer to drawings:** for memos with many pins, one line points the builder to the attached drawings instead of listing every instruction (wording editable in Settings).
 - Each page with pins gets a **notes box** listing its instructions and observations, dragged into a clear spot, resizable (width and S/M/L text) and burned into the exported page as shown.
-- **General notes** are observations with no pin, for things that apply to the whole inspection (such as its extent). They're lettered first and listed in every page's notes box.
+- **General notes** are observations with no pin, for things that apply to the whole inspection (such as its extent). They're lettered first and listed in every page's notes box. **Inspection types** (General concrete, piling, steel, editable in Settings) add their standard general notes in one tap.
 - The Items panel lists everything by page: tap one to jump to its pin, swipe to delete, drag to reorder and multi-select.
 
 ## Markup (Apple Pencil)
