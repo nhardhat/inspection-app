@@ -279,10 +279,22 @@ function recipientsTable(input: ReturnType<typeof buildMemoPdfInput>) {
       new TableRow({
         tableHeader: true,
         children: head.map((h, i) =>
-          cell([para([text(h, { size: 11 })])], widths[i], {
-            fill: CREAM,
-            borders: noBorders,
-          }),
+          // Ruled above and below, the column lines running up through it, as in the PDF.
+          cell(
+            [
+              para([text(h, { size: 11 })], {
+                alignment: i < 2 ? AlignmentType.CENTER : AlignmentType.LEFT,
+              }),
+            ],
+            widths[i],
+            {
+              fill: CREAM,
+              borders: {
+                ...(i < head.length - 1 ? inner : borders),
+                top: rule,
+              },
+            },
+          ),
         ),
       }),
       ...input.fields.recipients.map(

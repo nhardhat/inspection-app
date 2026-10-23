@@ -13,3 +13,5 @@ Use an inspection with a memo, a few instructions (one with photo confirmation a
 5. **Edit it.** Change some text and a recipient: it's ordinary Word text. The fonts look like the PDF's (Figtree), even if Figtree isn't installed on that PC.
 6. **Register logo.** **Export defect register** again and open it: the red Northrop wordmark sits at the top right.
 7. **Offline.** In airplane mode, make the Word file again: it works.
+8. **Recipients table.** In Word, the cream heading row has grey lines above and below it and between the columns, as in the PDF; To and Copy are centred.
+9. **Desktop.** On a Windows PC in Chrome or Edge, open the app, then Export PDF, Export Word and Export defect register: each Share button downloads the file.
