@@ -13,7 +13,7 @@ import { createProject } from "../../db/projects";
 import { InspectionDb } from "../../db/schema";
 import { ensureSeeded } from "../../db/seed";
 import { loadTestMemoAssets } from "../memo/pdf/memoAssets.testutil";
-import { blobLoader, loadPackData } from "./packData";
+import { loadPackData } from "./packData";
 import { buildWordMemo, wordFilename } from "./wordMemo";
 
 let db: InspectionDb;
@@ -35,7 +35,7 @@ const JPEG = Uint8Array.from(
   (c) => c.charCodeAt(0),
 );
 
-test("the memo and photo appendix as Word, with Figtree embedded", async () => {
+test("the memo as Word, with Figtree embedded, without the photos", async () => {
   const project = await createProject(db, {
     jobNumber: "SY000001",
     jobName: "Example Apartments",
@@ -83,15 +83,11 @@ test("the memo and photo appendix as Word, with Figtree embedded", async () => {
   ]);
   await createMemo(db, inspection.id);
   const data = (await loadPackData(db, inspection.id))!;
-  const bytes = await buildWordMemo(
-    data,
-    {
-      memo: await loadTestMemoAssets(),
-      sidebarFirst: read(northrop.assets.sidebarFirst),
-      sidebar: read(northrop.assets.sidebar),
-    },
-    blobLoader(db),
-  );
+  const bytes = await buildWordMemo(data, {
+    memo: await loadTestMemoAssets(),
+    sidebarFirst: read(northrop.assets.sidebarFirst),
+    sidebar: read(northrop.assets.sidebar),
+  });
   const zip = unzipSync(bytes);
   const words = strFromU8(zip["word/document.xml"]).replace(/<[^>]+>/g, "");
   for (const s of [
@@ -100,10 +96,11 @@ test("the memo and photo appendix as Word, with Figtree embedded", async () => {
     "Ok to proceed subject to the following. Items marked * to be closed out with photos:",
     "A. Add N12 bar *",
     northrop.disclaimer.lead,
-    "Photo appendix",
-    "Photo IA1",
   ])
     expect(words).toContain(s);
+  // The photos stay in the PDF pack (engineer, 2026-10-23).
+  expect(words).not.toContain("Photo appendix");
+  expect(Object.keys(zip).filter((n) => n.endsWith(".jpg"))).toHaveLength(0);
   const headers = Object.keys(zip)
     .filter((n) => /^word\/header\d+\.xml$/.test(n))
     .map((n) => strFromU8(zip[n]))

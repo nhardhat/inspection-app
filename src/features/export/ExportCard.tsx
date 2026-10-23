@@ -329,8 +329,8 @@ function DefectRegister({ inspectionId }: { inspectionId: string }) {
 }
 
 /**
- * The memo and photo appendix as a Word document (engineer, 2026-10-20):
- * made first, then shared from a tap. The drawings stay in the PDF.
+ * The memo as a Word document (engineer, 2026-10-20): made first, then
+ * shared from a tap. The drawings and photos stay in the PDF.
  */
 function WordMemo({ inspectionId }: { inspectionId: string }) {
   const [state, setState] = useState<
@@ -349,11 +349,7 @@ function WordMemo({ inspectionId }: { inspectionId: string }) {
           import("./wordMemo"),
           import("../memo/pdf/loadMemoAssets"),
         ]);
-      const bytes = await buildWordMemo(
-        data,
-        await loadWordAssets(),
-        blobLoader(db),
-      );
+      const bytes = await buildWordMemo(data, await loadWordAssets());
       setState({
         status: "done",
         file: new File([bytes.slice().buffer], wordFilename(data), {
@@ -394,8 +390,8 @@ function WordMemo({ inspectionId }: { inspectionId: string }) {
       ) : (
         <>
           <p className="muted">
-            The memo and photo appendix as an editable Word document (the
-            drawings stay in the PDF).
+            The memo as an editable Word document (the drawings and photos stay
+            in the PDF).
           </p>
           {state.status === "error" && (
             <p role="alert" className="error">

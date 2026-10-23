@@ -1,11 +1,12 @@
 /**
- * The memo and photo appendix as a Word document (engineer, 2026-10-20;
+ * The memo as a Word document (engineer, 2026-10-20;
  * feedback round 1, item 6): the Northrop sample memo's layout, filled in
  * as the PDF memo is (buildMemoPdfInput), with real, editable text. As in
  * the sample, the red sidebar is a picture behind the page, with the title
  * and office block as text over it; the footer has the roundel, strapline
  * and page number. Figtree is embedded so it looks right on any computer.
- * The drawings stay in the PDF pack. Made with `docx` (bundled, loaded
+ * The drawings and photos stay in the PDF pack (engineer, 2026-10-23:
+ * the PDF is the main export). Made with `docx` (bundled, loaded
  * only when exporting); measurements follow the PDF memo's.
  */
 import {
@@ -48,8 +49,7 @@ import {
   type TextPart,
 } from "../memo/memoTemplate";
 import type { MemoAssets } from "../memo/pdf/renderMemoPdf";
-import { appendixGroups } from "./appendixLayout";
-import type { LoadBlob, PackData } from "./packContents";
+import type { PackData } from "./packContents";
 
 /** Twentieths of a point (Word's unit for spacing and sizes). */
 const tw = (pt: number) => Math.round(pt * 20);
@@ -76,7 +76,8 @@ const TABLE_RIGHT = 546;
 const SIDEBAR = { top: 27.6, width: 169, height: 786.2 - 27.6 };
 const TITLE = { x: 26.6, top: 187, width: 140 };
 const OFFICE = { x: 27.8, top: 676, width: 140 };
-const MARGIN = { top: 42.5, right: 72, bottom: 72, header: 25.5, footer: 2.85 };
+/** Footer: the roundel's bottom 25.6 pt up, as in the PDF memo (engineer, 2026-10-23: it sat too low). */
+const MARGIN = { top: 42.5, right: 72, bottom: 72, header: 25.5, footer: 25.6 };
 
 /** The sidebar pictures (4 px per point), made from the brand's red. */
 export interface WordAssets {
@@ -357,11 +358,10 @@ function bodyParagraph(value: string | TextPart[]) {
   );
 }
 
-/** Builds the memo and photo appendix as .docx bytes. */
+/** Builds the memo as .docx bytes. */
 export async function buildWordMemo(
   data: PackData,
   assets: WordAssets,
-  loadBlob: LoadBlob,
 ): Promise<Uint8Array> {
   const { inspection, memo } = data;
   const input = buildMemoPdfInput(
@@ -420,82 +420,6 @@ export async function buildWordMemo(
       { spacing: { before: tw(24), line: tw(10.1) } },
     ),
   );
-
-  // The photo appendix: groups as in the PDF, two photos a row.
-  const groups = appendixGroups(data.items, inspection.photoIds, data.photos);
-  if (groups.length > 0) {
-    body.push(
-      para(
-        [
-          text(
-            `Photo appendix · ${referenceLine(memo.reference, inspection.itemInspected)}`,
-            {
-              font: SEMIBOLD,
-            },
-          ),
-        ],
-        { pageBreakBefore: true, spacing: { after: tw(10) } },
-      ),
-    );
-    const cellWidth = (TABLE_RIGHT - LEFT) / 2;
-    const photoWidth = cellWidth - 12;
-    for (const group of groups) {
-      body.push(
-        para([text(group.title, { font: SEMIBOLD })], {
-          keepNext: true,
-          spacing: { before: tw(10), after: tw(6) },
-        }),
-      );
-      const cells = [];
-      for (const { photo, label } of group.photos) {
-        const { data: bytes } = await loadBlob(photo.blobId);
-        const height = (photoWidth * photo.height) / photo.width;
-        cells.push(
-          cell(
-            [
-              picture([
-                new ImageRun({
-                  type: "jpg",
-                  data: bytes,
-                  transformation: { width: px(photoWidth), height: px(height) },
-                }),
-              ]),
-              para([
-                text(label, { size: 7.5, bold: true }),
-                ...(photo.caption?.trim()
-                  ? [text(` – ${photo.caption.trim()}`, { size: 7.5 })]
-                  : []),
-              ]),
-            ],
-            cellWidth,
-          ),
-        );
-      }
-      const rows = [];
-      for (let i = 0; i < cells.length; i += 2)
-        rows.push(
-          new TableRow({
-            cantSplit: true,
-            children: [
-              cells[i],
-              cells[i + 1] ?? cell([para([text("")])], cellWidth),
-            ],
-          }),
-        );
-      body.push(
-        new Table({
-          width: { size: tw(TABLE_RIGHT - LEFT), type: WidthType.DXA },
-          columnWidths: [tw(cellWidth), tw(cellWidth)],
-          borders: {
-            ...noBorders,
-            insideHorizontal: none,
-            insideVertical: none,
-          },
-          rows,
-        }),
-      );
-    }
-  }
 
   const doc = new Document({
     creator: northrop.name,
