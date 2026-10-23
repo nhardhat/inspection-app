@@ -70,17 +70,19 @@ export async function prepareFiles(
 export type SaveResult = "shared" | "downloaded" | "cancelled";
 
 /**
- * Opens the Share sheet with the files (call straight from a tap). Where
- * sharing files isn't supported (most desktop browsers), downloads them.
+ * Opens the Share sheet with the files (call straight from a tap). On a
+ * computer without touch, or where sharing files isn't supported or fails
+ * (Chrome and Edge on Windows can reject silently; engineer, 2026-10-23),
+ * downloads them.
  */
 export async function saveFiles(files: File[]): Promise<SaveResult> {
-  if (navigator.canShare?.({ files })) {
+  if (navigator.maxTouchPoints > 0 && navigator.canShare?.({ files })) {
     try {
       await navigator.share({ files });
       return "shared";
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return "cancelled";
-      throw e;
+      console.warn("Share failed; downloading instead", e);
     }
   }
   for (const file of files) {

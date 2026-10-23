@@ -382,6 +382,8 @@ test("export the defect register (Excel) and the memo in Word", async ({
   await page.addInitScript(() => {
     const shared: { name: string; size: number }[] = [];
     Object.assign(window, { sharedFiles: shared });
+    // A touch device, as the iPad (WebKit here reports none).
+    Object.defineProperty(navigator, "maxTouchPoints", { value: 5 });
     Object.defineProperty(navigator, "canShare", {
       value: (data: { files?: File[] }) => !!data.files?.length,
     });
@@ -434,6 +436,8 @@ test("export the PDF pack: memo then the marked-up page; warns when letters chan
   await page.addInitScript(() => {
     const shared: { name: string; bytes: number[] }[] = [];
     Object.assign(window, { sharedFiles: shared });
+    // A touch device, as the iPad (WebKit here reports none).
+    Object.defineProperty(navigator, "maxTouchPoints", { value: 5 });
     Object.defineProperty(navigator, "canShare", {
       value: (data: { files?: File[] }) => !!data.files?.length,
     });

@@ -1597,6 +1597,8 @@ async function stubShareSheet(page: Page) {
   await page.addInitScript(() => {
     const shared: { name: string; size: number }[][] = [];
     Object.assign(window, { sharedBatches: shared });
+    // A touch device, as the iPad (WebKit here reports none).
+    Object.defineProperty(navigator, "maxTouchPoints", { value: 5 });
     Object.defineProperty(navigator, "canShare", {
       value: (data: { files?: File[] }) => !!data.files?.length,
     });
