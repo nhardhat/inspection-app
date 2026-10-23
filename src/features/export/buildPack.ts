@@ -8,7 +8,11 @@ import { boxHeader } from "../drawings/observationBox";
 import { buildMemoPdfInput } from "../memo/buildMemo";
 import { memoFilename } from "../memo/memoFilename";
 import { referenceLine } from "../memo/memoTemplate";
-import { writeMemo, type MemoAssets } from "../memo/pdf/renderMemoPdf";
+import {
+  writeMemo,
+  type MemoAssets,
+  type MemoFieldLine,
+} from "../memo/pdf/renderMemoPdf";
 import { appendDrawingPages } from "./drawingPages";
 import {
   appendixPages,
@@ -37,6 +41,11 @@ export async function buildPack(
   assets: MemoAssets,
   loadBlob: LoadBlob,
   onProgress: (progress: PackProgress) => void = () => {},
+  /**
+   * Editable PDF for Bluebeam (spike, feedback round 1 item 7): memo
+   * fields as form fields, markup as annotations.
+   */
+  options: { editable?: boolean } = {},
 ): Promise<Pack> {
   const { inspection, memo } = data;
   const pinned = pinnedPages(data.drawings, data.items, data.marks);
@@ -62,7 +71,19 @@ export async function buildPack(
     data.photoLine,
     data.referLine,
   );
-  const written = await writeMemo(doc, memoInput, assets, data.signature);
+  const fieldLines: MemoFieldLine[] | null = options.editable ? [] : null;
+  const written = await writeMemo(
+    doc,
+    memoInput,
+    assets,
+    data.signature,
+    fieldLines,
+  );
+  const editable = options.editable
+    ? await import("./editable/editable")
+    : null;
+  if (editable && fieldLines)
+    await editable.addMemoFields(doc, written.pages, fieldLines, assets.fonts);
   step(1, pinned.length > 0 ? `Drawing page 1 of ${pinned.length}` : "Photos");
 
   const markupFonts = {
@@ -82,6 +103,10 @@ export async function buildPack(
         step(3, n < total ? `Drawing page ${n + 1} of ${total}` : "Photos"),
     },
     markupFonts,
+    editable
+      ? (page, markup, fonts) =>
+          editable.annotatePageMarkup(page, markup, fonts, inspection.inspector)
+      : undefined,
   );
 
   let photosDone = 0;
@@ -108,7 +133,7 @@ export async function buildPack(
       inspection.jobNumber,
       memo.reference,
       inspection.itemInspected,
-    ),
+    ).replace(/\.pdf$/, options.editable ? " - editable.pdf" : ".pdf"),
     pages: doc.getPageCount(),
   };
 }

@@ -149,6 +149,25 @@ const RULE = hex(northrop.colours.rule);
 const MUTED = hex(northrop.colours.muted);
 
 export type MemoFonts = Record<FontKey, PDFFont>;
+
+/**
+ * Editable export (Bluebeam spike, feedback round 1 item 7): a line of a
+ * per-job field, collected instead of drawn so it can become a form field.
+ * Positions in points from the top-left of the memo page.
+ */
+export interface MemoFieldLine {
+  /** The field it belongs to, e.g. "Job name", "Body 2", "Condition 1". */
+  name: string;
+  /** 0-based memo page. */
+  page: number;
+  x: number;
+  baseline: number;
+  /** Where the field may run to on the right. */
+  right: number;
+  size: number;
+  text: string;
+  multiline: boolean;
+}
 type Fonts = MemoFonts;
 
 class MemoWriter {
@@ -161,6 +180,20 @@ class MemoWriter {
   readonly fonts: Fonts;
   readonly wordmark: PDFImage;
   readonly icon: PDFImage;
+  /** Editable export: per-job text goes here instead of on the page. */
+  fieldLines: MemoFieldLine[] | null = null;
+  /** The field being written, while collecting. */
+  field: { name: string; right: number; multiline?: boolean } | null = null;
+
+  /** Writes `draw` as the field `name` (just draws it when not collecting). */
+  inField(name: string, right: number, draw: () => void, multiline = false) {
+    this.field = { name, right, multiline };
+    try {
+      draw();
+    } finally {
+      this.field = null;
+    }
+  }
 
   constructor(
     doc: PDFDocument,
@@ -213,6 +246,24 @@ class MemoWriter {
   ) {
     const safe = toEncodable(value, font);
     if (!safe) return;
+    if (this.fieldLines && this.field) {
+      const last = this.fieldLines[this.fieldLines.length - 1];
+      // Runs on one line (italic parts) join up.
+      if (last?.name === this.field.name && last.baseline === baseline)
+        last.text += safe;
+      else
+        this.fieldLines.push({
+          name: this.field.name,
+          page: this.pages.length - 1,
+          x,
+          baseline,
+          right: this.field.right,
+          size,
+          text: safe,
+          multiline: !!this.field.multiline,
+        });
+      return;
+    }
     this.page.drawText(safe, { x, y: PAGE_H - baseline, font, size, color });
   }
 
@@ -360,42 +411,52 @@ function drawHeader(w: MemoWriter, input: MemoPdfInput): number {
   const { regular, semiBold } = w.fonts;
   const { fields } = input;
 
-  const left: [string, number][] = [
-    [fields.clientName, 8],
-    [fields.clientCompany, 9],
-    [fields.address1, 8],
-    [fields.address2, 8],
+  const left: [string, number, string][] = [
+    [fields.clientName, 8, "Client name"],
+    [fields.clientCompany, 9, "Client company"],
+    [fields.address1, 8, "Address line 1"],
+    [fields.address2, 8, "Address line 2"],
   ];
   let baseline = HEADER.baseline - HEADER.pitch;
-  for (const [value, size] of left) {
+  for (const [value, size, name] of left) {
     const lines = w.wrap(value, regular, size, HEADER.leftWidth);
-    for (const line of lines.length ? lines : [""]) {
-      baseline += HEADER.pitch;
-      w.text(line, LEFT, baseline, regular, size);
-    }
+    w.inField(name, LEFT + HEADER.leftWidth, () => {
+      for (const line of lines.length ? lines : [""]) {
+        baseline += HEADER.pitch;
+        w.text(line, LEFT, baseline, regular, size);
+      }
+    });
   }
   const leftBottom = baseline;
 
   const rightWidth = TEXT_RIGHT - HEADER.rightX;
-  w.text(
-    formatMemoDate(fields.date),
-    HEADER.rightX,
-    HEADER.baseline,
-    regular,
-    8,
+  w.inField("Date", TEXT_RIGHT, () =>
+    w.text(
+      formatMemoDate(fields.date),
+      HEADER.rightX,
+      HEADER.baseline,
+      regular,
+      8,
+    ),
   );
   // Blank line between the date and the job block, as in the sample.
   baseline = HEADER.baseline + 24.2 - HEADER.rightPitch;
-  const right: [string, PDFFont][] = [
-    [fields.jobNumber, regular],
-    [fields.jobName, semiBold],
-    [referenceLine(input.reference, fields.itemInspected), semiBold],
+  const right: [string, PDFFont, string][] = [
+    [fields.jobNumber, regular, "Job number"],
+    [fields.jobName, semiBold, "Job name"],
+    [
+      referenceLine(input.reference, fields.itemInspected),
+      semiBold,
+      "Reference",
+    ],
   ];
-  for (const [value, font] of right) {
-    for (const line of w.wrap(value, font, 9, rightWidth)) {
-      baseline += HEADER.rightPitch;
-      w.text(line, HEADER.rightX, baseline, font, 9);
-    }
+  for (const [value, font, name] of right) {
+    w.inField(name, TEXT_RIGHT, () => {
+      for (const line of w.wrap(value, font, 9, rightWidth)) {
+        baseline += HEADER.rightPitch;
+        w.text(line, HEADER.rightX, baseline, font, 9);
+      }
+    });
   }
   return Math.max(leftBottom, baseline);
 }
@@ -444,7 +505,7 @@ function drawRecipients(w: MemoWriter, recipients: Recipient[], top: number) {
   w.hLine(c0, c4, headTop + r.headerHeight);
   let segmentTop = headTop;
 
-  for (const recipient of recipients) {
+  for (const [n, recipient] of recipients.entries()) {
     const company = w.wrap(recipient.company, regular, 9, companyWidth);
     const attn = w.wrap(recipient.attn, regular, 9, attnWidth);
     const lines = Math.max(1, company.length, attn.length);
@@ -459,11 +520,15 @@ function drawRecipients(w: MemoWriter, recipients: Recipient[], top: number) {
 
     drawCheckbox(w, (c0 + c1) / 2, rowTop + r.rowHeight / 2, recipient.to);
     drawCheckbox(w, (c1 + c2) / 2, rowTop + r.rowHeight / 2, recipient.copy);
-    company.forEach((line, i) =>
-      w.text(line, c2 + r.textInset, rowTop + 13.6 + i * 11.5, regular, 9),
+    w.inField(`Recipient ${n + 1} company`, c3 - r.textInset, () =>
+      company.forEach((line, i) =>
+        w.text(line, c2 + r.textInset, rowTop + 13.6 + i * 11.5, regular, 9),
+      ),
     );
-    attn.forEach((line, i) =>
-      w.text(line, c3 + r.textInset, rowTop + 13.6 + i * 11.5, regular, 9),
+    w.inField(`Recipient ${n + 1} attn`, c4 - r.textInset, () =>
+      attn.forEach((line, i) =>
+        w.text(line, c3 + r.textInset, rowTop + 13.6 + i * 11.5, regular, 9),
+      ),
     );
     w.hLine(c0, c4, rowTop + height);
     for (const x of [c1, c2, c3]) w.vLine(x, segmentTop, rowTop + height);
@@ -540,10 +605,12 @@ function drawDetails(w: MemoWriter, fields: MemoFields) {
     }
     const valueBlock = (valueLines.length - 1) * d.extraValueLine + 9 * 0.7;
     baseline = top + (height - valueBlock) / 2 + 9 * 0.7;
-    for (const line of valueLines) {
-      w.text(line, valueX, baseline, regular, 9);
-      baseline += d.extraValueLine;
-    }
+    w.inField(label, RIGHT - d.textInset, () => {
+      for (const line of valueLines) {
+        w.text(line, valueX, baseline, regular, 9);
+        baseline += d.extraValueLine;
+      }
+    });
   }
 }
 
@@ -575,19 +642,30 @@ function drawBody(
   const { regular, bold } = w.fonts;
   const { fields } = input;
 
-  drawParagraph(w, fields.salutation, BODY.firstGap);
-  for (const paragraph of input.bodyParagraphs) {
-    drawParagraph(w, paragraph, BODY.paragraphGap);
-  }
-  drawParagraph(
-    w,
-    conditionsLeadIn(input.conditions.length, input.photoLine),
-    BODY.paragraphGap,
+  const body = (name: string, draw: () => void) =>
+    w.inField(name, TEXT_RIGHT, draw, true);
+  body("Salutation", () => drawParagraph(w, fields.salutation, BODY.firstGap));
+  input.bodyParagraphs.forEach((paragraph, i) =>
+    body(`Paragraph ${i + 1}`, () =>
+      drawParagraph(w, paragraph, BODY.paragraphGap),
+    ),
+  );
+  body("Conditions lead-in", () =>
+    drawParagraph(
+      w,
+      conditionsLeadIn(input.conditions.length, input.photoLine),
+      BODY.paragraphGap,
+    ),
   );
 
   const bulletWidth = TEXT_RIGHT - BODY.bulletTextX;
-  for (const condition of input.conditions) {
+  for (const [n, condition] of input.conditions.entries()) {
     const lines = w.wrap(condition, regular, BODY.size, bulletWidth);
+    w.field = {
+      name: `Condition ${n + 1}`,
+      right: TEXT_RIGHT,
+      multiline: true,
+    };
     lines.forEach((line, i) => {
       const baseline = w.baseline(i === 0 ? BODY.bulletGap : BODY.pitch);
       if (i === 0) {
@@ -600,6 +678,7 @@ function drawBody(
       }
       w.text(line, BODY.bulletTextX, baseline, regular, BODY.size);
     });
+    w.field = null;
   }
 
   // Keep the sign-off, signature, name and title together.
@@ -637,14 +716,18 @@ function drawBody(
       height: sig.height,
     });
   }
-  nameLines.forEach((line, i) => {
-    baseline = w.baseline(i === 0 ? nameGap : BODY.pitch);
-    w.text(line, LEFT, baseline, bold, BODY.size);
-  });
-  titleLines.forEach((line, i) => {
-    baseline = w.baseline(i === 0 ? BODY.titleGap : BODY.pitch);
-    w.text(line, LEFT, baseline, regular, BODY.size);
-  });
+  w.inField("Name", TEXT_RIGHT, () =>
+    nameLines.forEach((line, i) => {
+      baseline = w.baseline(i === 0 ? nameGap : BODY.pitch);
+      w.text(line, LEFT, baseline, bold, BODY.size);
+    }),
+  );
+  w.inField("Title", TEXT_RIGHT, () =>
+    titleLines.forEach((line, i) => {
+      baseline = w.baseline(i === 0 ? BODY.titleGap : BODY.pitch);
+      w.text(line, LEFT, baseline, regular, BODY.size);
+    }),
+  );
 }
 
 function drawDisclaimer(w: MemoWriter) {
@@ -693,6 +776,8 @@ export async function writeMemo(
   input: MemoPdfInput,
   assets: MemoAssets,
   signature: MemoSignature | null = null,
+  /** Editable export: collects the per-job text here instead of drawing it. */
+  fieldLines: MemoFieldLine[] | null = null,
 ): Promise<MemoResources> {
   doc.registerFontkit(fontkit);
 
@@ -718,6 +803,7 @@ export async function writeMemo(
   doc.setCreator("Northrop Hardhat");
 
   const w = new MemoWriter(doc, fonts, wordmark, icon);
+  w.fieldLines = fieldLines;
   w.addPage();
   const headerBottom = drawHeader(w, input);
   drawRecipients(

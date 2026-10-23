@@ -7,7 +7,12 @@
 import { PDFDocument } from "pdf-lib";
 import type { Drawing, Item, ObservationBox } from "../../db/types";
 import { boxLines } from "../drawings/observationBox";
-import { drawPageMarkup, type MarkupFonts } from "./drawMarkup";
+import {
+  drawPageMarkup,
+  type MarkupFonts,
+  type PageMarkup,
+} from "./drawMarkup";
+import type { PDFPage } from "pdf-lib";
 import type { PinnedPage } from "./packContents";
 
 export interface DrawingPagesInput {
@@ -39,6 +44,12 @@ export async function appendDrawingPages(
   doc: PDFDocument,
   input: DrawingPagesInput,
   fonts: MarkupFonts,
+  /** Burns the markup in (default) or, for the editable PDF, annotates. */
+  draw: (
+    page: PDFPage,
+    markup: PageMarkup,
+    fonts: MarkupFonts,
+  ) => void = drawPageMarkup,
 ): Promise<number> {
   const total = input.pages.length;
   let done = 0;
@@ -71,7 +82,7 @@ export async function appendDrawingPages(
       const box = input.boxes.find(
         (b) => b.drawingId === pinned.drawing.id && b.page === pinned.position,
       );
-      drawPageMarkup(
+      draw(
         page,
         {
           pins: pinned.pins,

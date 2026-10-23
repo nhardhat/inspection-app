@@ -56,7 +56,7 @@ export interface PageMarkup {
   boxLines: BoxLine[];
 }
 
-function hex(colour: string): Color {
+export function hex(colour: string): Color {
   const n = parseInt(colour.slice(1), 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
@@ -66,7 +66,7 @@ const BLUE = hex(northrop.markup.blue);
 const HEADER = hex(northrop.markup.header);
 const WHITE = rgb(1, 1, 1);
 
-const kindColour = (kind: Item["kind"]) =>
+export const kindColour = (kind: Item["kind"]) =>
   kind === "instruction" ? RED : BLUE;
 
 /** Draws the markup over the page's own content. */
@@ -82,12 +82,6 @@ export function drawPageMarkup(
     pushGraphicsState(),
     concatTransformationMatrix(...view.matrix),
   );
-  /** A normalised point (y down) in shown-page points (y up). */
-  const at = (p: Point) => ({
-    x: p.x * size.width,
-    y: size.height - p.y * size.height,
-  });
-
   drawMarks(page, markup.marks, size, fonts);
   // A page with only markup has no notes box (it lists the page's pins).
   // A page with pins, or any exported page while there are general notes
@@ -95,67 +89,84 @@ export function drawPageMarkup(
   if (markup.pins.length > 0 || markup.boxLines.length > 1)
     drawNotesBox(page, markup, size, fonts);
 
-  const am = arrowMetrics(size);
-  for (const item of markup.pins) {
-    const colour = kindColour(item.kind);
-    for (const arrow of item.arrows) {
-      // arrowShape works in y-down page units; flip the result.
-      const shape = arrowShape(
-        { x: item.x * size.width, y: item.y * size.height },
-        { x: arrow.x * size.width, y: arrow.y * size.height },
-        size,
-      );
-      if (!shape) continue;
-      const flip = (p: Point) => ({ x: p.x, y: size.height - p.y });
-      // Each leg with round caps, so a dog leg's elbow is rounded too.
-      const line = shape.line.map(flip);
-      line.slice(1).forEach((end, i) =>
-        page.drawLine({
-          start: line[i],
-          end,
-          thickness: am.strokeWidth,
-          color: colour,
-          lineCap: 1,
-        }),
-      );
-      const head = shape.head;
-      page.drawSvgPath(
-        `M ${head[0].x} ${head[0].y} L ${head[1].x} ${head[1].y} L ${head[2].x} ${head[2].y} Z`,
-        { x: 0, y: size.height, color: colour, borderWidth: 0 },
-      );
-    }
-  }
-
-  const pm = pinMetrics(size);
-  for (const item of markup.pins) {
-    const centre = at(item);
-    page.drawCircle({
-      ...centre,
-      size: pm.radius,
-      color: kindColour(item.kind),
-      borderColor: WHITE,
-      borderWidth: pm.borderWidth,
-    });
-    const letter = toEncodable(item.letter, fonts.bold);
-    // Two letters (AA...) shrink to fit inside the circle.
-    const fontSize = Math.min(
-      pm.fontSize,
-      (pm.radius * 1.5) / (fonts.bold.widthOfTextAtSize(letter, 1) || 1),
-    );
-    page.drawText(letter, {
-      x: centre.x - fonts.bold.widthOfTextAtSize(letter, fontSize) / 2,
-      y: centre.y - fonts.bold.heightAtSize(fontSize, { descender: false }) / 2,
-      size: fontSize,
-      font: fonts.bold,
-      color: WHITE,
-    });
-  }
+  for (const item of markup.pins) drawPinArrows(page, item, size);
+  for (const item of markup.pins) drawPin(page, item, size, fonts);
 
   page.pushOperators(popGraphicsState());
 }
 
+/** A pin's arrows, each from the pin to its tip (shown-page units, y up). */
+export function drawPinArrows(
+  page: PDFPage,
+  item: PagePin,
+  size: { width: number; height: number },
+) {
+  const am = arrowMetrics(size);
+  const colour = kindColour(item.kind);
+  for (const arrow of item.arrows) {
+    // arrowShape works in y-down page units; flip the result.
+    const shape = arrowShape(
+      { x: item.x * size.width, y: item.y * size.height },
+      { x: arrow.x * size.width, y: arrow.y * size.height },
+      size,
+    );
+    if (!shape) continue;
+    const flip = (p: Point) => ({ x: p.x, y: size.height - p.y });
+    // Each leg with round caps, so a dog leg's elbow is rounded too.
+    const line = shape.line.map(flip);
+    line.slice(1).forEach((end, i) =>
+      page.drawLine({
+        start: line[i],
+        end,
+        thickness: am.strokeWidth,
+        color: colour,
+        lineCap: 1,
+      }),
+    );
+    const head = shape.head;
+    page.drawSvgPath(
+      `M ${head[0].x} ${head[0].y} L ${head[1].x} ${head[1].y} L ${head[2].x} ${head[2].y} Z`,
+      { x: 0, y: size.height, color: colour, borderWidth: 0 },
+    );
+  }
+}
+
+/** A pin: its circle and letter (shown-page units, y up). */
+export function drawPin(
+  page: PDFPage,
+  item: PagePin,
+  size: { width: number; height: number },
+  fonts: MarkupFonts,
+) {
+  const pm = pinMetrics(size);
+  const centre = {
+    x: item.x * size.width,
+    y: size.height - item.y * size.height,
+  };
+  page.drawCircle({
+    ...centre,
+    size: pm.radius,
+    color: kindColour(item.kind),
+    borderColor: WHITE,
+    borderWidth: pm.borderWidth,
+  });
+  const letter = toEncodable(item.letter, fonts.bold);
+  // Two letters (AA...) shrink to fit inside the circle.
+  const fontSize = Math.min(
+    pm.fontSize,
+    (pm.radius * 1.5) / (fonts.bold.widthOfTextAtSize(letter, 1) || 1),
+  );
+  page.drawText(letter, {
+    x: centre.x - fonts.bold.widthOfTextAtSize(letter, fontSize) / 2,
+    y: centre.y - fonts.bold.heightAtSize(fontSize, { descender: false }) / 2,
+    size: fontSize,
+    font: fonts.bold,
+    color: WHITE,
+  });
+}
+
 /** Marks as vector strokes, in the same smoothed shape as the viewer's. */
-function drawMarks(
+export function drawMarks(
   page: PDFPage,
   marks: Markup[],
   size: { width: number; height: number },
@@ -252,7 +263,7 @@ function drawCallout(
   }
 }
 
-function drawNotesBox(
+export function drawNotesBox(
   page: PDFPage,
   markup: PageMarkup,
   size: { width: number; height: number },
