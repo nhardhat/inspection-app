@@ -1,9 +1,10 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { CloudUpload } from "lucide-react";
+import { CloudUpload, FolderDown } from "lucide-react";
 import { useState } from "react";
 import { needsBackup } from "../../db/backup";
 import { db } from "../../db/db";
 import { formatBytes } from "../../db/storage";
+import { canSaveAllToFolder, saveAllToFolder } from "../export/saveToFolder";
 import { saveFiles } from "../photos/savePhotos";
 import { buildBackupFile, recordBackups } from "./backupActions";
 
@@ -21,10 +22,12 @@ type State =
 export function BackupAll() {
   const inspections = useLiveQuery(() => db.inspections.toArray(), []);
   const [state, setState] = useState<State>({ status: "idle" });
+  const [saved, setSaved] = useState<string | null>(null);
   if (!inspections) return null;
   const stale = inspections.filter(needsBackup).length;
 
   async function build() {
+    setSaved(null);
     const ids = (inspections ?? []).map((i) => i.id);
     const files: File[] = [];
     try {
@@ -50,6 +53,26 @@ export function BackupAll() {
     }
   }
 
+  /** On a PC: pick a folder and write every file into it. */
+  async function saveToFolder(files: File[], ids: string[]) {
+    try {
+      const folder = await saveAllToFolder(files);
+      if (!folder) return;
+      await recordBackups(ids);
+      setState({ status: "idle" });
+      setSaved(
+        `Saved ${files.length} ${files.length === 1 ? "file" : "files"} to ${folder}.`,
+      );
+    } catch (e) {
+      console.error("Save to folder failed", e);
+      setState({
+        status: "error",
+        message:
+          "The files couldn't be saved there. Try another folder, or Back up all again.",
+      });
+    }
+  }
+
   if (inspections.length === 0)
     return <p className="muted small">No inspections to back up yet.</p>;
 
@@ -60,6 +83,11 @@ export function BackupAll() {
           ? "Every inspection is backed up."
           : `${stale} of ${inspections.length} inspections changed since their last backup.`}
       </p>
+      {saved && (
+        <p role="status" className="muted small">
+          {saved}
+        </p>
+      )}
       {state.status === "error" && (
         <p role="alert" className="error">
           {state.message}
@@ -74,6 +102,14 @@ export function BackupAll() {
           >
             Share {state.files.length} files…
           </button>
+          {canSaveAllToFolder() && (
+            <button
+              type="button"
+              onClick={() => void saveToFolder(state.files, state.ids)}
+            >
+              <FolderDown aria-hidden="true" /> Save to folder…
+            </button>
+          )}
           <span className="muted small">
             {formatBytes(state.files.reduce((n, f) => n + f.size, 0))}. Choose
             Save to Files, then a folder.

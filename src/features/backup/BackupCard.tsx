@@ -5,6 +5,8 @@ import { needsBackup } from "../../db/backup";
 import { db } from "../../db/db";
 import { formatBytes } from "../../db/storage";
 import { formatDateTime } from "../../lib/dates";
+import { SaveToFolderButton } from "../export/SaveToFolderButton";
+import { BACKUPS_FOLDER } from "../export/saveToFolder";
 import { saveFiles } from "../photos/savePhotos";
 import { buildBackupFile, recordBackups } from "./backupActions";
 
@@ -131,6 +133,11 @@ export function BackupCard({ inspectionId }: { inspectionId: string }) {
             >
               Share…
             </button>
+            <SaveToFolderButton
+              file={state.file}
+              folderId={BACKUPS_FOLDER}
+              onSaved={() => recordBackups([inspectionId])}
+            />
             <button type="button" onClick={() => void build()}>
               Back up again
             </button>

@@ -151,6 +151,7 @@ Under it, **Export Word** makes the memo as an editable Word document (with the 
 
 1. Open **Pre-inspection** and find the **Backup** card.
 2. Tap **Back up now**, then **Share…** and choose **Save to Files** (or AirDrop it to your computer).
+   On a PC (Chrome or Edge), **Save to folder…** saves it straight into a folder instead. In Settings, **Back up all** has it too: pick a folder once and every inspection is saved there.
 3. To restore or move it to another device, use **Import inspection…** on the Inspections page.
 
 ![The Backup card](shots/backup.png)

@@ -239,3 +239,61 @@ test(
     });
   },
 );
+
+test("on a PC, backups save to a folder @chromium", async ({ page }) => {
+  // Stand-in Save As box and folder picker that keep what was written.
+  await page.addInitScript(() => {
+    const saved: string[] = [];
+    const writable = (name: string) => ({
+      name,
+      createWritable: async () => ({
+        write: async () => {
+          saved.push(name);
+        },
+        close: async () => {},
+      }),
+    });
+    Object.assign(window, {
+      savedFiles: saved,
+      showSaveFilePicker: async (options: { suggestedName: string }) =>
+        writable(options.suggestedName),
+      showDirectoryPicker: async () => ({
+        name: "Hardhat backups",
+        getFileHandle: async (name: string) => writable(name),
+      }),
+    });
+  });
+  const savedFiles = () =>
+    page.evaluate(
+      () => (window as unknown as { savedFiles: string[] }).savedFiles,
+    );
+  await page.goto("./");
+  await startInspection(page, {
+    jobNumber: "SY000001",
+    jobName: "Example Apartments",
+  });
+  await page
+    .getByLabel("Item inspected", { exact: true })
+    .fill("Level 3 slab reinforcement");
+  await expect(page.getByTestId("save-state")).toHaveText("Saved");
+
+  // One inspection, from Pre-inspection: the Save As box.
+  const card = page.getByTestId("backup-card");
+  await card.getByRole("button", { name: "Back up now" }).click();
+  await card.getByRole("button", { name: "Save to folder…" }).click();
+  await expect(card.getByRole("status")).toHaveText(
+    /^Saved SY000001_Level-3-slab-reinforcement_.*\.inspection\.$/,
+  );
+  await expect(card.getByTestId("backup-status")).toHaveText("Backed up");
+
+  // All of them, from Settings: pick a folder.
+  await page.goto("./#/settings");
+  const all = page.getByTestId("backup-all");
+  await all.getByRole("button", { name: /Back up all/ }).click();
+  await all.getByRole("button", { name: "Save to folder…" }).click();
+  await expect(all.getByRole("status")).toHaveText(
+    "Saved 1 file to Hardhat backups.",
+  );
+  await expect(all).toContainText("Every inspection is backed up.");
+  expect(await savedFiles()).toHaveLength(2);
+});
