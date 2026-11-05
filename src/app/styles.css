@@ -329,6 +329,12 @@ button.toggle-on {
   align-items: center;
 }
 
+/* Under a button row's buttons: "Saved …" after Save to folder. */
+.button-row .save-status {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 /* Text-only action, e.g. Reset beside a field. */
 .link-button {
   min-height: 0;

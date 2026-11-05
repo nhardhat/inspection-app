@@ -376,6 +376,54 @@ test("a signature drawn in Settings goes on new memos; a memo can upload its own
   ).toBeVisible();
 });
 
+test("on a PC, exports save to a folder through the Save As box @chromium", async ({
+  page,
+}) => {
+  // Stand-in Save As box that keeps what was written.
+  await page.addInitScript(() => {
+    const saved: { name: string; size: number }[] = [];
+    Object.assign(window, {
+      savedFiles: saved,
+      showSaveFilePicker: async (options: { suggestedName: string }) => ({
+        name: options.suggestedName,
+        createWritable: async () => ({
+          write: async (data: Blob) => {
+            saved.push({ name: options.suggestedName, size: data.size });
+          },
+          close: async () => {},
+        }),
+      }),
+    });
+  });
+  await newInspection(page);
+  await createMemo(page);
+  const savedFiles = () =>
+    page.evaluate(
+      () =>
+        (window as unknown as { savedFiles: { name: string; size: number }[] })
+          .savedFiles,
+    );
+
+  await page.getByRole("button", { name: "Export PDF" }).click();
+  const card = page.getByTestId("export-file").locator("..");
+  await card.getByRole("button", { name: "Save to folder…" }).first().click();
+  await expect(
+    page.getByText("Saved SY000001-SIM001-A-Level 3 slab reinforcement.pdf."),
+  ).toBeVisible();
+
+  const word = page.getByTestId("word-memo");
+  await word.getByRole("button", { name: "Export Word" }).click();
+  await word.getByRole("button", { name: "Save to folder…" }).click();
+  await expect(word.getByRole("status")).toHaveText(
+    "Saved SY000001-SIM001-A-Level 3 slab reinforcement.docx.",
+  );
+  expect((await savedFiles()).map((f) => f.name)).toEqual([
+    "SY000001-SIM001-A-Level 3 slab reinforcement.pdf",
+    "SY000001-SIM001-A-Level 3 slab reinforcement.docx",
+  ]);
+  expect((await savedFiles())[1].size).toBeGreaterThan(200_000);
+});
+
 test("export the defect register (Excel) and the memo in Word", async ({
   page,
 }) => {
@@ -423,6 +471,10 @@ test("export the defect register (Excel) and the memo in Word", async ({
     "SY000001-SIM001-A-Level 3 slab reinforcement.docx",
     { timeout: 30_000 },
   );
+  // No Save As box on the iPad: Share only.
+  await expect(
+    word.getByRole("button", { name: "Save to folder…" }),
+  ).toHaveCount(0);
   await word.getByRole("button", { name: "Share Word file…" }).click();
   await expect.poll(async () => (await shared()).length).toBe(2);
   // Figtree is inside it.

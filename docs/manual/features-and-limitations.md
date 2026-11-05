@@ -87,6 +87,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 ## Export and backup
 
 - **PDF pack:** the memo, then each drawing page with pins or markup (at its native sheet size, original vector content kept, pins, arrows, notes box and markup burned in), then the photo appendix. Page numbers run through the pack.
+- **Save to folder (PC):** in Chrome or Edge on a computer, the PDF, Word memo and defect register save straight into a folder through the Save As box (it remembers the last folder); the iPad uses the Share sheet.
 - **Memo in Word:** the memo as an editable Word document laid out like the Northrop sample memo, with the fonts embedded (the drawings and photos stay in the PDF pack).
 - **Defect register:** an Excel file (Northrop logo at the top), one row per item (reference, type, description, sheet, photo confirmation, photo references), with empty Status, Date closed and Comments columns for the builder to close items out.
 - If letters change after a memo was exported, the app says what changed before it is sent again.

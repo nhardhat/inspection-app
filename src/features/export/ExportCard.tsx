@@ -10,6 +10,7 @@ import { saveFiles } from "../photos/savePhotos";
 import { changesSinceExport, letterSnapshot } from "./exportedLetters";
 import { packSummary, packWarnings } from "./packContents";
 import { blobLoader, loadPackData } from "./packData";
+import { SaveToFolderButton } from "./SaveToFolderButton";
 
 type State =
   | { status: "idle" }
@@ -151,6 +152,7 @@ export function ExportCard({ inspectionId }: { inspectionId: string }) {
             >
               {changes.length > 0 ? "Share old PDF…" : "Share…"}
             </button>
+            <SaveToFolderButton file={state.file} />
             <button type="button" onClick={() => setPreviewing(state.file)}>
               Preview
             </button>
@@ -294,6 +296,7 @@ function DefectRegister({ inspectionId }: { inspectionId: string }) {
             >
               Share register…
             </button>
+            <SaveToFolderButton file={state.file} />
             <button type="button" onClick={() => void make()}>
               Make again
             </button>
@@ -382,6 +385,7 @@ function WordMemo({ inspectionId }: { inspectionId: string }) {
             >
               Share Word file…
             </button>
+            <SaveToFolderButton file={state.file} />
             <button type="button" onClick={() => void make()}>
               Make again
             </button>
