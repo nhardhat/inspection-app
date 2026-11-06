@@ -22,8 +22,8 @@ export default defineConfig({
       use: { ...devices["iPad Pro 11"] },
       // Manual screenshots (@shots) run only when asked for: docs:shots.
       grepInvert: process.argv.some((a) => a.includes("@shots"))
-        ? /@offline|@chromium/
-        : /@offline|@chromium|@shots/,
+        ? /@offline|@chromium|@phone/
+        : /@offline|@chromium|@phone|@shots/,
     },
     {
       // Playwright's WebKit cannot reload a page offline through a service
@@ -34,6 +34,18 @@ export default defineConfig({
       name: "ipad-chromium",
       use: { ...devices["iPad Pro 11"], browserName: "chromium" },
       grep: /@offline|@chromium/,
+    },
+    // Phone layout (engineer, 2026-11-06): an iPhone (Safari's engine) and
+    // an Android phone (Chrome's), @phone tests only.
+    {
+      name: "iphone-webkit",
+      use: { ...devices["iPhone 13"] },
+      grep: /@phone/,
+    },
+    {
+      name: "android-chromium",
+      use: { ...devices["Pixel 7"] },
+      grep: /@phone/,
     },
   ],
   webServer: {

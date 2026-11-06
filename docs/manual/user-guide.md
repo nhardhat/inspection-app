@@ -14,6 +14,8 @@ audience: For engineers: how to run an inspection, from loading drawings to send
 
 > When an update is ready, the app shows **Update now**. Tap it, or close and reopen the app.
 
+> **On a phone** (iPhone in Safari, Android in Chrome, added to the home screen the same way): the same app fits the narrow screen. The main areas are along the bottom instead of on the left, the steps are tabs under the header (Pre-inspection reads **Pre-insp.**), and cards stack. A phone keeps its own inspections: move one between devices with a backup.
+
 ## Set up your details
 
 1. Open **Settings** from the bar on the left.
@@ -92,7 +94,7 @@ On Pre-inspection, the **Inspection type** buttons (General concrete, piling, st
 - In an item's editor: **Take photo** (camera) or **Choose photos** (library).
 - The **camera** button on the right takes a general photo, not tied to a pin.
 - Tap a photo to view it full screen and add a caption.
-- **Save to iPad** shares the photos to Photos or Files for filing.
+- **Save to device** shares the photos to Photos or Files for filing.
 
 ## Marking up with the Pencil
 

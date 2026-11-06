@@ -109,6 +109,7 @@ These are the known limits of the proof of concept, stated plainly so they can b
 ## Platform
 
 - Designed and tested on **iPad (iPadOS 26) with Apple Pencil**. Android and Windows tablets are untested; a desktop browser works for editing.
+- **Phones:** on an iPhone or Android phone the same screens fit the narrow width (navigation along the bottom, steps as tabs, cards stacked). Every feature is there, but an A1 drawing is small to work on, so the phone suits checking, adding a pin or photo, and the memo rather than full markup.
 - iPadOS only opens the Share sheet straight after a tap, so sharing a PDF or backup is two taps: prepare, then Share.
 - The Pencil feels slightly less fluid than native apps such as GoodNotes; a web app has less direct access to the Pencil.
 
@@ -136,7 +137,7 @@ These are the known limits of the proof of concept, stated plainly so they can b
 - **Drawings:** shown with Mozilla's pdf.js; markup and pins are stored as positions relative to each page, so they stay correct at any zoom or sheet size.
 - **PDF export:** built on the device with pdf-lib. Drawing pages are copied in as they are (vector), with the markup drawn on top; the memo uses the Northrop template and the Figtree font.
 - **Privacy:** no analytics, no external fonts or services, no data sent anywhere. Real drawings may be used in the app because they never leave the device.
-- **Quality:** around 300 automated unit tests and 90 end-to-end tests on an iPad-sized browser run before every release, plus a written manual test plan for each feature, run on the iPad. A diagnostics panel (Settings, Developer, behind a password) shows how sharply each page is drawn, memory use, scrolling smoothness and errors, to measure performance on the iPad itself.
+- **Quality:** around 300 automated unit tests and 90 end-to-end tests on iPad-sized browsers (and a phone-sized check on iPhone and Android sizes) run before every release, plus a written manual test plan for each feature, run on the iPad. A diagnostics panel (Settings, Developer, behind a password) shows how sharply each page is drawn, memory use, scrolling smoothness and errors, to measure performance on the iPad itself.
 
 ## How it was built
 
