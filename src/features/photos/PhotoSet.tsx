@@ -141,7 +141,7 @@ export function PhotoSet({
             className="quiet"
             onClick={() => setSaving(true)}
           >
-            <Share aria-hidden="true" /> Save to iPad
+            <Share aria-hidden="true" /> Save to device
           </button>
         )}
       </div>

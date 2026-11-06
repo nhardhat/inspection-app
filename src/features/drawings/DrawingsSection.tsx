@@ -166,7 +166,7 @@ export function DrawingsSection({
       {drawings && drawings.length === 0 && !busy && (
         <p className="muted drawings-hint">
           No drawings yet. Add the drawing PDFs for this inspection from Files;
-          they stay on this iPad, and all their pages scroll as one document.
+          they stay on this device, and all their pages scroll as one document.
         </p>
       )}
       {drawings && drawings.length > 0 && (

@@ -80,7 +80,7 @@ export function SavePhotosDialog({ entries, jobNumber, onClose }: Props) {
         onClose();
       }}
     >
-      <h2 id="save-photos-title">Save photos to iPad</h2>
+      <h2 id="save-photos-title">Save photos to device</h2>
       {done ? (
         <p role="status">
           {entries.length === 1

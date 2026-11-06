@@ -59,7 +59,7 @@ export function isStorageFull(error: unknown): boolean {
 
 /** What to tell the engineer when storage is full. */
 export const STORAGE_FULL_MESSAGE =
-  "There isn't enough space on this iPad to save it. Back up and delete inspections you've finished (Settings, Storage and backup), then try again.";
+  "There isn't enough space on this device to save it. Back up and delete inspections you've finished (Settings, Storage and backup), then try again.";
 
 /** Storage this full or more (0..1) gets a warning on the Dashboard. */
 export const NEARLY_FULL = 0.8;

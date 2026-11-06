@@ -30,8 +30,8 @@ export function DrawingSettings() {
           Pencil prediction
           <span className="muted small">
             {" "}
-            Draws the line a moment ahead, toward where the iPad expects the tip
-            to go, so it keeps up better. The saved line uses only where the
+            Draws the line a moment ahead, toward where the device expects the
+            tip to go, so it keeps up better. The saved line uses only where the
             Pencil actually went.
           </span>
         </span>

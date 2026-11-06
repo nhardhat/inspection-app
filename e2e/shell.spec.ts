@@ -122,6 +122,6 @@ test("storage: when the iPad is full, adding a drawing says so", async ({
     buffer: Buffer.from(await buildSyntheticDrawing(TYPICAL_DRAWING)),
   });
   await expect(page.getByRole("alert").first()).toContainText(
-    "There isn't enough space on this iPad",
+    "There isn't enough space on this device",
   );
 });

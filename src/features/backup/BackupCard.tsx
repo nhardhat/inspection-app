@@ -93,7 +93,7 @@ export function BackupCard({ inspectionId }: { inspectionId: string }) {
         {inspection.backedUpAt
           ? `Last backed up ${formatDateTime(inspection.backedUpAt)}. `
           : ""}
-        Keep the file off this iPad (Files › iCloud Drive or OneDrive).
+        Keep the file off this device (Files › iCloud Drive or OneDrive).
       </p>
       {originalsSize > 0 && state.status !== "ready" && (
         <label className="checkbox switch">

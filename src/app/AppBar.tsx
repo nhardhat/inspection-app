@@ -65,7 +65,9 @@ export function NetStatus() {
       className={`net-status ${online ? "online" : "offline"}`}
       role="status"
       data-testid="net-status"
-      title={online ? "Online" : "Offline: everything still saves on this iPad"}
+      title={
+        online ? "Online" : "Offline: everything still saves on this device"
+      }
     >
       {online ? (
         <span className="net-dot" aria-hidden="true" />

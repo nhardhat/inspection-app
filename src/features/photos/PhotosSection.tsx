@@ -109,7 +109,7 @@ export function PhotosSection({
               className="primary"
               onClick={() => setSaving(true)}
             >
-              Save photos to iPad
+              Save photos to device
             </button>
             <button
               type="button"
@@ -148,9 +148,9 @@ export function PhotosSection({
       >
         <p>
           This removes the full-size copies of {freeable.length} photo
-          {freeable.length === 1 ? "" : "s"} already saved to the iPad (
+          {freeable.length === 1 ? "" : "s"} already saved to the device (
           {megabytes(freeableBytes)}). The smaller copies stay for the report.
-          Photos you saved to the iPad are not affected.
+          Photos you saved to the device are not affected.
         </p>
       </ConfirmDialog>
     </div>

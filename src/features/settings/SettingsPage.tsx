@@ -164,7 +164,7 @@ export function SettingsPage() {
                   "Not reported on this device"
                 ) : storage.persisted ? (
                   <>
-                    <ShieldCheck aria-hidden="true" /> Kept by the iPad
+                    <ShieldCheck aria-hidden="true" /> Kept by the device
                   </>
                 ) : (
                   <>

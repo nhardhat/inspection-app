@@ -302,7 +302,7 @@ export function DrawingLab() {
       <h1 id="lab-heading">Drawing lab</h1>
       <p className="muted">
         Draws one page on the main thread and on the background thread (as the
-        drawings screen does), to compare speed and freezes on this iPad.
+        drawings screen does), to compare speed and freezes on this device.
         Nothing is saved.
       </p>
       {drawings && drawings.length === 0 && (

@@ -1637,7 +1637,7 @@ test("saving photos shares camera shots at full size, named by job and item", as
 
   // From the item.
   await photoSection(page)
-    .getByRole("button", { name: "Save to iPad" })
+    .getByRole("button", { name: "Save to device" })
     .click();
   const dialog = page.getByTestId("save-photos-dialog");
   await dialog.getByRole("button", { name: "Save 2 photos" }).click();
@@ -1658,7 +1658,7 @@ test("saving photos shares camera shots at full size, named by job and item", as
   await expect(page.getByTestId("photos-summary")).toContainText(
     "2 photos · 1 full-size camera copy kept",
   );
-  await section.getByRole("button", { name: "Save photos to iPad" }).click();
+  await section.getByRole("button", { name: "Save photos to device" }).click();
   await dialog.getByRole("button", { name: "Save 2 photos" }).click();
   await expect(dialog).toContainText("All 2 photos have been saved.");
   await dialog.getByRole("button", { name: "Done" }).click();
@@ -1671,7 +1671,7 @@ test("saving photos shares camera shots at full size, named by job and item", as
   await expect(section).toContainText("Freed");
 
   // Saving again now shares the 1600 px copy.
-  await section.getByRole("button", { name: "Save photos to iPad" }).click();
+  await section.getByRole("button", { name: "Save photos to device" }).click();
   await dialog.getByRole("button", { name: "Save 2 photos" }).click();
   shared = await sharedBatches(page);
   expect(shared[2][0].size).toBeLessThan(original.length);
@@ -1692,7 +1692,7 @@ test("more than 20 photos save in batches", async ({ page }) => {
   await expect(photoSection(page)).toContainText("Photos (21)");
 
   await photoSection(page)
-    .getByRole("button", { name: "Save to iPad" })
+    .getByRole("button", { name: "Save to device" })
     .click();
   const dialog = page.getByTestId("save-photos-dialog");
   await expect(dialog).toContainText("Batch 1 of 2: photos 1–20 of 21.");
@@ -1744,7 +1744,7 @@ test("general photos on the Site memo step save as General and delete with a con
   ]);
   await expect(general).toContainText("General photos (2)");
 
-  await general.getByRole("button", { name: "Save to iPad" }).click();
+  await general.getByRole("button", { name: "Save to device" }).click();
   const dialog = page.getByTestId("save-photos-dialog");
   await dialog.getByRole("button", { name: "Save 2 photos" }).click();
   await expect(dialog).toContainText("All 2 photos have been saved.");

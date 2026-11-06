@@ -93,7 +93,7 @@ export function DashboardPage() {
           <h1>Start your first inspection</h1>
           <p className="muted">
             Pick or create the project, add the drawing PDFs, then drop pins on
-            site. Everything stays on this iPad.
+            site. Everything stays on this device.
           </p>
           <NewInspectionButton from={HERE} />
         </div>
@@ -378,7 +378,7 @@ function StorageTile() {
           >
             {storage.persisted ? (
               <>
-                <ShieldCheck aria-hidden="true" /> Kept by the iPad
+                <ShieldCheck aria-hidden="true" /> Kept by the device
               </>
             ) : (
               <>
