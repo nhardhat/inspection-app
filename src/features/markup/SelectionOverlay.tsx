@@ -1,5 +1,5 @@
 import { ChevronDown, Copy, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useViewerCoords } from "../drawings/viewer/viewerCoords";
 import {
   boxCentre,
@@ -57,6 +57,25 @@ export function SelectionOverlay({
   const { width, height } = pageSize;
   const prefs = useMarkupPrefs();
   const [colours, setColours] = useState(false);
+  // Screen px the bar is slid sideways to stay on screen (a phone, or a
+  // selection near the edge); measured after each layout.
+  const barRef = useRef<HTMLDivElement>(null);
+  const [nudge, setNudge] = useState(0);
+  // Every layout (zoom and scroll move the bar); it settles once it fits.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const r = bar.getBoundingClientRect();
+    const left = r.left - nudge;
+    const right = r.right - nudge;
+    const margin = 8;
+    let want = 0;
+    if (right > window.innerWidth - margin)
+      want = window.innerWidth - margin - right;
+    if (left + want < margin) want = margin - left;
+    if (Math.abs(want - nudge) > 0.5) setNudge(want);
+  });
   if (marks.length === 0) return null;
 
   // Page units per screen px at the current zoom.
@@ -214,6 +233,7 @@ export function SelectionOverlay({
       </svg>
       {!dragging && (
         <div
+          ref={barRef}
           className="select-bar"
           role="toolbar"
           aria-label="Selection"
@@ -225,7 +245,7 @@ export function SelectionOverlay({
             top: above
               ? b.y - gap - barGap * k
               : b.y + b.height + gap + BAR_GAP_PX * k,
-            transform: above ? `scale(${k}) translateY(-100%)` : `scale(${k})`,
+            transform: `translateX(${nudge * k}px) scale(${k})${above ? " translateY(-100%)" : ""}`,
           }}
         >
           <button
@@ -263,17 +283,23 @@ export function SelectionOverlay({
             </button>
           ))}
           <span className="select-divider" aria-hidden="true" />
-          <button type="button" className="select-action" onClick={onDuplicate}>
+          <button
+            type="button"
+            className="select-action"
+            aria-label="Duplicate"
+            onClick={onDuplicate}
+          >
             <Copy aria-hidden="true" />
-            Duplicate
+            <span className="select-action-label">Duplicate</span>
           </button>
           <button
             type="button"
             className="select-action select-delete"
+            aria-label="Delete"
             onClick={onDelete}
           >
             <Trash2 aria-hidden="true" />
-            Delete
+            <span className="select-action-label">Delete</span>
           </button>
           {colours && (
             <div

@@ -367,6 +367,7 @@ function ContactsEditor({
                 <td>
                   <input
                     aria-label={`Contact ${i + 1} company`}
+                    placeholder="Company"
                     value={c.company}
                     autoCapitalize="words"
                     onChange={(e) => change(i, { company: e.target.value })}
@@ -376,6 +377,7 @@ function ContactsEditor({
                 <td>
                   <input
                     aria-label={`Contact ${i + 1} attention`}
+                    placeholder="Attn"
                     value={c.attn}
                     autoCapitalize="words"
                     onChange={(e) => change(i, { attn: e.target.value })}

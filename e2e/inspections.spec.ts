@@ -81,11 +81,11 @@ test("creates an inspection, autosaves every field and keeps it after reload", a
   await expect(continueTile).toContainText(/Edited (just now|\d+ min ago)/);
   // Any step opens from the tile; the suggested next one is marked.
   const steps = continueTile.getByRole("navigation", { name: "Open a step" });
-  await expect(steps.getByRole("link")).toHaveText([
-    "Pre-inspection",
-    "Inspection",
-    "Site memo",
-  ]);
+  // As shown (a phone's short "Pre-insp." is hidden on the iPad).
+  await expect(steps.getByRole("link")).toHaveText(
+    ["Pre-inspection", "Inspection", "Site memo"],
+    { useInnerText: true },
+  );
   await expect(steps.locator(".suggested")).toHaveCount(1);
   await steps.getByRole("link", { name: "Site memo" }).click();
   await expect(page).toHaveURL(/\/memo/);

@@ -1,4 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
+import { StepLabel } from "./StepLabel";
 import {
   ArrowUpRight,
   Check,
@@ -212,7 +213,7 @@ function ContinueTile({
             <span className="progress-bar" />
             <span className="progress-label">
               {done[i] && <Check aria-hidden="true" />}
-              {label}
+              <StepLabel label={label} />
               <span className="sr-only">{done[i] ? ", done" : ", to do"}</span>
             </span>
           </li>
@@ -239,7 +240,7 @@ function ContinueTile({
                 className={`step-link${suggested ? " suggested" : ""}`}
                 title={suggested ? `Next: ${next.label}` : undefined}
               >
-                {step.label}
+                <StepLabel label={step.label} />
                 {suggested && <ArrowUpRight aria-hidden="true" />}
               </InspectionLink>
             );

@@ -367,6 +367,7 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                     <td>
                       <input
                         aria-label={`Recipient ${i + 1} company`}
+                        placeholder="Company"
                         value={r.company}
                         autoCapitalize="words"
                         onChange={(e) =>
@@ -377,6 +378,7 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                     <td>
                       <input
                         aria-label={`Recipient ${i + 1} attention`}
+                        placeholder="Attn"
                         value={r.attn}
                         autoCapitalize="words"
                         onChange={(e) =>

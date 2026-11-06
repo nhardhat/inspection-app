@@ -1,4 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
+import { StepLabel } from "./StepLabel";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -106,7 +107,7 @@ export function InspectionTabs({
             {step?.done && !isCurrent && (
               <Check aria-hidden="true" className="step-done" />
             )}
-            {base.label}
+            <StepLabel label={base.label} />
             {step && (
               <span className="sr-only" data-testid={`step-status-${base.key}`}>
                 {step.status}
