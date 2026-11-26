@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { Signature, User } from "lucide-react";
 import { useState } from "react";
+import { northrop, officeFor } from "../../brand/northrop";
 import { saveStateLabel, useAutosave } from "../../app/useAutosave";
 import { db } from "../../db/db";
 import { clearMySignature, setMySignature } from "../../db/signatures";
@@ -9,7 +10,7 @@ import { SignatureField } from "../signature/SignatureField";
 
 type Details = Pick<
   Settings,
-  "inspectorName" | "inspectorTitle" | "defaultSentVia"
+  "inspectorName" | "inspectorTitle" | "defaultSentVia" | "officeId"
 >;
 
 const SENT_VIA: SentVia[] = ["Aconex", "Email"];
@@ -57,6 +58,7 @@ function MyDetailsFields({ initial }: { initial: Details }) {
     inspectorName: initial.inspectorName,
     inspectorTitle: initial.inspectorTitle,
     defaultSentVia: initial.defaultSentVia,
+    officeId: officeFor(initial.officeId).id,
   });
   const autosave = useAutosave<Partial<Details>>(
     async (patch) => {
@@ -91,7 +93,10 @@ function MyDetailsFields({ initial }: { initial: Details }) {
           {saveStateLabel(autosave.state)}
         </span>
       </div>
-      <p className="muted">Used for new inspections and the memo sign-off.</p>
+      <p className="muted">
+        Used for new inspections and the memo sign-off. Your office&rsquo;s
+        address goes on new memos.
+      </p>
       <form
         className="form-grid"
         aria-label="My details"
@@ -131,6 +136,21 @@ function MyDetailsFields({ initial }: { initial: Details }) {
           >
             {SENT_VIA.map((option) => (
               <option key={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Office</span>
+          <select
+            name="officeId"
+            value={values.officeId}
+            onChange={(e) => change("officeId", e.target.value)}
+            onBlur={() => void autosave.flush()}
+          >
+            {northrop.offices.map((office) => (
+              <option key={office.id} value={office.id}>
+                {office.name}
+              </option>
             ))}
           </select>
         </label>

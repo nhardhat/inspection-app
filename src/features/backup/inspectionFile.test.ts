@@ -147,6 +147,7 @@ beforeEach(async () => {
   await updateMemo(source, memo.id, {
     itemOverrides: { [a.id]: "Reworded" },
     referToDrawings: true,
+    officeId: "melbourne",
   });
   await setMemoSignature(source, memo.id, PNG);
   await markMemoExported(source, memo.id, { [a.id]: "instruction:A" });
@@ -249,6 +250,7 @@ describe("inspection file", () => {
     const memo = await source.memos.where("inspectionId").equals(id).first();
     const a = items.find((i) => i.kind === "instruction")!;
     expect(memo!.itemOverrides).toEqual({ [a.id]: "Reworded" });
+    expect(memo!.officeId).toBe("melbourne");
     expect(await source.blobs.get(memo!.signatureBlobId!)).toBeDefined();
     // Same project: joined, not duplicated.
     expect(await source.projects.count()).toBe(1);

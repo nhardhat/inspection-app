@@ -3,7 +3,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { northrop } from "../../brand/northrop";
+import { northrop, officeBlock } from "../../brand/northrop";
 import { addDrawing } from "../../db/drawings";
 import { createInspection, emptyClient } from "../../db/inspections";
 import { createItem, updateItem } from "../../db/items";
@@ -106,8 +106,28 @@ test("the memo as Word, with Figtree embedded, without the photos", async () => 
     .map((n) => strFromU8(zip[n]))
     .join("");
   expect(headers).toContain(northrop.memoTitle);
-  expect(headers).toContain(northrop.officeBlock[0]);
+  // My office from Settings: Sydney by default.
+  for (const line of officeBlock("sydney")) expect(headers).toContain(line);
   // Figtree: four faces, and SemiBold.
   expect(Object.keys(zip).filter((n) => n.endsWith(".odttf"))).toHaveLength(5);
   expect(wordFilename(data)).toBe("SY000001-SIM001-A-Level 3 slab.docx");
+
+  // Another office: its block replaces Sydney's.
+  const wollongong = unzipSync(
+    await buildWordMemo(
+      { ...data, memo: { ...data.memo, officeId: "wollongong" } },
+      {
+        memo: await loadTestMemoAssets(),
+        sidebarFirst: read(northrop.assets.sidebarFirst),
+        sidebar: read(northrop.assets.sidebar),
+      },
+    ),
+  );
+  const officeHeaders = Object.keys(wollongong)
+    .filter((n) => /^word\/header\d+\.xml$/.test(n))
+    .map((n) => strFromU8(wollongong[n]))
+    .join("");
+  for (const line of officeBlock("wollongong"))
+    expect(officeHeaders).toContain(line);
+  expect(officeHeaders).not.toContain("George St");
 });

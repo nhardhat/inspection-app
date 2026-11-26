@@ -1,3 +1,4 @@
+import { northrop, officeFor } from "../../brand/northrop";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -271,7 +272,9 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
             <div className="job-summary">
               <div className="list-row-main">
                 <span className="eyebrow">Job details</span>
-                <span className="job-summary-text">{jobSummary(job)}</span>
+                <span className="job-summary-text">
+                  {jobSummary(job)} · {officeFor(memo.officeId).name} office
+                </span>
               </div>
               <button
                 type="button"
@@ -305,6 +308,24 @@ function MemoEditorFor({ inspectionId }: { inspectionId: string }) {
                   }}
                   onBlur={() => void jobSave.flush()}
                 />
+                <label className="field">
+                  <span>Office</span>
+                  <select
+                    value={officeFor(memo.officeId).id}
+                    onChange={(e) => patch({ officeId: e.target.value })}
+                    onBlur={() => void memoSave.flush()}
+                  >
+                    {northrop.offices.map((office) => (
+                      <option key={office.id} value={office.id}>
+                        {office.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="muted">
+                  The office&rsquo;s address goes in the memo&rsquo;s sidebar.
+                  Only this memo changes; new memos use your office in Settings.
+                </p>
               </>
             )}
           </section>

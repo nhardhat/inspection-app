@@ -7,7 +7,7 @@ import {
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
-import { northrop } from "../../../brand/northrop";
+import { northrop, officeBlock } from "../../../brand/northrop";
 import type { MemoFields, Recipient } from "../../../db/types";
 import {
   DETAIL_LABELS,
@@ -33,6 +33,8 @@ export interface MemoPdfInput {
   conditions: string[];
   /** Joins the lead-in when an instruction needs photos (else empty). */
   photoLine?: string;
+  /** The office in the sidebar (brand office id). Missing: Sydney. */
+  officeId?: string;
 }
 
 /** Signature image (PNG), printed between the sign-off and the name. */
@@ -182,6 +184,8 @@ class MemoWriter {
   readonly icon: PDFImage;
   /** Editable export: per-job text goes here instead of on the page. */
   fieldLines: MemoFieldLine[] | null = null;
+  /** The sidebar's office block (first page). */
+  office: string[] = officeBlock(null);
   /** The field being written, while collecting. */
   field: { name: string; right: number; multiline?: boolean } | null = null;
 
@@ -337,7 +341,7 @@ class MemoWriter {
       SIDEBAR_TITLE.size,
       CREAM,
     );
-    northrop.officeBlock.forEach((line, i) => {
+    this.office.forEach((line, i) => {
       this.text(
         line,
         OFFICE.x,
@@ -804,6 +808,7 @@ export async function writeMemo(
 
   const w = new MemoWriter(doc, fonts, wordmark, icon);
   w.fieldLines = fieldLines;
+  w.office = officeBlock(input.officeId);
   w.addPage();
   const headerBottom = drawHeader(w, input);
   drawRecipients(

@@ -45,7 +45,7 @@ Standard details library (searchable, attachable to a memo item).
 The sample is a one-page **Site Instruction Memo**, not a long report. Anatomy:
 
 **Fixed branding and layout (template, not edited per job)**
-- Red full-height left sidebar with logo, the title "SITE INSTRUCTION MEMO", and office contact block at the bottom (address, phone, email, ABN).
+- Red full-height left sidebar with logo, the title "SITE INSTRUCTION MEMO", and office contact block at the bottom (address, phone, email, ABN). **Offices (engineer, 2026-11-26):** the block is the memo's office: one of Northrop's eight (Brisbane, Canberra, Coffs Harbour, Melbourne, Newcastle, Parramatta, Sydney, Wollongong; from northrop.com.au/location, written in the sample's style: street address, "St"/"Hwy", phone without brackets; Sydney's is the sample's, verbatim; Parramatta shares Sydney's phone and email), then the ABN. Settings, My details, **Office** (Sydney to start) is mine; a new memo takes it (`Memo.officeId`, kept in the inspection file), and the memo's Edit job details has an **Office** list that changes that memo only. Memos made before offices show Sydney. Same in the PDF and Word memo.
 - Footer strapline and page number.
 - Fixed disclaimer paragraph at the bottom of the memo (site safety remains the builder's responsibility, inspection doesn't relieve the contractor, no variation without approval).
 - A4 portrait.
@@ -72,6 +72,7 @@ The sample is a one-page **Site Instruction Memo**, not a long report. Anatomy:
 | Body paragraph 2 | pick from **prefilled messages** (see below); the chosen text is copied into the memo and can be edited there |
 | Conditions list | One lead-in line, then bullets: first the ticked **standard conditions** (condition snippets; "[letters]" becomes the instruction letters, e.g. "A–D"), then each **instruction** as "A. text" in letter order, generated live from the items. An instruction with photo confirmation required is **marked \*** ("A. Add N12 bar at grid C/4 \*"), and when any is, the **photo confirmation line** joins the lead-in: "Ok to proceed subject to the following. Items marked \* to be closed out with photos:" (engineer, 2026-10-16: not a bullet, short; replacing the 2026-10-06 note after each instruction, "(provide photos confirming completion before proceeding)"); the line is a single prefilled message editable in Settings (kind `photoNote`, "Items marked \* to be closed out with photos"; a full stop at its end is dropped for the colon; empty means the plain lead-in; earlier starter texts are replaced once on update, text the engineer wrote is kept). The \* also shows after those instructions in the drawing's notes box (viewer and pack). "Complete items [letters] listed below." is ticked by default when there are instructions; other standard conditions, including "Confirm completion of items via photos prior to proceeding.", start unticked (it no longer ticks itself, since the \* says which items); the engineer can tick or untick any. The memo editor shows "\* photo confirmation" by each instruction marked \* and the lead-in as it will print. **Refer to drawings (engineer, 2026-10-16; feedback round 1 item 2):** a switch in the memo editor (shown with instructions; off by default; `Memo.referToDrawings`, kept in the inspection file) replaces the A, B, C… instruction lines with one bullet, the **refer line**, "Complete the instructions marked on the attached drawings (items [letters])." (a single prefilled message editable in Settings, kind `referDrawings`; "[letters]" as in the standard conditions); ticked standard conditions still show, and the lead-in still explains the \* (it's on the drawings' notes boxes). Rewordings are kept for when it's switched off. An instruction can be reworded for the memo without changing the item ("Use item text" goes back). With one or more conditions the lead-in is "Ok to proceed subject to the following:" (same for every body message, as in the sample; with the photo line when any instruction needs photos, above); with none, "Ok to proceed." and no list. |
 | Sign-off | engineer name and title, from Settings (My details) when the memo is created; editable |
+| Office | the sidebar's office block (section 4a): my office from Settings when the memo is created; changed under Edit job details; shown at the end of the job details summary ("· Newcastle office") |
 
 **Prefilled messages (needs a small snippet library)**
 The sample explicitly says different prefilled messages should be selectable. Example from the sample:
@@ -198,7 +199,7 @@ Photo          { id, blobId, originalBlobId?, originalSize?, source: 'camera' | 
 Memo           { id, inspectionId, templateId, reference, recipients[], siteVisitRequestedBy|null,
                  reasonForVisit|null, sentVia, salutation|null, bodySnippetId, bodyText,
                  conditionChoices{snippetId: bool}, itemOverrides{itemId: text},
-                 signOffName, signOffTitle, signatureBlobId|null, includeSignature,
+                 signOffName, signOffTitle, signatureBlobId|null, includeSignature, officeId?,
                  exportedAt?, exportedLetters?{itemId: 'kind:letter'},
                  createdAt, updatedAt }
                // one per inspection; job details (client, address, date, job number/name,
@@ -216,7 +217,8 @@ PageImage      { id: `${drawingId}:${source}:${width}x${height}`, drawingId, sou
                // step 10b: a page's saved base image (Dexie v13); a cache, never in inspection files
                // slice 2 (section 5a): one record per mark; points normalised 0..1 of the page;
                // weight relative to the sheet's short side; page is a position in Drawing.pages
-Settings       { inspectorName, inspectorTitle, defaultSentVia, signatureBlobId?, ... }
+Settings       { inspectorName, inspectorTitle, defaultSentVia, signatureBlobId?, officeId?, ... }
+               // officeId: my office (brand office id), for new memos; missing = Sydney
                // signatureBlobId: my signature (PNG), copied into each new memo
 // later
 Calculation    { id, type, inputs, outputs, createdAt }   // standalone history, no inspectionId, never exported with an inspection

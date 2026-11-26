@@ -36,7 +36,7 @@ import {
   type IParagraphOptions,
   type ParagraphChild,
 } from "docx";
-import { northrop } from "../../brand/northrop";
+import { northrop, officeBlock } from "../../brand/northrop";
 import { buildMemoPdfInput } from "../memo/buildMemo";
 import { memoFilename } from "../memo/memoFilename";
 import {
@@ -130,7 +130,11 @@ function picture(children: ParagraphChild[]) {
 }
 
 /** The sidebar behind the page, with (on the first page) its text. */
-function sidebarHeader(picture: Uint8Array, first: boolean) {
+function sidebarHeader(
+  picture: Uint8Array,
+  first: boolean,
+  office: string[] = [],
+) {
   const image = new ImageRun({
     type: "png",
     data: picture,
@@ -169,7 +173,7 @@ function sidebarHeader(picture: Uint8Array, first: boolean) {
       }),
     );
     children.push(
-      ...northrop.officeBlock.map(
+      ...office.map(
         (line, i) =>
           new Paragraph({
             frame: frame(OFFICE.x, OFFICE.top + i * 10.1, OFFICE.width, 10.1),
@@ -492,7 +496,11 @@ export async function buildWordMemo(
           },
         },
         headers: {
-          first: sidebarHeader(assets.sidebarFirst, true),
+          first: sidebarHeader(
+            assets.sidebarFirst,
+            true,
+            officeBlock(input.officeId),
+          ),
           default: sidebarHeader(assets.sidebar, false),
         },
         footers: {

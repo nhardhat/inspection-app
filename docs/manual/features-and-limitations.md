@@ -13,7 +13,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 - **No App Store.** It is a web app opened from a link and added to the iPad's home screen, where it runs full screen like any other app.
 - **Works offline.** Once opened, everything it needs is stored on the iPad. It never needs the internet on site.
 - **No accounts, no server.** All drawings, photos and memos stay on the device. Nothing is uploaded anywhere.
-- **Northrop branded.** The memo follows the Northrop sample memo: branding, disclaimer and office details are fixed template text.
+- **Northrop branded.** The memo follows the Northrop sample memo: branding, disclaimer and office details are fixed template text (the office is picked from Northrop's eight).
 
 ![The Dashboard: the last inspection, items this month, what needs attention and storage|190](shots/dashboard.jpg)
 
@@ -80,6 +80,7 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 - **Prefilled messages** for the body, the standard conditions and the notes box heading, all editable in Settings.
 - The instructions appear as the memo's conditions, each rewordable for the memo without changing the item.
 - A drawn or uploaded signature, saved once and reused.
+- The **office** in the red sidebar: any of Northrop's eight offices, your own from Settings by default, changeable per memo.
 - A **live preview** that is the real exported PDF.
 
 ![The memo editor beside its live preview|200](shots/memo.jpg)

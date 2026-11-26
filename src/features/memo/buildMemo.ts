@@ -213,5 +213,6 @@ export function buildMemoPdfInput(
       (c) => c.text,
     ),
     photoLine: photoLineFor(items, line),
+    officeId: memo.officeId,
   };
 }

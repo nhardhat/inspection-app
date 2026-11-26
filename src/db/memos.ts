@@ -1,3 +1,4 @@
+import { officeFor } from "../brand/northrop";
 import { touchInspection } from "./items";
 import { loadJobInspection, rememberContacts } from "./projects";
 import type { InspectionDb } from "./schema";
@@ -33,7 +34,7 @@ export function blankMemo(
   reference: string,
   settings: Pick<
     Settings,
-    "inspectorName" | "inspectorTitle" | "defaultSentVia"
+    "inspectorName" | "inspectorTitle" | "defaultSentVia" | "officeId"
   >,
   body: { id: string; text: string } | null,
   now = Date.now(),
@@ -60,6 +61,7 @@ export function blankMemo(
     signOffTitle: settings.inspectorTitle,
     signatureBlobId: null,
     includeSignature: true,
+    officeId: officeFor(settings.officeId).id,
     createdAt: now,
     updatedAt: now,
   };
@@ -124,6 +126,7 @@ export async function createMemo(
           inspectorName: settings?.inspectorName ?? "",
           inspectorTitle: settings?.inspectorTitle ?? "",
           defaultSentVia: settings?.defaultSentVia ?? "Email",
+          officeId: settings?.officeId,
         },
         body ?? null,
         now,

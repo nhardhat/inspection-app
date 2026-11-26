@@ -94,6 +94,16 @@ describe("memos", () => {
     expect(memo.bodyText).toMatch(/^At the time of the inspection/);
   });
 
+  test("takes my office from Settings (Sydney when none is set)", async () => {
+    const first = await createMemo(db, (await inspectionFor("SY000001")).id);
+    expect(first.officeId).toBe("sydney");
+    await db.settings.update(SETTINGS_ID, { officeId: "newcastle" });
+    const second = await createMemo(db, (await inspectionFor("SY000002")).id);
+    expect(second.officeId).toBe("newcastle");
+    // Changing Settings later doesn't change memos already made.
+    expect((await db.memos.get(first.id))?.officeId).toBe("sydney");
+  });
+
   test("saves edits", async () => {
     const inspection = await inspectionFor("SY000001");
     const memo = await createMemo(db, inspection.id);

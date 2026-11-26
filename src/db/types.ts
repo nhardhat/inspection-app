@@ -320,6 +320,11 @@ export interface Memo {
   signatureBlobId: string | null;
   /** Print the signature between "Yours sincerely," and the name. */
   includeSignature: boolean;
+  /**
+   * The office in the memo's sidebar (brand office id, engineer,
+   * 2026-11-26): mine from Settings when made. Missing: Sydney.
+   */
+  officeId?: string;
   /** When the PDF pack was last exported (build step 8). */
   exportedAt?: number;
   /**
@@ -470,6 +475,8 @@ export interface Settings {
   seededKinds?: SnippetKind[];
   /** My signature (PNG in blobs), copied into each new memo. */
   signatureBlobId?: string | null;
+  /** My office (brand office id), for new memos. Missing: Sydney. */
+  officeId?: string;
   /** Result of the first-run navigator.storage.persist() request. */
   persistRequested?: { granted: boolean; at: number };
 }

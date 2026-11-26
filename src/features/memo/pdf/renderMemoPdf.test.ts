@@ -2,7 +2,8 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { northrop } from "../../../brand/northrop";
+import fontkit from "@pdf-lib/fontkit";
+import { northrop, officeBlock } from "../../../brand/northrop";
 import { sampleMemo } from "../sampleMemo";
 import {
   renderMemoPdf,
@@ -80,12 +81,42 @@ describe("renderMemoPdf", () => {
       "Ok to proceed subject to the following:",
       "Yours sincerely,",
       f.signOffTitle,
-      ...northrop.officeBlock,
+      ...officeBlock(null),
       "REAL PEOPLE",
       ...f.recipients.map((r) => r.company),
     ]) {
       expect(text).toContain(value);
     }
+  });
+
+  test("shows the memo's office in the sidebar, Sydney by default", async () => {
+    const [sydney] = await pageTexts(await renderMemoPdf(sampleMemo, assets));
+    expect(sydney).toContain("Level 10, 400 George St Sydney NSW 2000");
+    for (const office of northrop.offices) {
+      const bytes = await renderMemoPdf(
+        { ...sampleMemo, officeId: office.id },
+        assets,
+      );
+      saveForInspection(`office-${office.id}.pdf`, bytes);
+      const [text] = await pageTexts(bytes);
+      expect(text).toContain(officeBlock(office.id).join(" "));
+    }
+    const [newcastle] = await pageTexts(
+      await renderMemoPdf({ ...sampleMemo, officeId: "newcastle" }, assets),
+    );
+    expect(newcastle).not.toContain("George St");
+  });
+
+  test("every office's lines fit inside the red sidebar", async () => {
+    const doc = await PDFDocument.create();
+    doc.registerFontkit(fontkit);
+    const font = await doc.embedFont(assets.fonts.regular);
+    // Sidebar right edge 169 pt, text from 27.8 pt: keep the same margin
+    // on the right as on the left.
+    const room = 169 - 2 * 27.8;
+    for (const office of northrop.offices)
+      for (const line of officeBlock(office.id))
+        expect(font.widthOfTextAtSize(line, 6.96), line).toBeLessThan(room);
   });
 
   test("includes the disclaimer word for word", async () => {

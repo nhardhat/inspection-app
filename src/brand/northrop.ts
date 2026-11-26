@@ -41,13 +41,98 @@ export const northrop = {
     height: 841.89,
   },
   memoTitle: "SITE INSTRUCTION MEMO",
-  officeBlock: [
-    "Level 10, 400 George St",
-    "Sydney NSW 2000",
-    "02 9241 4188",
-    "sydney@northrop.com.au",
-    "ABN 81 094 433 100",
+  /**
+   * Northrop's offices for the memo's sidebar (engineer, 2026-11-26): the
+   * memo shows its office's lines, then the ABN. Sydney's is the sample
+   * report's, verbatim; the others are from northrop.com.au/location in
+   * the same style (street address, "St", no phone brackets). Parramatta
+   * shares Sydney's phone and email, as on the website.
+   */
+  offices: [
+    {
+      id: "brisbane",
+      name: "Brisbane",
+      lines: [
+        "The Annex, Level 8, 12 Creek St",
+        "Brisbane QLD 4000",
+        "07 3365 0400",
+        "brisbane@northrop.com.au",
+      ],
+    },
+    {
+      id: "canberra",
+      name: "Canberra",
+      lines: [
+        "SAP House, Level 6, 224 Bunda St",
+        "Canberra ACT 2601",
+        "02 6285 1822",
+        "canberra@northrop.com.au",
+      ],
+    },
+    {
+      id: "coffs-harbour",
+      name: "Coffs Harbour",
+      lines: [
+        "Suite 5, 27 Orlando St",
+        "Coffs Harbour NSW 2450",
+        "02 5603 3053",
+        "coffsharbour@northrop.com.au",
+      ],
+    },
+    {
+      id: "melbourne",
+      name: "Melbourne",
+      lines: [
+        "Suite 3, Level 23, 385 Bourke St",
+        "Melbourne VIC 3000",
+        "03 9600 2645",
+        "melbourne@northrop.com.au",
+      ],
+    },
+    {
+      id: "newcastle",
+      name: "Newcastle",
+      lines: [
+        "Level 1, 215 Pacific Hwy",
+        "Charlestown NSW 2290",
+        "02 4943 1777",
+        "newcastle@northrop.com.au",
+      ],
+    },
+    {
+      id: "parramatta",
+      name: "Parramatta",
+      lines: [
+        "Level 15, 6 Hassall St",
+        "Parramatta NSW 2150",
+        "02 9241 4188",
+        "sydney@northrop.com.au",
+      ],
+    },
+    {
+      id: "sydney",
+      name: "Sydney",
+      lines: [
+        "Level 10, 400 George St",
+        "Sydney NSW 2000",
+        "02 9241 4188",
+        "sydney@northrop.com.au",
+      ],
+    },
+    {
+      id: "wollongong",
+      name: "Wollongong",
+      lines: [
+        "Level 1, 57 Kembla St",
+        "Wollongong NSW 2500",
+        "02 4226 3333",
+        "southcoast@northrop.com.au",
+      ],
+    },
   ],
+  /** The office used when none is chosen (and by memos made before offices). */
+  defaultOfficeId: "sydney",
+  abn: "ABN 81 094 433 100",
   /** First sentence is bold in the memo; the rest follows in italic. */
   disclaimer: {
     lead: "Site safety remains the responsibility of the builder.",
@@ -111,3 +196,18 @@ export const northrop = {
     },
   },
 } as const;
+
+export type Office = (typeof northrop.offices)[number];
+
+/** The office with this id, else the default (Sydney). */
+export function officeFor(id: string | null | undefined): Office {
+  return (
+    northrop.offices.find((o) => o.id === id) ??
+    northrop.offices.find((o) => o.id === northrop.defaultOfficeId)!
+  );
+}
+
+/** The memo sidebar's office block: the office's lines, then the ABN. */
+export function officeBlock(id: string | null | undefined): string[] {
+  return [...officeFor(id).lines, northrop.abn];
+}

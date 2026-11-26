@@ -19,7 +19,7 @@ audience: For engineers: how to run an inspection, from loading drawings to send
 ## Set up your details
 
 1. Open **Settings** from the bar on the left.
-2. Under **My details**, enter your name and title. They go on new inspections and memos.
+2. Under **My details**, enter your name and title. They go on new inspections and memos. Pick your **Office**: its address goes in the red sidebar of new memos.
 3. Draw or upload your **signature**. It's copied into each new memo.
 
 ## Keep your work safe
@@ -133,7 +133,8 @@ Turn on **Select** (the dotted lasso), then tap a mark or draw a loop round seve
 2. Check the **recipients**: the client starts as "To". Add others as To or Copy, and drag ≡ to change their order.
 3. Pick the **message** that fits, and tick the **standard conditions** that apply. Your instructions are listed as conditions; each can be reworded for the memo. Instructions needing photos are marked \*, and the line above the list explains it. With lots of pins, turn on **Refer to drawings**: one line points the builder to the attached drawings instead of listing every instruction.
 4. Check the **signature** and sign-off.
-5. Read the **preview** beside the editor: it's exactly what will be exported.
+5. The memo uses your office's address. For a different office on this memo only, tap **Edit job details** and pick it under **Office**.
+6. Read the **preview** beside the editor: it's exactly what will be exported.
 
 ![The memo editor and its preview](shots/memo.jpg)
 
