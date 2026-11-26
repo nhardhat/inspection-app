@@ -2,6 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   Database,
   Info,
+  LogOut,
   MessageSquareText,
   PenLine,
   ShieldAlert,
@@ -11,6 +12,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { signOut } from "../../app/signIn";
 import { appCommit, appVersion } from "../../app/version";
 import { db } from "../../db/db";
 import {
@@ -92,6 +94,16 @@ export function SettingsPage() {
           <p className="app-version">
             Version {appVersion} ({appCommit})
           </p>
+          <button
+            type="button"
+            className="sign-out"
+            onClick={() => {
+              signOut();
+              window.location.reload();
+            }}
+          >
+            <LogOut aria-hidden="true" /> Sign out
+          </button>
         </nav>
 
         <div className="settings-cards">

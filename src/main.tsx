@@ -6,6 +6,7 @@ import "./app/phone.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
+import { SignInGate } from "./app/SignInGate";
 import { applyBrandTokens } from "./app/applyBrandTokens";
 import { db } from "./db/db";
 import { initDatabase } from "./db/init";
@@ -18,6 +19,8 @@ initDatabase(db).catch((error: unknown) => {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <SignInGate>
+      <App />
+    </SignInGate>
   </StrictMode>,
 );

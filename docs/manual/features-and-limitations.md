@@ -12,7 +12,8 @@ It is a **proof of concept**, built for one engineer and tested on a real iPad t
 
 - **No App Store.** It is a web app opened from a link and added to the iPad's home screen, where it runs full screen like any other app.
 - **Works offline.** Once opened, everything it needs is stored on the iPad. It never needs the internet on site.
-- **No accounts, no server.** All drawings, photos and memos stay on the device. Nothing is uploaded anywhere.
+- **No server.** All drawings, photos and memos stay on the device. Nothing is uploaded anywhere.
+- **Sign-in.** A username and password, checked on the device, keep casual visitors out; each device stays signed in until Sign out. With no server, it isn't strong security.
 - **Northrop branded.** The memo follows the Northrop sample memo: branding, disclaimer and office details are fixed template text (the office is picked from Northrop's eight).
 
 ![The Dashboard: the last inspection, items this month, what needs attention and storage|190](shots/dashboard.jpg)

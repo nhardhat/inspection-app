@@ -19,7 +19,7 @@ WORKING AGREEMENTS (important)
 - When features or limitations change, update the documents (see DOCUMENTS) and rebuild them.
 - Repo, test fixtures and chats stay synthetic. Real drawings are allowed in the app only. Don't ask me for screenshots of real drawings: ask for the diagnostics panel's **Copy** text instead (it holds page numbers and paper sizes only).
 - I'm right-handed: viewer controls on the right edge; panels open on the left. Markup tools are a GoodNotes-style toolbar across the top.
-- No Mac: no Safari Web Inspector. Don't guess at iPad-only rendering or performance problems: measure with the diagnostics panel (or the drawing lab) and ask me for a reading. Both are in Settings, Developer, behind a password I know (never write it in the repo; e2e unlocks with the helper unlockDeveloperTools, a session flag).
+- No Mac: no Safari Web Inspector. Don't guess at iPad-only rendering or performance problems: measure with the diagnostics panel (or the drawing lab) and ask me for a reading. Both are in Settings, Developer, behind a password I know (never write it in the repo; e2e unlocks with the helper unlockDeveloperTools, a session flag). The app's own sign-in (SPEC 12b, 2026-11-27) is the same: only a PBKDF2 hash in src/app/signIn.ts, the username and password never in the repo, docs or memory; e2e starts signed in via storageState in playwright.config.ts.
 - I asked (2026-10-14) whether we were congesting the code. Keep it lean: remove experiments that don't pay off, and say so.
 
 STATUS (2026-10-20, version 0.3.0)

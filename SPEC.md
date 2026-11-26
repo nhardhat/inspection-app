@@ -295,6 +295,10 @@ The app is iPad first; on a phone (narrower than 600 px) the same screens and fe
 - Wording that named the iPad says "device" on every device (engineer, 2026-11-06): e.g. "Everything stays on this device", **Save to device**, **Save photos to device**, "Kept by the device".
 - Phone-specific features (a simpler drawing toolbar, different flows) are not part of this.
 
+## 12b. Local sign-in (engineer, 2026-11-27)
+
+So someone who finds the link can't make Northrop memos, the app opens on a **sign-in screen** (the Hardhat icon, "Northrop Hardhat", Username, Password, **Sign in**) before anything else, on every route. The check runs on the device, so it works offline: only a PBKDF2-SHA-256 hash (600,000 rounds) of the username and password is in the code (`src/app/signIn.ts`), never the text. The username ignores capitals and extra spaces; the password is exact. A wrong pair says "That username or password isn't right." and empties the password, and each wrong try in a row waits longer before the next (1, 2, 4 … up to 30 s). A device stays signed in (a flag in localStorage) until **Sign out**, under the version in Settings. Data on the device is unchanged by signing out. This keeps casual visitors out; it isn't server-grade security (the code is public and there is no server; a sign-in service in front of the site would be the next step if needed). Never write the username or password in the repo, docs or tests: e2e tests start signed in through Playwright's storage state, and the unit test uses a made-up pair.
+
 ## 13. Build order
 
 1. Project scaffold, PWA, offline shell, Dexie schema, deploy a "hello" to a shareable URL.

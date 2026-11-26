@@ -15,6 +15,17 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}/inspection-app/`,
     trace: "retain-on-failure",
+    // Tests start signed in (src/app/signIn.ts); the sign-in screen has its
+    // own test. The real username and password stay out of the repo.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://localhost:${port}`,
+          localStorage: [{ name: "hardhat-signed-in", value: "1" }],
+        },
+      ],
+    },
   },
   projects: [
     {

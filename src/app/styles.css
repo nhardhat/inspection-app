@@ -1877,6 +1877,11 @@ nav[aria-label="Inspections view"] {
   padding: 0.5rem 0.85rem;
 }
 
+.settings-nav .sign-out {
+  justify-self: start;
+  margin: 0 0.85rem;
+}
+
 .settings-cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -5107,4 +5112,43 @@ h1 {
 .defect-register-title svg {
   width: 18px;
   height: 18px;
+}
+
+/* Local sign-in (engineer, 2026-11-27): before anything else. */
+.sign-in {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4)
+    calc(env(safe-area-inset-bottom) + var(--space-4));
+  background: var(--page);
+  box-sizing: border-box;
+}
+
+.sign-in-card {
+  width: min(100%, 22rem);
+  display: grid;
+  gap: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5);
+  box-sizing: border-box;
+}
+
+.sign-in-icon {
+  justify-self: center;
+  border-radius: 50%;
+}
+
+.sign-in-card h1 {
+  margin: 0;
+  text-align: center;
+  color: var(--ink-strong);
+  font-size: 1.5rem;
+}
+
+.sign-in-error {
+  margin: 0;
+  color: var(--danger);
 }

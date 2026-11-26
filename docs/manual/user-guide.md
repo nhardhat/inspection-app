@@ -12,6 +12,8 @@ audience: For engineers: how to run an inspection, from loading drawings to send
 2. Tap the **Share** button, then **Add to Home Screen**.
 3. Open it from the home screen from now on. It runs full screen and works with no internet.
 
+> **Sign in** the first time you open it on each device, with the username and password you were given (capitals in the username don't matter). It stays signed in, even offline, until you tap **Sign out** in Settings, under the version.
+
 > When an update is ready, the app shows **Update now**. Tap it, or close and reopen the app.
 
 > **On a phone** (iPhone in Safari, Android in Chrome, added to the home screen the same way): the same app fits the narrow screen. The main areas are along the bottom instead of on the left, the steps are tabs under the header (Pre-inspection reads **Pre-insp.**), and cards stack. A phone keeps its own inspections: move one between devices with a backup.
