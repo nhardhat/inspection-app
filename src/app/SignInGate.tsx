@@ -32,6 +32,9 @@ function SignInScreen({ onSignIn }: { onSignIn: () => void }) {
     setChecking(false);
     if (ok) {
       rememberSignIn();
+      // Signing in always opens the Dashboard (engineer, 2026-11-27), not
+      // the screen the app was on when it signed out.
+      history.replaceState(null, "", "#/");
       onSignIn();
       return;
     }

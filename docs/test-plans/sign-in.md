@@ -12,5 +12,5 @@ Use the username and password you were given (they aren't written here).
 4. **Sign in.** Type the username in different capitals (e.g. all lower case) and the right password: the Dashboard opens with your inspections as before.
 5. **Stays signed in.** Close the app fully (swipe it away) and reopen: straight to the Dashboard.
 6. **Offline.** Sign out (step 7), turn on airplane mode, reopen and sign in: it works. Turn airplane mode off.
-7. **Sign out.** Settings: **Sign out** under the version. Tap it: the sign-in screen. Sign in again: your inspections are all still there.
+7. **Sign out.** Settings: **Sign out** under the version. Tap it: the sign-in screen. Sign in again: it opens the **Dashboard** (not Settings), and your inspections are all still there.
 8. **Other devices.** On a phone and on the PC, open the link: each asks to sign in once, then stays signed in.

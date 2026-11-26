@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, createHashRouter, useParams } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { PreInspectionScreen } from "../features/inspections/InspectionHome";
@@ -12,27 +13,29 @@ import { DrawingLab } from "../features/lab/DrawingLab";
 import { Shell } from "./Shell";
 
 // Hash routing: GitHub Pages has no SPA fallback, and every route is served
-// by the one precached index.html.
-const router = createHashRouter([
-  {
-    element: <Shell />,
-    children: [
-      { index: true, element: <DashboardPage /> },
-      { path: "inspections", element: <InspectionsPage /> },
-      // An inspection opens on its Inspection tab (SPEC section 12).
-      { path: "inspections/:id", element: <OpenInspection /> },
-      { path: "inspections/:id/details", element: <PreInspectionScreen /> },
-      // The Inspection step is the drawings themselves.
-      { path: "inspections/:id/inspection", element: <DocumentScreen /> },
-      { path: "projects/:id", element: <ProjectPage /> },
-      { path: "settings", element: <SettingsPage /> },
-      { path: "inspections/:id/document", element: <DocumentScreen /> },
-      { path: "inspections/:id/memo", element: <MemoScreen /> },
-      // Developer tools (Settings, Developer; password).
-      { path: "lab/drawing", element: <DrawingLab /> },
-    ],
-  },
-]);
+// by the one precached index.html. Made when the app first shows (after
+// sign-in), so it starts from the address sign-in leaves.
+const makeRouter = () =>
+  createHashRouter([
+    {
+      element: <Shell />,
+      children: [
+        { index: true, element: <DashboardPage /> },
+        { path: "inspections", element: <InspectionsPage /> },
+        // An inspection opens on its Inspection tab (SPEC section 12).
+        { path: "inspections/:id", element: <OpenInspection /> },
+        { path: "inspections/:id/details", element: <PreInspectionScreen /> },
+        // The Inspection step is the drawings themselves.
+        { path: "inspections/:id/inspection", element: <DocumentScreen /> },
+        { path: "projects/:id", element: <ProjectPage /> },
+        { path: "settings", element: <SettingsPage /> },
+        { path: "inspections/:id/document", element: <DocumentScreen /> },
+        { path: "inspections/:id/memo", element: <MemoScreen /> },
+        // Developer tools (Settings, Developer; password).
+        { path: "lab/drawing", element: <DrawingLab /> },
+      ],
+    },
+  ]);
 
 function OpenInspection() {
   const { id = "" } = useParams();
@@ -40,5 +43,6 @@ function OpenInspection() {
 }
 
 export function App() {
+  const [router] = useState(makeRouter);
   return <RouterProvider router={router} />;
 }
